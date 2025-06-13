@@ -33,13 +33,13 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-nuget-
           
+    # Fix: Use solution file or specify correct working directory
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore HospitalManagement.API/HospitalManagement.API.sln
       
     - name: Build backend
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build HospitalManagement.API/HospitalManagement.API.sln --configuration Release --no-restore
       
-    # Fix: Remove --no-build flag and specify configuration explicitly
     - name: Run unit tests
       run: dotnet test Tests/HospitalManagement.Tests/HospitalManagement.Tests.csproj --configuration Release --verbosity normal --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults
       
@@ -88,10 +88,10 @@ jobs:
         dotnet-version: ${{ env.DOTNET_VERSION }}
         
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore HospitalManagement.API/HospitalManagement.API.sln
       
     - name: Build backend
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet build HospitalManagement.API/HospitalManagement.API.sln --configuration Release --no-restore
       
     - name: Wait for SQL Server
       run: |
@@ -104,13 +104,12 @@ jobs:
           sleep 2
         done
         
-    # Fix: Remove --no-build and specify configuration
     - name: Run integration tests
       env:
         ConnectionStrings__DefaultConnection: "Server=localhost,1433;Database=HospitalManagementTestDB;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=true;"
       run: dotnet test Tests/HospitalManagement.Tests/HospitalManagement.Tests.csproj --filter "Category=Integration" --configuration Release --verbosity normal
 
-  # Simplified Frontend Tests (if you have frontend)
+  # Frontend Tests (Conditional)
   frontend-tests:
     name: Frontend Tests (Angular 19)
     runs-on: ubuntu-latest
@@ -147,12 +146,6 @@ jobs:
       run: |
         cd hospital-management-frontend
         npm run test:ci || echo "Frontend tests not configured yet"
-        
-    - name: Build frontend
-      if: steps.check-frontend.outputs.exists == 'true'
-      run: |
-        cd hospital-management-frontend
-        npm run build || echo "Frontend build not configured yet"
 
   # Notification Job
   notify:
