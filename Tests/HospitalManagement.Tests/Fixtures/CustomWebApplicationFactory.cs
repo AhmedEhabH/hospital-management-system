@@ -2,10 +2,9 @@
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using HospitalManagement.API.Data;
 using Serilog;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace HospitalManagement.Tests.Fixtures
 {
@@ -14,6 +13,19 @@ namespace HospitalManagement.Tests.Fixtures
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             Log.Information("Configuring test web host");
+
+            builder.ConfigureAppConfiguration((context, config) =>
+            {
+                // Add test-specific configuration
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = GetTestConnectionString(),
+                    ["JwtSettings:SecretKey"] = "YourSuperSecretKeyThatIsAtLeast32CharactersLongForSecurity!",
+                    ["JwtSettings:Issuer"] = "HospitalManagement.API",
+                    ["JwtSettings:Audience"] = "HospitalManagement.Client",
+                    ["JwtSettings:ExpiryInMinutes"] = "60"
+                });
+            });
 
             builder.ConfigureServices(services =>
             {
@@ -31,22 +43,24 @@ namespace HospitalManagement.Tests.Fixtures
                     services.Remove(contextDescriptor);
                 }
 
-                // Remove any IDbContextOptionsConfiguration registrations (EF Core 8+ issue)
-                var optionsConfigDescriptors = services
-                    .Where(d => d.ServiceType.IsGenericType &&
-                               d.ServiceType.GetGenericTypeDefinition() == typeof(IDbContextOptionsConfiguration<>))
-                    .ToList();
-
-                foreach (var optionsConfigDescriptor in optionsConfigDescriptors)
+                // Use SQL Server for integration tests if connection string is available, otherwise use InMemory
+                var connectionString = GetTestConnectionString();
+                if (!string.IsNullOrEmpty(connectionString) && connectionString.Contains("Server=localhost"))
                 {
-                    services.Remove(optionsConfigDescriptor);
+                    // Integration test with SQL Server
+                    services.AddDbContext<HospitalDbContext>(options =>
+                    {
+                        options.UseSqlServer(connectionString);
+                    });
                 }
-
-                // Add in-memory database for testing
-                services.AddDbContext<HospitalDbContext>(options =>
+                else
                 {
-                    options.UseInMemoryDatabase("InMemoryDbForTesting");
-                });
+                    // Fallback to InMemory for unit tests
+                    services.AddDbContext<HospitalDbContext>(options =>
+                    {
+                        options.UseInMemoryDatabase("InMemoryDbForTesting");
+                    });
+                }
 
                 // Build service provider and ensure database is created
                 var serviceProvider = services.BuildServiceProvider();
@@ -55,8 +69,16 @@ namespace HospitalManagement.Tests.Fixtures
 
                 try
                 {
-                    context.Database.EnsureCreated();
-                    Log.Information("Test database created successfully");
+                    if (connectionString?.Contains("Server=localhost") == true)
+                    {
+                        context.Database.EnsureCreated();
+                        Log.Information("Test SQL Server database created successfully");
+                    }
+                    else
+                    {
+                        context.Database.EnsureCreated();
+                        Log.Information("Test InMemory database created successfully");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -67,6 +89,12 @@ namespace HospitalManagement.Tests.Fixtures
 
             builder.UseEnvironment("Testing");
             Log.Information("Test web host configuration completed");
+        }
+
+        private static string GetTestConnectionString()
+        {
+            return Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                   ?? "Data Source=:memory:";
         }
     }
 }

@@ -12,6 +12,7 @@ using Serilog;
 
 namespace HospitalManagement.Tests.Integration
 {
+    [Trait("Category", "Integration")]
     public class AuthControllerIntegrationTests : IClassFixture<CustomWebApplicationFactory<Program>>
     {
         private readonly CustomWebApplicationFactory<Program> _factory;
