@@ -73,11 +73,11 @@ jobs:
         ports:
           - 1433:1433
         options: >-
-          --health-cmd="timeout 60s bash -c 'until /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd123 -Q \"SELECT 1\" &> /dev/null; do sleep 1; done'"
+          --health-cmd="/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd123 -Q 'SELECT 1' -b -o /dev/null"
           --health-interval=10s
-          --health-timeout=60s
-          --health-retries=10
-          --health-start-period=80s
+          --health-timeout=30s
+          --health-retries=20
+          --health-start-period=120s
 
     steps:
       - name: Checkout code
