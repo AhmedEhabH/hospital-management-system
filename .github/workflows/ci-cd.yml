@@ -43,14 +43,14 @@ jobs:
       run: dotnet test Tests/HospitalManagement.Tests/HospitalManagement.Tests.csproj --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
       
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-results
         path: Tests/HospitalManagement.Tests/TestResults/
         
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: Tests/HospitalManagement.Tests/TestResults/*/coverage.cobertura.xml
         flags: backend
@@ -93,7 +93,7 @@ jobs:
         npm run build --prod
         
     - name: Upload frontend build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: frontend-build
         path: hospital-management-frontend/dist/

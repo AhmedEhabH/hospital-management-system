@@ -7,7 +7,10 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:hospital-management-frontend": "node dist/hospital-management-frontend/server/server.mjs"
+    "serve:ssr:hospital-management-frontend": "node dist/hospital-management-frontend/server/server.mjs",
+	"test:ci": "ng test --watch=false --browsers=ChromeHeadless --code-coverage",
+    "lint": "ng lint",
+    "e2e:ci": "ng e2e --protractor-config=e2e/protractor-ci.conf.js"
   },
   "private": true,
   "dependencies": {
