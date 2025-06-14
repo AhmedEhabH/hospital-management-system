@@ -1,1 +1,404 @@
-<p>dashboard works!</p>
+<div class="admin-dashboard" [class.dark-theme]="isDarkMode">
+	<!-- Dashboard Header -->
+	<div class="dashboard-header medical-gradient">
+		<div class="header-content">
+			<div class="admin-welcome">
+				<div class="avatar-section">
+					<div class="admin-avatar">
+						<mat-icon>admin_panel_settings</mat-icon>
+					</div>
+					<div class="welcome-text">
+						<h1 class="welcome-title">System Administrator</h1>
+						<p class="welcome-subtitle">{{ currentUser?.firstName }} {{ currentUser?.lastName }} - Complete
+							System Overview</p>
+					</div>
+				</div>
+				<div class="quick-actions">
+					<!-- Theme Toggle -->
+					<app-theme-toggle></app-theme-toggle>
+
+					<button mat-raised-button color="accent" (click)="exportSystemReport()" class="action-button">
+						<mat-icon>file_download</mat-icon>
+						Export Report
+					</button>
+					<button mat-raised-button color="primary" (click)="refreshSystemMetrics()" class="action-button">
+						<mat-icon>refresh</mat-icon>
+						Refresh Data
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Loading State -->
+	<div *ngIf="isLoading" class="loading-container">
+		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+		<div class="loading-content">
+			<mat-icon class="loading-icon pulse-animation">admin_panel_settings</mat-icon>
+			<p>Loading system dashboard...</p>
+		</div>
+	</div>
+
+	<!-- Dashboard Content -->
+	<div *ngIf="!isLoading" class="dashboard-content">
+		<div class="container">
+
+			<!-- System Metrics Cards -->
+			<div class="metrics-section">
+				<h2 class="section-title">
+					<mat-icon>dashboard</mat-icon>
+					System Overview
+				</h2>
+
+				<div class="metrics-grid">
+					<!-- Total Users -->
+					<mat-card class="metric-card medical-card">
+						<mat-card-content>
+							<div class="metric-header">
+								<mat-icon class="metric-icon users-icon">people</mat-icon>
+								<span class="metric-label">Total Users</span>
+							</div>
+							<div class="metric-value">{{ systemMetrics.totalUsers }}</div>
+							<div class="metric-breakdown">
+								<div class="breakdown-item">
+									<span class="breakdown-label">Active:</span>
+									<span class="breakdown-value">{{ systemMetrics.activeUsers }}</span>
+								</div>
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- System Uptime -->
+					<mat-card class="metric-card medical-card">
+						<mat-card-content>
+							<div class="metric-header">
+								<mat-icon class="metric-icon uptime-icon">schedule</mat-icon>
+								<span class="metric-label">System Uptime</span>
+							</div>
+							<div class="metric-value">{{ systemMetrics.systemUptime }}</div>
+							<div class="metric-status stable">
+								<mat-icon>check_circle</mat-icon>
+								System Stable
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Server Load -->
+					<mat-card class="metric-card medical-card" [class.warning]="systemMetrics.serverLoad > 80">
+						<mat-card-content>
+							<div class="metric-header">
+								<mat-icon class="metric-icon load-icon">memory</mat-icon>
+								<span class="metric-label">Server Load</span>
+							</div>
+							<div class="metric-value">{{ systemMetrics.serverLoad }}%</div>
+							<div class="load-bar">
+								<mat-progress-bar mode="determinate"
+									[value]="systemMetrics.serverLoad"></mat-progress-bar>
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Database Size -->
+					<mat-card class="metric-card medical-card">
+						<mat-card-content>
+							<div class="metric-header">
+								<mat-icon class="metric-icon db-icon">storage</mat-icon>
+								<span class="metric-label">Database Size</span>
+							</div>
+							<div class="metric-value">{{ systemMetrics.databaseSize }}</div>
+							<div class="metric-trend">
+								<mat-icon class="trend-icon">trending_up</mat-icon>
+								Growing steadily
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Daily Logins -->
+					<mat-card class="metric-card medical-card">
+						<mat-card-content>
+							<div class="metric-header">
+								<mat-icon class="metric-icon login-icon">login</mat-icon>
+								<span class="metric-label">Daily Logins</span>
+							</div>
+							<div class="metric-value">{{ systemMetrics.dailyLogins }}</div>
+							<div class="metric-change positive">
+								<mat-icon>trending_up</mat-icon>
+								+15% from yesterday
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Monthly Registrations -->
+					<mat-card class="metric-card medical-card">
+						<mat-card-content>
+							<div class="metric-header">
+								<mat-icon class="metric-icon registration-icon">person_add</mat-icon>
+								<span class="metric-label">Monthly Registrations</span>
+							</div>
+							<div class="metric-value">{{ systemMetrics.monthlyRegistrations }}</div>
+							<div class="metric-change positive">
+								<mat-icon>trending_up</mat-icon>
+								+8% from last month
+							</div>
+						</mat-card-content>
+					</mat-card>
+				</div>
+			</div>
+
+			<!-- System Alerts -->
+			<div class="alerts-section" *ngIf="systemAlerts.length > 0">
+				<h2 class="section-title">
+					<mat-icon>warning</mat-icon>
+					System Alerts
+				</h2>
+
+				<div class="alerts-grid">
+					<mat-card *ngFor="let alert of systemAlerts" class="alert-card medical-card"
+						[class]="getAlertClass(alert.type)" [class.resolved]="alert.resolved">
+						<mat-card-content>
+							<div class="alert-header">
+								<div class="alert-info">
+									<mat-icon class="alert-icon">
+										{{ alert.type === 'Critical' ? 'error' : alert.type === 'Warning' ? 'warning' :
+										'info' }}
+									</mat-icon>
+									<div class="alert-details">
+										<div class="alert-type">{{ alert.type }}</div>
+										<div class="alert-time">{{ alert.timestamp | date:'medium' }}</div>
+									</div>
+								</div>
+								<button mat-icon-button *ngIf="!alert.resolved" (click)="resolveAlert(alert)"
+									matTooltip="Mark as resolved">
+									<mat-icon>check</mat-icon>
+								</button>
+							</div>
+							<div class="alert-message">{{ alert.message }}</div>
+						</mat-card-content>
+					</mat-card>
+				</div>
+			</div>
+
+			<!-- Charts Section -->
+			<div class="charts-section">
+				<div class="charts-grid">
+					<!-- User Distribution Chart -->
+					<mat-card class="chart-card medical-card">
+						<mat-card-header>
+							<mat-icon mat-card-avatar>pie_chart</mat-icon>
+							<mat-card-title>User Distribution</mat-card-title>
+							<mat-card-subtitle>System user breakdown</mat-card-subtitle>
+						</mat-card-header>
+						<mat-card-content>
+							<div class="chart-container">
+								<canvas baseChart [data]="userDistributionChartData" [options]="chartOptions"
+									[type]="userDistributionChartType">
+								</canvas>
+							</div>
+							<div class="chart-legend">
+								<div class="legend-item">
+									<span class="legend-color patients"></span>
+									<span>Patients: {{ systemMetrics.totalPatients }}</span>
+								</div>
+								<div class="legend-item">
+									<span class="legend-color doctors"></span>
+									<span>Doctors: {{ systemMetrics.totalDoctors }}</span>
+								</div>
+								<div class="legend-item">
+									<span class="legend-color admins"></span>
+									<span>Admins: {{ systemMetrics.totalAdmins }}</span>
+								</div>
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- System Usage Chart -->
+					<mat-card class="chart-card medical-card">
+						<mat-card-header>
+							<mat-icon mat-card-avatar>show_chart</mat-icon>
+							<mat-card-title>System Usage Trends</mat-card-title>
+							<mat-card-subtitle>6-month overview</mat-card-subtitle>
+						</mat-card-header>
+						<mat-card-content>
+							<div class="chart-container">
+								<canvas baseChart [data]="systemUsageChartData" [options]="chartOptions"
+									[type]="systemUsageChartType">
+								</canvas>
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Performance Metrics Chart -->
+					<mat-card class="chart-card medical-card">
+						<mat-card-header>
+							<mat-icon mat-card-avatar>speed</mat-icon>
+							<mat-card-title>Performance Metrics</mat-card-title>
+							<mat-card-subtitle>System performance scores</mat-card-subtitle>
+						</mat-card-header>
+						<mat-card-content>
+							<div class="chart-container">
+								<canvas baseChart [data]="performanceChartData" [options]="chartOptions"
+									[type]="performanceChartType">
+								</canvas>
+							</div>
+						</mat-card-content>
+					</mat-card>
+				</div>
+			</div>
+
+			<!-- Main Content Tabs -->
+			<div class="main-content-section">
+				<mat-tab-group class="medical-tabs" backgroundColor="primary">
+
+					<!-- User Activity Tab -->
+					<mat-tab>
+						<ng-template mat-tab-label>
+							<mat-icon>history</mat-icon>
+							Recent User Activity
+						</ng-template>
+						<div class="tab-content">
+							<div class="tab-header">
+								<h3>System Activity Log</h3>
+								<div class="header-actions">
+									<mat-form-field class="search-field">
+										<mat-label>Search activities</mat-label>
+										<input matInput (keyup)="applyFilter($event)"
+											placeholder="Search by user, action...">
+										<mat-icon matSuffix>search</mat-icon>
+									</mat-form-field>
+									<button mat-button color="primary" (click)="navigateToAuditLogs()">
+										View Full Audit Log
+										<mat-icon>arrow_forward</mat-icon>
+									</button>
+								</div>
+							</div>
+
+							<div class="activities-table">
+								<mat-table [dataSource]="activitiesDataSource" matSort class="medical-table">
+									<!-- Timestamp Column -->
+									<ng-container matColumnDef="timestamp">
+										<mat-header-cell *matHeaderCellDef mat-sort-header>Time</mat-header-cell>
+										<mat-cell *matCellDef="let activity">
+											<div class="timestamp-cell">
+												<mat-icon class="time-icon">schedule</mat-icon>
+												{{ activity.timestamp | date:'short' }}
+											</div>
+										</mat-cell>
+									</ng-container>
+
+									<!-- User Column -->
+									<ng-container matColumnDef="user">
+										<mat-header-cell *matHeaderCellDef mat-sort-header>User</mat-header-cell>
+										<mat-cell *matCellDef="let activity">
+											<div class="user-cell">
+												<div class="user-avatar-small">
+													<mat-icon>person</mat-icon>
+												</div>
+												<span>{{ activity.userName }}</span>
+											</div>
+										</mat-cell>
+									</ng-container>
+
+									<!-- User Type Column -->
+									<ng-container matColumnDef="userType">
+										<mat-header-cell *matHeaderCellDef>Type</mat-header-cell>
+										<mat-cell *matCellDef="let activity">
+											<mat-chip [class]="getUserTypeClass(activity.userType)">
+												{{ activity.userType }}
+											</mat-chip>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Action Column -->
+									<ng-container matColumnDef="action">
+										<mat-header-cell *matHeaderCellDef>Action</mat-header-cell>
+										<mat-cell *matCellDef="let activity">{{ activity.action }}</mat-cell>
+									</ng-container>
+
+									<!-- IP Address Column -->
+									<ng-container matColumnDef="ipAddress">
+										<mat-header-cell *matHeaderCellDef>IP Address</mat-header-cell>
+										<mat-cell *matCellDef="let activity">
+											<code class="ip-address">{{ activity.ipAddress }}</code>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Status Column -->
+									<ng-container matColumnDef="status">
+										<mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+										<mat-cell *matCellDef="let activity">
+											<mat-chip [class]="getStatusClass(activity.status)">
+												{{ activity.status }}
+											</mat-chip>
+										</mat-cell>
+									</ng-container>
+
+									<mat-header-row *matHeaderRowDef="activitiesDisplayedColumns"></mat-header-row>
+									<mat-row *matRowDef="let row; columns: activitiesDisplayedColumns;"
+										(click)="viewUserDetails(row)" class="clickable-row"></mat-row>
+								</mat-table>
+
+								<mat-paginator [pageSizeOptions]="[10, 25, 50]" showFirstLastButtons></mat-paginator>
+							</div>
+						</div>
+					</mat-tab>
+
+					<!-- Quick Actions Tab -->
+					<mat-tab>
+						<ng-template mat-tab-label>
+							<mat-icon>settings</mat-icon>
+							Quick Actions
+						</ng-template>
+						<div class="tab-content">
+							<div class="quick-actions-grid">
+								<mat-card class="action-card medical-card" (click)="navigateToUserManagement()">
+									<mat-card-content>
+										<mat-icon class="action-icon">people</mat-icon>
+										<h3>User Management</h3>
+										<p>Manage users, roles, and permissions</p>
+										<div class="action-stats">
+											<span>{{ systemMetrics.totalUsers }} total users</span>
+										</div>
+									</mat-card-content>
+								</mat-card>
+
+								<mat-card class="action-card medical-card" (click)="navigateToSystemAnalytics()">
+									<mat-card-content>
+										<mat-icon class="action-icon">analytics</mat-icon>
+										<h3>System Analytics</h3>
+										<p>View detailed system performance metrics</p>
+										<div class="action-stats">
+											<span>{{ systemMetrics.serverLoad }}% current load</span>
+										</div>
+									</mat-card-content>
+								</mat-card>
+
+								<mat-card class="action-card medical-card" (click)="navigateToSettings()">
+									<mat-card-content>
+										<mat-icon class="action-icon">settings</mat-icon>
+										<h3>System Settings</h3>
+										<p>Configure system parameters and preferences</p>
+										<div class="action-stats">
+											<span>Last updated today</span>
+										</div>
+									</mat-card-content>
+								</mat-card>
+
+								<mat-card class="action-card medical-card" (click)="exportSystemReport()">
+									<mat-card-content>
+										<mat-icon class="action-icon">file_download</mat-icon>
+										<h3>Generate Reports</h3>
+										<p>Export system reports and analytics</p>
+										<div class="action-stats">
+											<span>Multiple formats available</span>
+										</div>
+									</mat-card-content>
+								</mat-card>
+							</div>
+						</div>
+					</mat-tab>
+				</mat-tab-group>
+			</div>
+
+		</div>
+	</div>
+</div>
