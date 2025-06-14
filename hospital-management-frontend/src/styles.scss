@@ -431,3 +431,168 @@ body:not(.dark-theme) {
 		color: var(--medical-blue);
 	}
 }
+
+// Enhanced theme transitions
+* {
+	transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+// Theme-aware scrollbar
+::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--background-color);
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--border-color);
+	border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--text-secondary);
+}
+
+// Dark theme scrollbar
+.dark-theme {
+	::-webkit-scrollbar-track {
+		background: #1e1e1e;
+	}
+
+	::-webkit-scrollbar-thumb {
+		background: #404040;
+	}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: #606060;
+	}
+}
+
+// Theme-aware selection
+::selection {
+	background: var(--primary-color);
+	color: white;
+}
+
+::-moz-selection {
+	background: var(--primary-color);
+	color: white;
+}
+
+// Enhanced focus styles for accessibility
+*:focus-visible {
+	outline: 2px solid var(--primary-color);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+// Theme toggle specific styles
+.theme-toggle-global {
+	position: fixed;
+	top: 1rem;
+	right: 1rem;
+	z-index: 1000;
+
+	@media (max-width: 768px) {
+		top: 0.5rem;
+		right: 0.5rem;
+	}
+}
+
+// Smooth theme transition for all elements
+.theme-transition {
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// Enhanced medical card hover effects for both themes
+.medical-card {
+	&:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 16px 48px var(--shadow-color);
+	}
+}
+
+.dark-theme .medical-card {
+	&:hover {
+		box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+	}
+}
+
+// Theme-aware backdrop filters
+.backdrop-blur {
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+}
+
+// Enhanced button styles for both themes
+.mat-mdc-raised-button {
+	&.medical-button {
+		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+		&:hover {
+			transform: translateY(-2px);
+		}
+	}
+}
+
+// Theme-aware Material Design overrides
+.mat-mdc-card {
+	background: var(--surface-color) !important;
+	color: var(--text-primary) !important;
+}
+
+.mat-mdc-tab-group {
+	background: var(--surface-color);
+
+	.mat-mdc-tab-header {
+		background: var(--surface-color);
+	}
+}
+
+// Enhanced notification styles for both themes
+.medical-notification {
+	&.success {
+		background: rgba(76, 175, 80, 0.1);
+		border-left: 4px solid var(--medical-green);
+		color: var(--medical-green);
+	}
+
+	&.warning {
+		background: rgba(255, 152, 0, 0.1);
+		border-left: 4px solid var(--medical-orange);
+		color: var(--medical-orange);
+	}
+
+	&.error {
+		background: rgba(244, 67, 54, 0.1);
+		border-left: 4px solid var(--medical-red);
+		color: var(--medical-red);
+	}
+
+	&.info {
+		background: rgba(66, 153, 237, 0.1);
+		border-left: 4px solid var(--medical-blue);
+		color: var(--medical-blue);
+	}
+}
+
+.dark-theme .medical-notification {
+	&.success {
+		background: rgba(129, 199, 132, 0.15);
+	}
+
+	&.warning {
+		background: rgba(255, 183, 77, 0.15);
+	}
+
+	&.error {
+		background: rgba(239, 83, 80, 0.15);
+	}
+
+	&.info {
+		background: rgba(122, 185, 243, 0.15);
+	}
+}

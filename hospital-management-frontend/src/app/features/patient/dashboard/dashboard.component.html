@@ -13,6 +13,9 @@
 					</div>
 				</div>
 				<div class="quick-actions">
+					<!-- Theme Toggle -->
+					<app-theme-toggle></app-theme-toggle>
+
 					<button mat-raised-button color="accent" (click)="scheduleAppointment()" class="action-button">
 						<mat-icon>event</mat-icon>
 						Schedule Appointment
@@ -26,6 +29,7 @@
 		</div>
 	</div>
 
+	<!-- Rest of the dashboard content remains the same -->
 	<!-- Loading State -->
 	<div *ngIf="isLoading" class="loading-container">
 		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>

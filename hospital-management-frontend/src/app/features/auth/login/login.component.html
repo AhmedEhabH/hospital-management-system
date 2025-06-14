@@ -17,13 +17,11 @@
 						</div>
 					</div>
 				</div>
-				<button mat-icon-button (click)="toggleTheme()" class="theme-toggle"
-					[attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-					matTooltip="Toggle theme">
-					<mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
-				</button>
+				<!-- Theme Toggle -->
+				<app-theme-toggle></app-theme-toggle>
 			</div>
 
+			<!-- Rest of the login form remains the same -->
 			<!-- Login Form -->
 			<mat-card-content class="card-content">
 				<div class="welcome-section">

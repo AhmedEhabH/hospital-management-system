@@ -8,7 +8,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
 	selector: 'app-login',
-	standalone:false,
+	standalone: false,
 	templateUrl: './login.component.html',
 	styleUrls: ['./login.component.scss']
 })
@@ -122,10 +122,6 @@ export class LoginComponent implements OnInit, OnDestroy {
 			default:
 				this.router.navigate(['/dashboard']);
 		}
-	}
-
-	toggleTheme(): void {
-		this.themeService.toggleTheme();
 	}
 
 	private showSuccess(message: string): void {

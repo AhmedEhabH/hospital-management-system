@@ -14,14 +14,15 @@ import { MedicalCardComponent } from './shared/components/medical-card/medical-c
 import { StatsWidgetComponent } from './shared/components/stats-widget/stats-widget.component';
 
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { ThemeToggleComponent } from './shared/components/theme-toggle/theme-toggle.component';
 
 @NgModule({
 	declarations: [
 		AppComponent,
-  DashboardHeaderComponent,
-  DashboardSidebarComponent,
-  MedicalCardComponent,
-  StatsWidgetComponent
+		DashboardHeaderComponent,
+		DashboardSidebarComponent,
+		MedicalCardComponent,
+		StatsWidgetComponent,
 	],
 	imports: [
 		BrowserModule,

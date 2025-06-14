@@ -12,35 +12,38 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+
+// Shared Module - Import instead of individual components
+import { SharedModule } from '../../shared/shared.module';
 
 import { AuthRoutingModule } from './auth-routing.module';
 import { LoginComponent } from './login/login.component';
 import { RegisterComponent } from './register/register.component';
 
-
 @NgModule({
-  declarations: [
-    LoginComponent,
-    RegisterComponent
-  ],
-  imports: [
-    CommonModule,
-    AuthRoutingModule,
-	ReactiveFormsModule,
-	FormsModule,
+	declarations: [
+		LoginComponent,
+		RegisterComponent
+	],
+	imports: [
+		CommonModule,
+		AuthRoutingModule,
+		ReactiveFormsModule,
+		FormsModule,
 
-	// Angular Material
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatSelectModule,
-    MatCheckboxModule,
-    MatProgressSpinnerModule,
-    MatSnackBarModule,
-    MatSlideToggleModule
-  ]
+		// Import SharedModule to get ThemeToggleComponent
+		SharedModule,
+
+		// Angular Material
+		MatCardModule,
+		MatFormFieldModule,
+		MatInputModule,
+		MatButtonModule,
+		MatIconModule,
+		MatSelectModule,
+		MatCheckboxModule,
+		MatProgressSpinnerModule,
+		MatSnackBarModule
+	]
 })
 export class AuthModule { }
