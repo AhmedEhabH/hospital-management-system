@@ -1,1 +1,402 @@
-<p>dashboard works!</p>
+<div class="doctor-dashboard" [class.dark-theme]="isDarkMode">
+	<!-- Dashboard Header -->
+	<div class="dashboard-header medical-gradient">
+		<div class="header-content">
+			<div class="doctor-welcome">
+				<div class="avatar-section">
+					<div class="doctor-avatar">
+						<mat-icon>medical_services</mat-icon>
+					</div>
+					<div class="welcome-text">
+						<h1 class="welcome-title">Dr. {{ currentUser?.firstName }} {{ currentUser?.lastName }}</h1>
+						<p class="welcome-subtitle">Medical Dashboard - {{ todayAppointments.length }} appointments
+							today</p>
+					</div>
+				</div>
+				<div class="quick-actions">
+					<!-- Theme Toggle -->
+					<app-theme-toggle></app-theme-toggle>
+
+					<button mat-raised-button color="accent" (click)="navigateToAppointments()" class="action-button">
+						<mat-icon>event</mat-icon>
+						Today's Schedule
+					</button>
+					<button mat-icon-button [matBadge]="dashboardStats.unreadMessages" matBadgeColor="warn"
+						(click)="navigateToMessages()">
+						<mat-icon>mail</mat-icon>
+					</button>
+					<button mat-icon-button [matBadge]="dashboardStats.pendingReports" matBadgeColor="warn"
+						(click)="navigateToLabReports()">
+						<mat-icon>science</mat-icon>
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Loading State -->
+	<div *ngIf="isLoading" class="loading-container">
+		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+		<div class="loading-content">
+			<mat-icon class="loading-icon pulse-animation">medical_services</mat-icon>
+			<p>Loading your medical dashboard...</p>
+		</div>
+	</div>
+
+	<!-- Dashboard Content -->
+	<div *ngIf="!isLoading" class="dashboard-content">
+		<div class="container">
+
+			<!-- Statistics Cards -->
+			<div class="stats-section">
+				<h2 class="section-title">
+					<mat-icon>analytics</mat-icon>
+					Today's Overview
+				</h2>
+
+				<div class="stats-grid">
+					<!-- Total Patients -->
+					<mat-card class="stat-card medical-card">
+						<mat-card-content>
+							<div class="stat-header">
+								<mat-icon class="stat-icon patients-icon">people</mat-icon>
+								<span class="stat-label">Total Patients</span>
+							</div>
+							<div class="stat-value">{{ dashboardStats.totalPatients }}</div>
+							<div class="stat-change positive">
+								<mat-icon>trending_up</mat-icon>
+								+5% from last week
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Today's Appointments -->
+					<mat-card class="stat-card medical-card">
+						<mat-card-content>
+							<div class="stat-header">
+								<mat-icon class="stat-icon appointments-icon">event</mat-icon>
+								<span class="stat-label">Today's Appointments</span>
+							</div>
+							<div class="stat-value">{{ dashboardStats.todayAppointments }}</div>
+							<div class="stat-change neutral">
+								<mat-icon>schedule</mat-icon>
+								{{ dashboardStats.completedToday }} completed
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Critical Patients -->
+					<mat-card class="stat-card medical-card critical">
+						<mat-card-content>
+							<div class="stat-header">
+								<mat-icon class="stat-icon critical-icon">warning</mat-icon>
+								<span class="stat-label">Critical Patients</span>
+							</div>
+							<div class="stat-value">{{ dashboardStats.criticalPatients }}</div>
+							<div class="stat-change critical">
+								<mat-icon>priority_high</mat-icon>
+								Requires immediate attention
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Pending Reports -->
+					<mat-card class="stat-card medical-card">
+						<mat-card-content>
+							<div class="stat-header">
+								<mat-icon class="stat-icon reports-icon">assignment</mat-icon>
+								<span class="stat-label">Pending Reports</span>
+							</div>
+							<div class="stat-value">{{ dashboardStats.pendingReports }}</div>
+							<div class="stat-change warning">
+								<mat-icon>pending_actions</mat-icon>
+								Review required
+							</div>
+						</mat-card-content>
+					</mat-card>
+				</div>
+			</div>
+
+			<!-- Charts Section -->
+			<div class="charts-section">
+				<div class="charts-grid">
+					<!-- Patient Status Chart -->
+					<mat-card class="chart-card medical-card">
+						<mat-card-header>
+							<mat-icon mat-card-avatar>pie_chart</mat-icon>
+							<mat-card-title>Patient Status Distribution</mat-card-title>
+							<mat-card-subtitle>Current patient conditions</mat-card-subtitle>
+						</mat-card-header>
+						<mat-card-content>
+							<div class="chart-container">
+								<canvas baseChart [data]="patientChartData" [options]="chartOptions"
+									[type]="patientChartType">
+								</canvas>
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- Appointments Chart -->
+					<mat-card class="chart-card medical-card">
+						<mat-card-header>
+							<mat-icon mat-card-avatar>show_chart</mat-icon>
+							<mat-card-title>Weekly Appointments</mat-card-title>
+							<mat-card-subtitle>Appointment trends this week</mat-card-subtitle>
+						</mat-card-header>
+						<mat-card-content>
+							<div class="chart-container">
+								<canvas baseChart [data]="appointmentChartData" [options]="chartOptions"
+									[type]="appointmentChartType">
+								</canvas>
+							</div>
+						</mat-card-content>
+					</mat-card>
+				</div>
+			</div>
+
+			<!-- Main Content Tabs -->
+			<div class="main-content-section">
+				<mat-tab-group class="medical-tabs" backgroundColor="primary">
+
+					<!-- Today's Appointments Tab -->
+					<mat-tab>
+						<ng-template mat-tab-label>
+							<mat-icon>event_note</mat-icon>
+							Today's Appointments ({{ todayAppointments.length }})
+						</ng-template>
+						<div class="tab-content">
+							<div class="tab-header">
+								<h3>Today's Schedule</h3>
+								<button mat-button color="primary" (click)="navigateToAppointments()">
+									View All Appointments
+									<mat-icon>arrow_forward</mat-icon>
+								</button>
+							</div>
+
+							<div class="appointments-table">
+								<mat-table [dataSource]="appointmentsDataSource" class="medical-table">
+									<!-- Time Column -->
+									<ng-container matColumnDef="time">
+										<mat-header-cell *matHeaderCellDef>Time</mat-header-cell>
+										<mat-cell *matCellDef="let appointment">
+											<div class="time-cell">
+												<mat-icon class="time-icon">schedule</mat-icon>
+												{{ appointment.time }}
+											</div>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Patient Column -->
+									<ng-container matColumnDef="patient">
+										<mat-header-cell *matHeaderCellDef>Patient</mat-header-cell>
+										<mat-cell *matCellDef="let appointment">
+											<div class="patient-cell">
+												<mat-icon class="patient-icon">person</mat-icon>
+												{{ appointment.patientName }}
+											</div>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Type Column -->
+									<ng-container matColumnDef="type">
+										<mat-header-cell *matHeaderCellDef>Type</mat-header-cell>
+										<mat-cell *matCellDef="let appointment">
+											<mat-chip class="type-chip">{{ appointment.type }}</mat-chip>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Priority Column -->
+									<ng-container matColumnDef="priority">
+										<mat-header-cell *matHeaderCellDef>Priority</mat-header-cell>
+										<mat-cell *matCellDef="let appointment">
+											<mat-chip [class]="getPriorityClass(appointment.priority)">
+												{{ appointment.priority }}
+											</mat-chip>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Status Column -->
+									<ng-container matColumnDef="status">
+										<mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+										<mat-cell *matCellDef="let appointment">
+											<mat-chip [class]="getStatusClass(appointment.status)">
+												{{ appointment.status }}
+											</mat-chip>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Actions Column -->
+									<ng-container matColumnDef="actions">
+										<mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+										<mat-cell *matCellDef="let appointment">
+											<div class="action-buttons">
+												<button mat-icon-button color="primary"
+													(click)="startAppointment(appointment)"
+													*ngIf="appointment.status === 'Scheduled'"
+													matTooltip="Start Appointment">
+													<mat-icon>play_arrow</mat-icon>
+												</button>
+												<button mat-icon-button color="accent"
+													(click)="completeAppointment(appointment)"
+													*ngIf="appointment.status === 'In Progress'"
+													matTooltip="Complete Appointment">
+													<mat-icon>check_circle</mat-icon>
+												</button>
+												<button mat-icon-button (click)="rescheduleAppointment(appointment)"
+													matTooltip="Reschedule">
+													<mat-icon>schedule</mat-icon>
+												</button>
+											</div>
+										</mat-cell>
+									</ng-container>
+
+									<mat-header-row *matHeaderRowDef="appointmentsDisplayedColumns"></mat-header-row>
+									<mat-row *matRowDef="let row; columns: appointmentsDisplayedColumns;"></mat-row>
+								</mat-table>
+							</div>
+						</div>
+					</mat-tab>
+
+					<!-- Patient Management Tab -->
+					<mat-tab>
+						<ng-template mat-tab-label>
+							<mat-icon>people</mat-icon>
+							Patient Management
+						</ng-template>
+						<div class="tab-content">
+							<div class="tab-header">
+								<h3>Patient Overview</h3>
+								<div class="header-actions">
+									<mat-form-field class="search-field">
+										<mat-label>Search patients</mat-label>
+										<input matInput (keyup)="applyFilter($event)"
+											placeholder="Search by name, condition...">
+										<mat-icon matSuffix>search</mat-icon>
+									</mat-form-field>
+									<button mat-button color="primary" (click)="navigateToPatientManagement()">
+										Manage All Patients
+										<mat-icon>arrow_forward</mat-icon>
+									</button>
+								</div>
+							</div>
+
+							<div class="patients-table">
+								<mat-table [dataSource]="patientsDataSource" matSort class="medical-table">
+									<!-- Name Column -->
+									<ng-container matColumnDef="name">
+										<mat-header-cell *matHeaderCellDef mat-sort-header>Patient
+											Name</mat-header-cell>
+										<mat-cell *matCellDef="let patient">
+											<div class="patient-name-cell">
+												<div class="patient-avatar-small">
+													<mat-icon>person</mat-icon>
+												</div>
+												<div class="patient-details">
+													<div class="patient-name">{{ patient.firstName }} {{
+														patient.lastName }}</div>
+													<div class="patient-email">{{ patient.email }}</div>
+												</div>
+											</div>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Age Column -->
+									<ng-container matColumnDef="age">
+										<mat-header-cell *matHeaderCellDef mat-sort-header>Age</mat-header-cell>
+										<mat-cell *matCellDef="let patient">{{ patient.age }}</mat-cell>
+									</ng-container>
+
+									<!-- Gender Column -->
+									<ng-container matColumnDef="gender">
+										<mat-header-cell *matHeaderCellDef>Gender</mat-header-cell>
+										<mat-cell *matCellDef="let patient">{{ patient.gender }}</mat-cell>
+									</ng-container>
+
+									<!-- Last Visit Column -->
+									<ng-container matColumnDef="lastVisit">
+										<mat-header-cell *matHeaderCellDef mat-sort-header>Last Visit</mat-header-cell>
+										<mat-cell *matCellDef="let patient">{{ patient.lastVisit | date:'mediumDate'
+											}}</mat-cell>
+									</ng-container>
+
+									<!-- Status Column -->
+									<ng-container matColumnDef="status">
+										<mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
+										<mat-cell *matCellDef="let patient">
+											<mat-chip [class]="getStatusClass(patient.status)">
+												{{ patient.status }}
+											</mat-chip>
+										</mat-cell>
+									</ng-container>
+
+									<!-- Condition Column -->
+									<ng-container matColumnDef="condition">
+										<mat-header-cell *matHeaderCellDef>Condition</mat-header-cell>
+										<mat-cell *matCellDef="let patient">{{ patient.condition }}</mat-cell>
+									</ng-container>
+
+									<!-- Actions Column -->
+									<ng-container matColumnDef="actions">
+										<mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+										<mat-cell *matCellDef="let patient">
+											<div class="action-buttons">
+												<button mat-icon-button color="primary"
+													(click)="viewPatientDetails(patient)" matTooltip="View Details">
+													<mat-icon>visibility</mat-icon>
+												</button>
+												<button mat-icon-button color="accent"
+													(click)="editPatientRecord(patient)" matTooltip="Edit Record">
+													<mat-icon>edit</mat-icon>
+												</button>
+											</div>
+										</mat-cell>
+									</ng-container>
+
+									<mat-header-row *matHeaderRowDef="patientsDisplayedColumns"></mat-header-row>
+									<mat-row *matRowDef="let row; columns: patientsDisplayedColumns;"></mat-row>
+								</mat-table>
+
+								<mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+							</div>
+						</div>
+					</mat-tab>
+
+					<!-- Recent Activities Tab -->
+					<mat-tab>
+						<ng-template mat-tab-label>
+							<mat-icon>history</mat-icon>
+							Recent Activities
+						</ng-template>
+						<div class="tab-content">
+							<div class="tab-header">
+								<h3>Recent Activities</h3>
+							</div>
+
+							<div class="activities-list">
+								<mat-card *ngFor="let activity of recentActivities" class="activity-card medical-card">
+									<mat-card-content>
+										<div class="activity-content">
+											<mat-icon class="activity-icon" [class]="'activity-' + activity.type">
+												{{ activity.icon }}
+											</mat-icon>
+											<div class="activity-details">
+												<p class="activity-message">{{ activity.message }}</p>
+												<span class="activity-time">{{ activity.time }}</span>
+											</div>
+										</div>
+									</mat-card-content>
+								</mat-card>
+
+								<div *ngIf="recentActivities.length === 0" class="empty-state">
+									<mat-icon>history</mat-icon>
+									<p>No recent activities</p>
+								</div>
+							</div>
+						</div>
+					</mat-tab>
+				</mat-tab-group>
+			</div>
+
+		</div>
+	</div>
+</div>
