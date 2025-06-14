@@ -1,0 +1,315 @@
+.login-container {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	padding: 1rem;
+	position: relative;
+	overflow: hidden;
+
+	.login-card-wrapper {
+		width: 100%;
+		max-width: 450px;
+		z-index: 10;
+	}
+
+	.login-card {
+		border-radius: 24px;
+		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+		backdrop-filter: blur(10px);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		overflow: hidden;
+		transition: all 0.3s ease;
+
+		&:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 30px 80px rgba(0, 0, 0, 0.15);
+		}
+	}
+
+	.card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 2rem 2rem 1rem;
+		background: linear-gradient(135deg, #2196F3, #21CBF3);
+		color: white;
+
+		.logo-section {
+			display: flex;
+			align-items: center;
+			gap: 0.75rem;
+
+			.logo-icon {
+				font-size: 2rem;
+				width: 2rem;
+				height: 2rem;
+			}
+
+			.app-title {
+				margin: 0;
+				font-size: 1.5rem;
+				font-weight: 600;
+			}
+		}
+
+		.theme-toggle {
+			color: white;
+			background: rgba(255, 255, 255, 0.1);
+			border-radius: 50%;
+
+			&:hover {
+				background: rgba(255, 255, 255, 0.2);
+			}
+		}
+	}
+
+	.card-content {
+		padding: 2rem;
+	}
+
+	.welcome-section {
+		text-align: center;
+		margin-bottom: 2rem;
+
+		.welcome-title {
+			margin: 0 0 0.5rem;
+			font-size: 1.75rem;
+			font-weight: 600;
+			color: var(--text-primary);
+		}
+
+		.welcome-subtitle {
+			margin: 0;
+			color: var(--text-secondary);
+			font-size: 0.95rem;
+		}
+	}
+
+	.login-form {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+
+		.full-width {
+			width: 100%;
+		}
+
+		.mat-mdc-form-field {
+			.mat-mdc-text-field-wrapper {
+				border-radius: 12px;
+			}
+		}
+
+		.user-type-icon {
+			margin-right: 0.5rem;
+			font-size: 1.2rem;
+		}
+
+		.login-button {
+			height: 48px;
+			border-radius: 12px;
+			font-size: 1rem;
+			font-weight: 600;
+			margin-top: 1rem;
+			position: relative;
+
+			.login-spinner {
+				margin-right: 0.5rem;
+			}
+		}
+	}
+
+	.form-footer {
+		text-align: center;
+		margin-top: 2rem;
+
+		.register-link {
+			margin-bottom: 1rem;
+			color: var(--text-secondary);
+
+			.link {
+				color: var(--primary-color);
+				text-decoration: none;
+				font-weight: 500;
+
+				&:hover {
+					text-decoration: underline;
+				}
+			}
+		}
+
+		.forgot-password-link {
+			color: var(--primary-color);
+			text-decoration: none;
+			font-size: 0.9rem;
+
+			&:hover {
+				text-decoration: underline;
+			}
+		}
+	}
+
+	// Background Elements
+	.background-elements {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+		z-index: 1;
+
+		.medical-cross {
+			position: absolute;
+			width: 60px;
+			height: 60px;
+			opacity: 0.1;
+
+			&::before,
+			&::after {
+				content: '';
+				position: absolute;
+				background: white;
+			}
+
+			&::before {
+				width: 100%;
+				height: 20%;
+				top: 40%;
+			}
+
+			&::after {
+				height: 100%;
+				width: 20%;
+				left: 40%;
+			}
+
+			&.cross-1 {
+				top: 10%;
+				left: 10%;
+				animation: float 6s ease-in-out infinite;
+			}
+
+			&.cross-2 {
+				top: 20%;
+				right: 15%;
+				animation: float 8s ease-in-out infinite reverse;
+			}
+
+			&.cross-3 {
+				bottom: 15%;
+				left: 20%;
+				animation: float 7s ease-in-out infinite;
+			}
+		}
+	}
+}
+
+// Dark Theme Styles
+:host-context(.dark-theme) {
+	.login-container {
+		background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+
+		.login-card {
+			background: rgba(30, 30, 30, 0.95);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+		}
+
+		.card-header {
+			background: linear-gradient(135deg, #1976D2, #1565C0);
+		}
+
+		.welcome-title {
+			color: #ffffff;
+		}
+
+		.welcome-subtitle {
+			color: #b0b0b0;
+		}
+	}
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+	.login-container {
+		padding: 0.5rem;
+
+		.login-card-wrapper {
+			max-width: 100%;
+		}
+
+		.card-header {
+			padding: 1.5rem 1.5rem 1rem;
+
+			.app-title {
+				font-size: 1.25rem;
+			}
+		}
+
+		.card-content {
+			padding: 1.5rem;
+		}
+
+		.welcome-title {
+			font-size: 1.5rem;
+		}
+	}
+}
+
+@media (max-width: 480px) {
+	.login-container {
+		.card-header {
+			padding: 1rem;
+
+			.logo-section {
+				gap: 0.5rem;
+
+				.logo-icon {
+					font-size: 1.5rem;
+					width: 1.5rem;
+					height: 1.5rem;
+				}
+
+				.app-title {
+					font-size: 1.1rem;
+				}
+			}
+		}
+
+		.card-content {
+			padding: 1rem;
+		}
+
+		.login-form {
+			gap: 1rem;
+		}
+	}
+}
+
+// Animations
+@keyframes float {
+
+	0%,
+	100% {
+		transform: translateY(0px);
+	}
+
+	50% {
+		transform: translateY(-20px);
+	}
+}
+
+// Custom Snackbar Styles
+::ng-deep {
+	.success-snackbar {
+		background: #4caf50 !important;
+		color: white !important;
+	}
+
+	.error-snackbar {
+		background: #f44336 !important;
+		color: white !important;
+	}
+}

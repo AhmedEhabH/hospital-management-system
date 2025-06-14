@@ -1,0 +1,84 @@
+<div class="login-container">
+	<div class="login-card-wrapper">
+		<mat-card class="login-card">
+			<!-- Header Section -->
+			<div class="card-header">
+				<div class="logo-section">
+					<mat-icon class="logo-icon">local_hospital</mat-icon>
+					<h1 class="app-title">Hospital Management</h1>
+				</div>
+				<button mat-icon-button (click)="toggleTheme()" class="theme-toggle"
+					[attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+					<mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+				</button>
+			</div>
+
+			<!-- Login Form -->
+			<mat-card-content class="card-content">
+				<div class="welcome-section">
+					<h2 class="welcome-title">Welcome Back</h2>
+					<p class="welcome-subtitle">Sign in to access your medical dashboard</p>
+				</div>
+
+				<form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+					<!-- User Type Selection -->
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>User Type</mat-label>
+						<mat-select formControlName="userType">
+							<mat-option *ngFor="let type of userTypes" [value]="type.value">
+								<mat-icon class="user-type-icon">{{ type.icon }}</mat-icon>
+								{{ type.label }}
+							</mat-option>
+						</mat-select>
+						<mat-icon matSuffix>arrow_drop_down</mat-icon>
+					</mat-form-field>
+
+					<!-- User ID Field -->
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>User ID</mat-label>
+						<input matInput formControlName="userId" placeholder="Enter your user ID"
+							autocomplete="username">
+						<mat-icon matSuffix>person</mat-icon>
+						<mat-error>{{ getFieldError('userId') }}</mat-error>
+					</mat-form-field>
+
+					<!-- Password Field -->
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Password</mat-label>
+						<input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password"
+							placeholder="Enter your password" autocomplete="current-password">
+						<button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword"
+							[attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'">
+							<mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+						</button>
+						<mat-error>{{ getFieldError('password') }}</mat-error>
+					</mat-form-field>
+
+					<!-- Login Button -->
+					<button mat-raised-button type="submit" color="primary" class="login-button full-width"
+						[disabled]="!loginForm.valid || isLoading">
+						<mat-spinner *ngIf="isLoading" diameter="20" class="login-spinner"></mat-spinner>
+						<span *ngIf="!isLoading">Sign In</span>
+						<span *ngIf="isLoading">Signing In...</span>
+					</button>
+				</form>
+
+				<!-- Footer Links -->
+				<div class="form-footer">
+					<p class="register-link">
+						Don't have an account?
+						<a routerLink="/auth/register" class="link">Register here</a>
+					</p>
+					<a href="#" class="forgot-password-link">Forgot Password?</a>
+				</div>
+			</mat-card-content>
+		</mat-card>
+	</div>
+
+	<!-- Background Elements -->
+	<div class="background-elements">
+		<div class="medical-cross cross-1"></div>
+		<div class="medical-cross cross-2"></div>
+		<div class="medical-cross cross-3"></div>
+	</div>
+</div>
