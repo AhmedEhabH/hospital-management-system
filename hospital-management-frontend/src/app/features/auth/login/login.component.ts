@@ -3,17 +3,16 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, takeUntil } from 'rxjs';
-import { AuthService } from '../../../core/services/auth.service';
+import { AuthService, AuthResult } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
-
 
 @Component({
 	selector: 'app-login',
-	standalone: false,
+	standalone:false,
 	templateUrl: './login.component.html',
-	styleUrl: './login.component.scss'
+	styleUrls: ['./login.component.scss']
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit, OnDestroy {
 	loginForm!: FormGroup;
 	isLoading = false;
 	hidePassword = true;
@@ -21,9 +20,24 @@ export class LoginComponent {
 	private destroy$ = new Subject<void>();
 
 	userTypes = [
-		{ value: 'Admin', label: 'Administrator', icon: 'admin_panel_settings' },
-		{ value: 'Doctor', label: 'Doctor', icon: 'medical_services' },
-		{ value: 'Patient', label: 'Patient', icon: 'person' }
+		{
+			value: 'Admin',
+			label: 'Administrator',
+			icon: 'admin_panel_settings',
+			description: 'System Management & Configuration'
+		},
+		{
+			value: 'Doctor',
+			label: 'Medical Doctor',
+			icon: 'medical_services',
+			description: 'Patient Care & Medical Records'
+		},
+		{
+			value: 'Patient',
+			label: 'Patient',
+			icon: 'person',
+			description: 'Health Records & Appointments'
+		}
 	];
 
 	constructor(
@@ -68,22 +82,30 @@ export class LoginComponent {
 			this.authService.login(credentials)
 				.pipe(takeUntil(this.destroy$))
 				.subscribe({
-					next: (result) => {
+					next: (result: AuthResult) => {
 						this.isLoading = false;
 						if (result.success) {
-							this.showSuccess('Login successful!');
+							this.showSuccess('Welcome back! Login successful.');
 							this.navigateBasedOnRole(result.user?.userType);
 						} else {
 							this.showError(result.message);
 						}
 					},
-					error: (error) => {
+					error: (error: any) => {
 						this.isLoading = false;
-						this.showError('Login failed. Please try again.');
+						this.showError('Authentication failed. Please check your credentials and try again.');
 						console.error('Login error:', error);
 					}
 				});
+		} else {
+			this.markFormGroupTouched();
 		}
+	}
+
+	private markFormGroupTouched(): void {
+		Object.keys(this.loginForm.controls).forEach(key => {
+			this.loginForm.get(key)?.markAsTouched();
+		});
 	}
 
 	private navigateBasedOnRole(userType?: string): void {
@@ -108,25 +130,41 @@ export class LoginComponent {
 
 	private showSuccess(message: string): void {
 		this.snackBar.open(message, 'Close', {
-			duration: 3000,
-			panelClass: ['success-snackbar']
+			duration: 4000,
+			panelClass: ['success-snackbar'],
+			horizontalPosition: 'end',
+			verticalPosition: 'top'
 		});
 	}
 
 	private showError(message: string): void {
 		this.snackBar.open(message, 'Close', {
-			duration: 5000,
-			panelClass: ['error-snackbar']
+			duration: 6000,
+			panelClass: ['error-snackbar'],
+			horizontalPosition: 'end',
+			verticalPosition: 'top'
 		});
 	}
 
 	getFieldError(fieldName: string): string {
 		const field = this.loginForm.get(fieldName);
 		if (field?.errors && field.touched) {
-			if (field.errors['required']) return `${fieldName} is required`;
-			if (field.errors['minlength']) return `${fieldName} must be at least ${field.errors['minlength'].requiredLength} characters`;
+			if (field.errors['required']) {
+				return `${this.getFieldDisplayName(fieldName)} is required`;
+			}
+			if (field.errors['minlength']) {
+				return `${this.getFieldDisplayName(fieldName)} must be at least ${field.errors['minlength'].requiredLength} characters`;
+			}
 		}
 		return '';
 	}
 
+	private getFieldDisplayName(fieldName: string): string {
+		const displayNames: { [key: string]: string } = {
+			userId: 'User ID',
+			password: 'Password',
+			userType: 'User Type'
+		};
+		return displayNames[fieldName] || fieldName;
+	}
 }

@@ -8,7 +8,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 
 @Component({
 	selector: 'app-register',
-	standalone: false,
+	standalone:false,
 	templateUrl: './register.component.html',
 	styleUrls: ['./register.component.scss']
 })
@@ -21,8 +21,16 @@ export class RegisterComponent implements OnInit, OnDestroy {
 	private destroy$ = new Subject<void>();
 
 	userTypes = [
-		{ value: 'Patient', label: 'Patient' },
-		{ value: 'Doctor', label: 'Doctor' }
+		{
+			value: 'Patient',
+			label: 'Patient',
+			description: 'Health Records & Appointments'
+		},
+		{
+			value: 'Doctor',
+			label: 'Medical Doctor',
+			description: 'Patient Care & Medical Records'
+		}
 	];
 
 	genderOptions = [
