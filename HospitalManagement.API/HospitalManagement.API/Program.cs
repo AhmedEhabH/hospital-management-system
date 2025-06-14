@@ -14,6 +14,18 @@ using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --------- CORS Configuration ---------
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngularApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
 // --------- Serilog Logging Setup ---------
 Log.Logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
@@ -116,6 +128,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
     Log.Information("Swagger enabled in development environment");
 }
+
+// --------- Enable CORS Middleware ---------
+app.UseCors("AllowAngularApp");
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
