@@ -4,12 +4,4 @@
 		matTooltip="{{ isDarkMode ? 'Switch to light mode' : 'Switch to dark mode' }}">
 		<mat-icon class="theme-icon">{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
 	</button>
-
-	<!-- Alternative: Slide Toggle -->
-	<div class="theme-toggle-slide" *ngIf="false">
-		<mat-icon class="theme-icon-small">light_mode</mat-icon>
-		<mat-slide-toggle [checked]="isDarkMode" (change)="toggleTheme()" class="theme-slide-toggle" color="primary">
-		</mat-slide-toggle>
-		<mat-icon class="theme-icon-small">dark_mode</mat-icon>
-	</div>
 </div>

@@ -1,3 +1,4 @@
+// Angular Material imports MUST be first
 @use '@angular/material' as mat;
 
 // Medical-themed color palette following 2025 healthcare design trends
@@ -45,7 +46,6 @@ $hospital-accent: mat.m2-define-palette((50: #e8f5e8,
 				900: white,
 			)));
 
-// Healthcare warning colors (Orange for alerts)
 $hospital-warn: mat.m2-define-palette((50: #fff3e0,
 			100: #ffe0b2,
 			200: #ffcc80,
@@ -87,8 +87,6 @@ $dark-theme: mat.m2-define-dark-theme((color: (primary: $hospital-primary,
 
 // Apply core styles once
 @include mat.core();
-
-// Apply light theme globally
 @include mat.all-component-themes($light-theme);
 
 // Light theme class with medical CSS variables
@@ -120,7 +118,6 @@ $dark-theme: mat.m2-define-dark-theme((color: (primary: $hospital-primary,
 	@include mat.all-component-colors($dark-theme);
 
 	& {
-
 		--primary-color: #7ab9f3;
 		--primary-light: #a0cef7;
 		--primary-dark: #5ea9f0;
@@ -169,10 +166,6 @@ body:not(.dark-theme) {
 	background: linear-gradient(135deg, var(--medical-blue) 0%, var(--medical-green) 100%);
 }
 
-.medical-gradient-alt {
-	background: linear-gradient(135deg, var(--medical-teal) 0%, var(--medical-blue) 100%);
-}
-
 .medical-card {
 	background: var(--surface-color);
 	border-radius: 16px;
@@ -180,11 +173,11 @@ body:not(.dark-theme) {
 	border: 1px solid var(--border-color);
 	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	backdrop-filter: blur(10px);
-}
 
-.medical-card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 16px 48px var(--shadow-color);
+	&:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 16px 48px var(--shadow-color);
+	}
 }
 
 // Medical status colors
@@ -288,28 +281,6 @@ body:not(.dark-theme) {
 	}
 }
 
-// Healthcare professional styling
-.healthcare-professional {
-	background: linear-gradient(135deg, var(--medical-navy), var(--medical-blue));
-	color: white;
-	padding: 1rem;
-	border-radius: 12px;
-	margin: 1rem 0;
-}
-
-// Trust indicators
-.trust-indicator {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	color: var(--medical-green);
-	font-weight: 500;
-
-	mat-icon {
-		color: var(--medical-green);
-	}
-}
-
 // Accessibility improvements
 .sr-only {
 	position: absolute;
@@ -330,23 +301,6 @@ body:not(.dark-theme) {
 	border-radius: 4px;
 }
 
-// Print styles for medical reports
-@media print {
-	.no-print {
-		display: none !important;
-	}
-
-	body {
-		background: white !important;
-		color: black !important;
-	}
-
-	.medical-card {
-		box-shadow: none !important;
-		border: 1px solid #ccc !important;
-	}
-}
-
 // Medical form styling
 .medical-form {
 	.mat-mdc-form-field {
@@ -361,74 +315,6 @@ body:not(.dark-theme) {
 		&:hover .mat-mdc-text-field-wrapper {
 			box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 		}
-	}
-}
-
-// Emergency button styling
-.emergency-button {
-	background: linear-gradient(135deg, var(--medical-red), #d32f2f) !important;
-	color: white !important;
-	animation: emergency-pulse 2s infinite;
-	box-shadow: 0 4px 16px rgba(244, 67, 54, 0.4);
-}
-
-@keyframes emergency-pulse {
-	0% {
-		box-shadow: 0 4px 16px rgba(244, 67, 54, 0.4);
-	}
-
-	50% {
-		box-shadow: 0 8px 24px rgba(244, 67, 54, 0.6);
-	}
-
-	100% {
-		box-shadow: 0 4px 16px rgba(244, 67, 54, 0.4);
-	}
-}
-
-// Loading states
-.medical-loading {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 2rem;
-
-	mat-spinner {
-		margin-right: 1rem;
-	}
-}
-
-// Notification styles
-.medical-notification {
-	border-radius: 12px;
-	padding: 1rem;
-	margin: 1rem 0;
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-
-	&.success {
-		background: rgba(76, 175, 80, 0.1);
-		border-left: 4px solid var(--medical-green);
-		color: var(--medical-green);
-	}
-
-	&.warning {
-		background: rgba(255, 152, 0, 0.1);
-		border-left: 4px solid var(--medical-orange);
-		color: var(--medical-orange);
-	}
-
-	&.error {
-		background: rgba(244, 67, 54, 0.1);
-		border-left: 4px solid var(--medical-red);
-		color: var(--medical-red);
-	}
-
-	&.info {
-		background: rgba(66, 153, 237, 0.1);
-		border-left: 4px solid var(--medical-blue);
-		color: var(--medical-blue);
 	}
 }
 
@@ -482,78 +368,15 @@ body:not(.dark-theme) {
 	color: white;
 }
 
-// Enhanced focus styles for accessibility
-*:focus-visible {
-	outline: 2px solid var(--primary-color);
-	outline-offset: 2px;
-	border-radius: 4px;
-}
-
-// Theme toggle specific styles
-.theme-toggle-global {
-	position: fixed;
-	top: 1rem;
-	right: 1rem;
-	z-index: 1000;
-
-	@media (max-width: 768px) {
-		top: 0.5rem;
-		right: 0.5rem;
-	}
-}
-
-// Smooth theme transition for all elements
-.theme-transition {
-	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-// Enhanced medical card hover effects for both themes
-.medical-card {
-	&:hover {
-		transform: translateY(-4px);
-		box-shadow: 0 16px 48px var(--shadow-color);
-	}
-}
-
-.dark-theme .medical-card {
-	&:hover {
-		box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
-	}
-}
-
-// Theme-aware backdrop filters
-.backdrop-blur {
-	backdrop-filter: blur(10px);
-	-webkit-backdrop-filter: blur(10px);
-}
-
-// Enhanced button styles for both themes
-.mat-mdc-raised-button {
-	&.medical-button {
-		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-		&:hover {
-			transform: translateY(-2px);
-		}
-	}
-}
-
-// Theme-aware Material Design overrides
-.mat-mdc-card {
-	background: var(--surface-color) !important;
-	color: var(--text-primary) !important;
-}
-
-.mat-mdc-tab-group {
-	background: var(--surface-color);
-
-	.mat-mdc-tab-header {
-		background: var(--surface-color);
-	}
-}
-
-// Enhanced notification styles for both themes
+// Medical notification styles
 .medical-notification {
+	border-radius: 12px;
+	padding: 1rem;
+	margin: 1rem 0;
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+
 	&.success {
 		background: rgba(76, 175, 80, 0.1);
 		border-left: 4px solid var(--medical-green);

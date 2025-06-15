@@ -1,0 +1,81 @@
+.logout-container {
+  display: flex;
+  align-items: center;
+
+  .logout-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: rgba(244, 67, 54, 0.1);
+    color: var(--medical-red);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+
+    &:hover {
+      background: rgba(244, 67, 54, 0.2);
+      transform: scale(1.05);
+      color: #ffffff;
+      background-color: var(--medical-red);
+    }
+
+    mat-icon {
+      font-size: 1.5rem;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+  }
+
+  .logout-button-text {
+    background: var(--medical-red);
+    color: white;
+    border-radius: 24px;
+    padding: 0.5rem 1rem;
+    
+    &:hover {
+      background: #d32f2f;
+      transform: translateY(-2px);
+    }
+
+    mat-icon {
+      margin-right: 0.5rem;
+      font-size: 1.25rem;
+    }
+  }
+}
+
+// Theme-aware styling
+:host-context(.light-theme) {
+  .logout-button {
+    background: rgba(244, 67, 54, 0.1);
+    color: var(--medical-red);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+  }
+}
+
+:host-context(.dark-theme) {
+  .logout-button {
+    background: rgba(239, 83, 80, 0.15);
+    color: #ef5350;
+    border: 1px solid rgba(239, 83, 80, 0.3);
+
+    &:hover {
+      background-color: #ef5350;
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .logout-container {
+    .logout-button {
+      width: 44px;
+      height: 44px;
+
+      mat-icon {
+        font-size: 1.25rem;
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+    }
+  }
+}

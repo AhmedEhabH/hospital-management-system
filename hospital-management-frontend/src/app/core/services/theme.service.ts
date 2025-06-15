@@ -51,16 +51,16 @@ export class ThemeService {
 		const body = document.body;
 		const htmlElement = document.documentElement;
 
+		// Remove existing theme classes
+		body.classList.remove('light-theme', 'dark-theme');
+		htmlElement.classList.remove('light-theme', 'dark-theme');
+
 		if (isDark) {
 			body.classList.add('dark-theme');
-			body.classList.remove('light-theme');
 			htmlElement.classList.add('dark-theme');
-			htmlElement.classList.remove('light-theme');
 		} else {
 			body.classList.add('light-theme');
-			body.classList.remove('dark-theme');
 			htmlElement.classList.add('light-theme');
-			htmlElement.classList.remove('dark-theme');
 		}
 
 		// Update meta theme-color for mobile browsers

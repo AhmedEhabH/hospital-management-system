@@ -1,8 +1,9 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
-import { environment } from '../../../environments/environment.development';
 
 
 export interface LoginRequest {
@@ -43,59 +44,26 @@ export interface UserRegistration {
 	userType: string;
 }
 
-
 @Injectable({
 	providedIn: 'root'
 })
-
 export class AuthService {
 	private readonly apiUrl = `${environment.apiUrl}/auth`;
-	private currentUserSubject = new BehaviorSubject<UserInfo | null>(null);
-	private tokenSubject = new BehaviorSubject<string | null>(null);
-
+	private currentUserSubject = new BehaviorSubject<any>(null);
 	public currentUser$ = this.currentUserSubject.asObservable();
+
+	private tokenSubject = new BehaviorSubject<string | null>(null);
 	public token$ = this.tokenSubject.asObservable();
 
 	constructor(
 		private http: HttpClient,
 		private router: Router
 	) {
-		this.loadStoredAuth();
-	}
-
-	login(credentials: LoginRequest): Observable<AuthResult> {
-		return this.http.post<AuthResult>(`${this.apiUrl}/login`, credentials)
-			.pipe(
-				tap(result => {
-					if (result.success && result.token && result.user) {
-						this.setAuth(result.token, result.user);
-					}
-				})
-			);
-	}
-
-	register(userData: UserRegistration): Observable<any> {
-		return this.http.post(`${this.apiUrl}/register`, userData);
-	}
-
-	logout(): void {
-		localStorage.removeItem('token');
-		localStorage.removeItem('user');
-		this.currentUserSubject.next(null);
-		this.tokenSubject.next(null);
-		this.router.navigate(['/auth/login']);
-	}
-
-	isAuthenticated(): boolean {
-		return !!this.tokenSubject.value;
-	}
-
-	getCurrentUser(): UserInfo | null {
-		return this.currentUserSubject.value;
-	}
-
-	getToken(): string | null {
-		return this.tokenSubject.value;
+		// Initialize user from localStorage on service creation
+		const storedUser = localStorage.getItem('currentUser');
+		if (storedUser) {
+			this.currentUserSubject.next(JSON.parse(storedUser));
+		}
 	}
 
 	hasRole(role: string): boolean {
@@ -103,25 +71,71 @@ export class AuthService {
 		return user?.userType === role;
 	}
 
-	private setAuth(token: string, user: UserInfo): void {
-		localStorage.setItem('token', token);
-		localStorage.setItem('user', JSON.stringify(user));
-		this.tokenSubject.next(token);
-		this.currentUserSubject.next(user);
+	login(credentials: any): Observable<AuthResult> {
+		return this.http.post<any>(`${this.apiUrl}/login`, credentials)
+			.pipe(
+				map(response => {
+					if (response && response.token) {
+						// Store user details and jwt token in local storage
+						localStorage.setItem('authToken', response.token);
+						localStorage.setItem('currentUser', JSON.stringify(response.user));
+						this.currentUserSubject.next(response.user);
+
+						return {
+							success: true,
+							message: 'Login successful',
+							token: response.token,
+							user: response.user
+						};
+					} else {
+						return {
+							success: false,
+							message: 'Invalid credentials'
+						};
+					}
+				}),
+				catchError(error => {
+					console.error('Login error:', error);
+					return of({
+						success: false,
+						message: error.error?.message || 'Login failed. Please try again.'
+					});
+				})
+			);
 	}
 
-	private loadStoredAuth(): void {
-		const token = localStorage.getItem('token');
-		const userStr = localStorage.getItem('user');
+	logout(): void {
+		// Remove user from local storage and set current user to null
+		localStorage.removeItem('authToken');
+		localStorage.removeItem('currentUser');
+		localStorage.removeItem('darkMode'); // Optional: reset theme on logout
+		this.currentUserSubject.next(null);
+	}
 
-		if (token && userStr) {
-			try {
-				const user = JSON.parse(userStr);
-				this.tokenSubject.next(token);
-				this.currentUserSubject.next(user);
-			} catch (error) {
-				this.logout();
-			}
-		}
+	getCurrentUser(): any {
+		return this.currentUserSubject.value;
+	}
+
+	isAuthenticated(): boolean {
+		const token = localStorage.getItem('authToken');
+		const user = this.getCurrentUser();
+		return !!(token && user);
+	}
+
+	getToken(): string | null {
+		return localStorage.getItem('authToken');
+	}
+
+	register(userData: any): Observable<any> {
+		return this.http.post<any>(`${this.apiUrl}/register`, userData)
+			.pipe(
+				catchError(error => {
+					console.error('Registration error:', error);
+					return of({
+						success: false,
+						message: error.error?.message || 'Registration failed. Please try again.'
+					});
+				})
+			);
 	}
 }
