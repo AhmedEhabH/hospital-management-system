@@ -1,17 +1,29 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
+import { FormControl } from '@angular/forms';
 import { MedicalHistoryService, MedicalHistory } from '../../../core/services/medical-history.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { Chart, ChartConfiguration, ChartData, ChartType } from 'chart.js';
 
 interface TimelineEvent {
+	id: string;
 	date: Date;
 	title: string;
 	description: string;
 	icon: string;
 	color: string;
-	type: 'medical' | 'appointment' | 'medication' | 'test';
+	type: 'medical' | 'appointment' | 'medication' | 'test' | 'surgery' | 'emergency';
+	priority: 'high' | 'medium' | 'low';
 	data?: any;
+	tags: string[];
+}
+
+interface FilterOptions {
+	dateRange: { start: Date | null; end: Date | null };
+	eventTypes: string[];
+	priorities: string[];
+	searchTerm: string;
 }
 
 @Component({
@@ -27,7 +39,83 @@ export class TimelineComponent implements OnInit, OnDestroy {
 	isDarkMode = false;
 	isLoading = true;
 
-	timelineEvents: TimelineEvent[] = [];
+	// Timeline Data
+	allTimelineEvents: TimelineEvent[] = [];
+	filteredTimelineEvents: TimelineEvent[] = [];
+
+	// Search and Filter Controls
+	searchControl = new FormControl('');
+	filterOptions: FilterOptions = {
+		dateRange: { start: null, end: null },
+		eventTypes: [],
+		priorities: [],
+		searchTerm: ''
+	};
+
+	// Filter Options
+	availableEventTypes = [
+		{ value: 'medical', label: 'Medical Records', icon: 'medical_services', color: '#4299ed' },
+		{ value: 'appointment', label: 'Appointments', icon: 'event', color: '#9c27b0' },
+		{ value: 'medication', label: 'Medications', icon: 'medication', color: '#ff9800' },
+		{ value: 'test', label: 'Lab Tests', icon: 'science', color: '#4caf50' },
+		{ value: 'surgery', label: 'Surgeries', icon: 'healing', color: '#f44336' },
+		{ value: 'emergency', label: 'Emergency', icon: 'emergency', color: '#e91e63' }
+	];
+
+	availablePriorities = [
+		{ value: 'high', label: 'High Priority', color: '#f44336' },
+		{ value: 'medium', label: 'Medium Priority', color: '#ff9800' },
+		{ value: 'low', label: 'Low Priority', color: '#4caf50' }
+	];
+
+	// Statistics
+	timelineStats = {
+		totalEvents: 0,
+		thisMonth: 0,
+		criticalEvents: 0,
+		upcomingAppointments: 0
+	};
+
+	// Chart Configuration for Health Trends
+	public healthTrendsChartType: ChartType = 'line';
+	public healthTrendsChartData: ChartData<'line'> = {
+		labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+		datasets: [
+			{
+				label: 'Blood Pressure (Systolic)',
+				data: [120, 118, 122, 119, 121, 120],
+				borderColor: '#4299ed',
+				backgroundColor: 'rgba(66, 153, 237, 0.1)',
+				tension: 0.4,
+				fill: true
+			},
+			{
+				label: 'Heart Rate',
+				data: [72, 75, 70, 73, 71, 72],
+				borderColor: '#4caf50',
+				backgroundColor: 'rgba(76, 175, 80, 0.1)',
+				tension: 0.4,
+				fill: true
+			}
+		]
+	};
+
+	public chartOptions: ChartConfiguration['options'] = {
+		responsive: true,
+		maintainAspectRatio: false,
+		scales: {
+			y: {
+				beginAtZero: false,
+				grid: { color: 'rgba(0,0,0,0.1)' }
+			},
+			x: {
+				grid: { color: 'rgba(0,0,0,0.1)' }
+			}
+		},
+		plugins: {
+			legend: { position: 'top' }
+		}
+	};
 
 	constructor(
 		private medicalHistoryService: MedicalHistoryService,
@@ -38,6 +126,7 @@ export class TimelineComponent implements OnInit, OnDestroy {
 	ngOnInit(): void {
 		this.initializeComponent();
 		this.subscribeToTheme();
+		this.setupSearchSubscription();
 		this.loadMedicalHistory();
 	}
 
@@ -55,6 +144,20 @@ export class TimelineComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this.destroy$))
 			.subscribe(isDark => {
 				this.isDarkMode = isDark;
+				this.updateChartTheme();
+			});
+	}
+
+	private setupSearchSubscription(): void {
+		this.searchControl.valueChanges
+			.pipe(
+				debounceTime(300),
+				distinctUntilChanged(),
+				takeUntil(this.destroy$)
+			)
+			.subscribe(searchTerm => {
+				this.filterOptions.searchTerm = searchTerm || '';
+				this.applyFilters();
 			});
 	}
 
@@ -67,6 +170,9 @@ export class TimelineComponent implements OnInit, OnDestroy {
 				.subscribe({
 					next: (histories: MedicalHistory[]) => {
 						this.processTimelineEvents(histories);
+						this.loadMockAdditionalData(); // Add mock data for demonstration
+						this.calculateStatistics();
+						this.applyFilters();
 						this.isLoading = false;
 					},
 					error: (error: any) => {
@@ -82,71 +188,228 @@ export class TimelineComponent implements OnInit, OnDestroy {
 	}
 
 	private processTimelineEvents(histories: MedicalHistory[]): void {
-		this.timelineEvents = histories.map(history => ({
+		this.allTimelineEvents = histories.map((history, index) => ({
+			id: `medical-${history.id || index}`,
 			date: history.createdAt || new Date(),
 			title: 'Medical History Record',
 			description: history.personalHistory || 'Medical record updated',
-			icon: 'pi pi-heart',
+			icon: 'medical_services',
 			color: this.getEventColor('medical'),
 			type: 'medical',
-			data: history
+			priority: this.determinePriority(history),
+			data: history,
+			tags: this.generateTags(history)
 		}));
+	}
 
-		// Sort by date (newest first)
-		this.timelineEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+	private loadMockAdditionalData(): void {
+		const mockEvents: TimelineEvent[] = [
+			{
+				id: 'appointment-1',
+				date: new Date('2024-12-20'),
+				title: 'Cardiology Consultation',
+				description: 'Follow-up appointment with Dr. Sarah Johnson for heart health assessment.',
+				icon: 'event',
+				color: '#9c27b0',
+				type: 'appointment',
+				priority: 'high',
+				tags: ['cardiology', 'follow-up', 'heart'],
+				data: { doctor: 'Dr. Sarah Johnson', department: 'Cardiology' }
+			},
+			{
+				id: 'test-1',
+				date: new Date('2024-12-18'),
+				title: 'Blood Test Results',
+				description: 'Complete blood count and lipid panel results available.',
+				icon: 'science',
+				color: '#4caf50',
+				type: 'test',
+				priority: 'medium',
+				tags: ['blood-test', 'lipid-panel', 'results'],
+				data: { testType: 'Blood Work', status: 'Normal' }
+			},
+			{
+				id: 'medication-1',
+				date: new Date('2024-12-15'),
+				title: 'Medication Update',
+				description: 'Started new medication for blood pressure management.',
+				icon: 'medication',
+				color: '#ff9800',
+				type: 'medication',
+				priority: 'high',
+				tags: ['medication', 'blood-pressure', 'new'],
+				data: { medication: 'Lisinopril 10mg', dosage: 'Once daily' }
+			},
+			{
+				id: 'surgery-1',
+				date: new Date('2024-11-28'),
+				title: 'Minor Surgical Procedure',
+				description: 'Successful removal of skin lesion under local anesthesia.',
+				icon: 'healing',
+				color: '#f44336',
+				type: 'surgery',
+				priority: 'high',
+				tags: ['surgery', 'dermatology', 'outpatient'],
+				data: { procedure: 'Lesion Removal', outcome: 'Successful' }
+			},
+			{
+				id: 'emergency-1',
+				date: new Date('2024-11-15'),
+				title: 'Emergency Room Visit',
+				description: 'Treated for acute chest pain, discharged after observation.',
+				icon: 'emergency',
+				color: '#e91e63',
+				type: 'emergency',
+				priority: 'high',
+				tags: ['emergency', 'chest-pain', 'observation'],
+				data: { diagnosis: 'Non-cardiac chest pain', duration: '6 hours' }
+			}
+		];
+
+		this.allTimelineEvents = [...this.allTimelineEvents, ...mockEvents];
+		this.allTimelineEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 	}
 
 	private loadMockData(): void {
-		this.timelineEvents = [
+		this.allTimelineEvents = [
 			{
+				id: 'mock-1',
 				date: new Date('2024-12-15'),
 				title: 'Annual Physical Examination',
 				description: 'Complete physical examination with blood work and vital signs check.',
-				icon: 'pi pi-heart',
+				icon: 'medical_services',
 				color: '#4299ed',
-				type: 'medical'
-			},
-			{
-				date: new Date('2024-12-10'),
-				title: 'Blood Test Results',
-				description: 'Cholesterol and glucose levels within normal range.',
-				icon: 'pi pi-chart-line',
-				color: '#4caf50',
-				type: 'test'
-			},
-			{
-				date: new Date('2024-12-05'),
-				title: 'Medication Update',
-				description: 'Prescribed new medication for blood pressure management.',
-				icon: 'pi pi-shopping-bag',
-				color: '#ff9800',
-				type: 'medication'
-			},
-			{
-				date: new Date('2024-11-28'),
-				title: 'Follow-up Appointment',
-				description: 'Routine follow-up for ongoing treatment monitoring.',
-				icon: 'pi pi-calendar',
-				color: '#9c27b0',
-				type: 'appointment'
+				type: 'medical',
+				priority: 'medium',
+				tags: ['annual', 'physical', 'checkup'],
+				data: null
 			}
 		];
 	}
 
+	private determinePriority(history: MedicalHistory): 'high' | 'medium' | 'low' {
+		if (history.hasHeartDisease || history.hasDiabetes) return 'high';
+		if (history.hasBloodPressure || history.hasAsthma) return 'medium';
+		return 'low';
+	}
+
+	private generateTags(history: MedicalHistory): string[] {
+		const tags: string[] = [];
+		if (history.hasAsthma) tags.push('asthma');
+		if (history.hasDiabetes) tags.push('diabetes');
+		if (history.hasBloodPressure) tags.push('hypertension');
+		if (history.hasHeartDisease) tags.push('heart-disease');
+		if (history.hasCholesterol) tags.push('cholesterol');
+		return tags;
+	}
+
 	private getEventColor(type: string): string {
-		switch (type) {
-			case 'medical': return '#4299ed';
-			case 'appointment': return '#9c27b0';
-			case 'medication': return '#ff9800';
-			case 'test': return '#4caf50';
-			default: return '#757575';
+		const typeConfig = this.availableEventTypes.find(t => t.value === type);
+		return typeConfig?.color || '#757575';
+	}
+
+	private calculateStatistics(): void {
+		const now = new Date();
+		const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+		this.timelineStats = {
+			totalEvents: this.allTimelineEvents.length,
+			thisMonth: this.allTimelineEvents.filter(event =>
+				new Date(event.date) >= thisMonth
+			).length,
+			criticalEvents: this.allTimelineEvents.filter(event =>
+				event.priority === 'high'
+			).length,
+			upcomingAppointments: this.allTimelineEvents.filter(event =>
+				event.type === 'appointment' && new Date(event.date) > now
+			).length
+		};
+	}
+
+	private updateChartTheme(): void {
+		if (this.chartOptions && this.chartOptions.scales) {
+			const gridColor = this.isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+			this.chartOptions.scales['y']!.grid!.color = gridColor;
+			this.chartOptions.scales['x']!.grid!.color = gridColor;
 		}
 	}
 
-	getEventTypeClass(type: string): string {
-		return `timeline-event-${type}`;
+	// Filter and Search Methods
+	applyFilters(): void {
+		let filtered = [...this.allTimelineEvents];
+
+		// Apply search filter
+		if (this.filterOptions.searchTerm) {
+			const searchTerm = this.filterOptions.searchTerm.toLowerCase();
+			filtered = filtered.filter(event =>
+				event.title.toLowerCase().includes(searchTerm) ||
+				event.description.toLowerCase().includes(searchTerm) ||
+				event.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+			);
+		}
+
+		// Apply event type filter
+		if (this.filterOptions.eventTypes.length > 0) {
+			filtered = filtered.filter(event =>
+				this.filterOptions.eventTypes.includes(event.type)
+			);
+		}
+
+		// Apply priority filter
+		if (this.filterOptions.priorities.length > 0) {
+			filtered = filtered.filter(event =>
+				this.filterOptions.priorities.includes(event.priority)
+			);
+		}
+
+		// Apply date range filter
+		if (this.filterOptions.dateRange.start) {
+			filtered = filtered.filter(event =>
+				new Date(event.date) >= this.filterOptions.dateRange.start!
+			);
+		}
+
+		if (this.filterOptions.dateRange.end) {
+			filtered = filtered.filter(event =>
+				new Date(event.date) <= this.filterOptions.dateRange.end!
+			);
+		}
+
+		this.filteredTimelineEvents = filtered;
 	}
 
+	toggleEventTypeFilter(eventType: string): void {
+		const index = this.filterOptions.eventTypes.indexOf(eventType);
+		if (index > -1) {
+			this.filterOptions.eventTypes.splice(index, 1);
+		} else {
+			this.filterOptions.eventTypes.push(eventType);
+		}
+		this.applyFilters();
+	}
+
+	togglePriorityFilter(priority: string): void {
+		const index = this.filterOptions.priorities.indexOf(priority);
+		if (index > -1) {
+			this.filterOptions.priorities.splice(index, 1);
+		} else {
+			this.filterOptions.priorities.push(priority);
+		}
+		this.applyFilters();
+	}
+
+	clearAllFilters(): void {
+		this.filterOptions = {
+			dateRange: { start: null, end: null },
+			eventTypes: [],
+			priorities: [],
+			searchTerm: ''
+		};
+		this.searchControl.setValue('');
+		this.applyFilters();
+	}
+
+	// Event Methods
 	formatDate(date: Date): string {
 		return new Date(date).toLocaleDateString('en-US', {
 			year: 'numeric',
@@ -155,8 +418,26 @@ export class TimelineComponent implements OnInit, OnDestroy {
 		});
 	}
 
+	getEventTypeClass(type: string): string {
+		return `timeline-event-${type}`;
+	}
+
+	getPriorityClass(priority: string): string {
+		return `priority-${priority}`;
+	}
+
 	viewEventDetails(event: TimelineEvent): void {
 		console.log('View event details:', event);
-		// Implement navigation to detailed view
+		// Implement detailed event viewer
+	}
+
+	editEvent(event: TimelineEvent): void {
+		console.log('Edit event:', event);
+		// Implement event editing
+	}
+
+	exportTimeline(): void {
+		console.log('Export timeline');
+		// Implement timeline export functionality
 	}
 }

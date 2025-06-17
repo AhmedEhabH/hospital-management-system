@@ -26,6 +26,7 @@ import { MedicalHistoryComponent } from './medical-history.component';
 import { TimelineComponent } from './timeline/timeline.component';
 import { FormComponent } from './form/form.component';
 import { DetailsComponent } from './details/details.component';
+import { BaseChartDirective } from 'ng2-charts';
 
 @NgModule({
 	declarations: [
@@ -39,6 +40,7 @@ import { DetailsComponent } from './details/details.component';
 		MedicalHistoryRoutingModule,
 		ReactiveFormsModule,
 		FormsModule,
+		BaseChartDirective,
 
 		// Shared Module - MUST BE IMPORTED FOR app-theme-toggle
 		SharedModule,
@@ -57,7 +59,7 @@ import { DetailsComponent } from './details/details.component';
 		MatChipsModule,
 		MatExpansionModule,
 		MatStepperModule,
-		MatProgressBarModule    // FIXES mat-progress-bar errors
+		MatProgressBarModule,    // FIXES mat-progress-bar errors
 	]
 })
 export class MedicalHistoryModule { }

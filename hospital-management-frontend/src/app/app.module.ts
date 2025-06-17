@@ -13,6 +13,8 @@ import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+import { MatChipsModule } from '@angular/material/chips';
 
 @NgModule({
 	declarations: [
@@ -27,14 +29,16 @@ import { AppComponent } from './app.component';
 		// Angular Material Core Modules - GLOBAL AVAILABILITY
 		MatIconModule,
 		MatButtonModule,
-		MatProgressBarModule
+		MatProgressBarModule,
+		
 	],
 	providers: [
 		{
 			provide: HTTP_INTERCEPTORS,
 			useClass: AuthInterceptor,
 			multi: true
-		}
+		},
+		provideCharts(withDefaultRegisterables())
 	],
 	bootstrap: [AppComponent]
 })
