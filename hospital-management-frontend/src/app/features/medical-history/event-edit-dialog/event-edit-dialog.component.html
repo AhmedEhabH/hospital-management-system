@@ -1,0 +1,90 @@
+<div class="event-edit-dialog">
+	<div class="dialog-header">
+		<h2 mat-dialog-title>
+			<mat-icon>edit</mat-icon>
+			Edit Medical Event
+		</h2>
+		<button mat-icon-button (click)="onCancel()" class="close-button">
+			<mat-icon>close</mat-icon>
+		</button>
+	</div>
+
+	<mat-dialog-content class="dialog-content">
+		<form [formGroup]="editForm" class="edit-form medical-form">
+
+			<!-- Event Title -->
+			<mat-form-field appearance="outline" class="full-width">
+				<mat-label>Event Title</mat-label>
+				<input matInput formControlName="title" placeholder="Enter event title">
+				<mat-icon matSuffix>title</mat-icon>
+				<mat-error>{{ getFieldError('title') }}</mat-error>
+			</mat-form-field>
+
+			<!-- Event Description -->
+			<mat-form-field appearance="outline" class="full-width">
+				<mat-label>Description</mat-label>
+				<textarea matInput formControlName="description" placeholder="Enter detailed description" rows="4">
+        </textarea>
+				<mat-icon matSuffix>description</mat-icon>
+				<mat-error>{{ getFieldError('description') }}</mat-error>
+			</mat-form-field>
+
+			<!-- Date and Type Row -->
+			<div class="form-row">
+				<mat-form-field appearance="outline" class="half-width">
+					<mat-label>Event Date</mat-label>
+					<input matInput [matDatepicker]="picker" formControlName="date">
+					<mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+					<mat-datepicker #picker></mat-datepicker>
+					<mat-error>{{ getFieldError('date') }}</mat-error>
+				</mat-form-field>
+
+				<mat-form-field appearance="outline" class="half-width">
+					<mat-label>Event Type</mat-label>
+					<mat-select formControlName="type">
+						<mat-option *ngFor="let type of eventTypes" [value]="type.value">
+							<div class="option-content">
+								<mat-icon>{{ type.icon }}</mat-icon>
+								<span>{{ type.label }}</span>
+							</div>
+						</mat-option>
+					</mat-select>
+					<mat-error>{{ getFieldError('type') }}</mat-error>
+				</mat-form-field>
+			</div>
+
+			<!-- Priority -->
+			<mat-form-field appearance="outline" class="full-width">
+				<mat-label>Priority Level</mat-label>
+				<mat-select formControlName="priority">
+					<mat-option *ngFor="let priority of priorityLevels" [value]="priority.value">
+						{{ priority.label }}
+					</mat-option>
+				</mat-select>
+				<mat-icon matSuffix>priority_high</mat-icon>
+				<mat-error>{{ getFieldError('priority') }}</mat-error>
+			</mat-form-field>
+
+			<!-- Tags -->
+			<mat-form-field appearance="outline" class="full-width">
+				<mat-label>Tags</mat-label>
+				<input matInput formControlName="tags" placeholder="Enter tags separated by commas">
+				<mat-icon matSuffix>label</mat-icon>
+				<mat-hint>Separate multiple tags with commas</mat-hint>
+				<mat-error>{{ getFieldError('tags') }}</mat-error>
+			</mat-form-field>
+
+		</form>
+	</mat-dialog-content>
+
+	<mat-dialog-actions class="dialog-actions">
+		<button mat-button (click)="onCancel()" class="cancel-button">
+			<mat-icon>close</mat-icon>
+			Cancel
+		</button>
+		<button mat-raised-button color="primary" (click)="onSave()" [disabled]="!editForm.valid" class="save-button">
+			<mat-icon>save</mat-icon>
+			Save Changes
+		</button>
+	</mat-dialog-actions>
+</div>

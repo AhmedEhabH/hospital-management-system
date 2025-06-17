@@ -27,13 +27,21 @@ import { TimelineComponent } from './timeline/timeline.component';
 import { FormComponent } from './form/form.component';
 import { DetailsComponent } from './details/details.component';
 import { BaseChartDirective } from 'ng2-charts';
+import { EventDetailsDialogComponent } from './event-details-dialog/event-details-dialog.component';
+import { MatDialog, MatDialogActions, MatDialogModule } from '@angular/material/dialog';
+import { EventEditDialogComponent } from './event-edit-dialog/event-edit-dialog.component';
+import { ExportOptionsDialogComponent } from './export-options-dialog/export-options-dialog.component';
+import { MatRadioButton, MatRadioModule } from '@angular/material/radio';
 
 @NgModule({
 	declarations: [
 		MedicalHistoryComponent,
 		TimelineComponent,
 		FormComponent,
-		DetailsComponent
+		DetailsComponent,
+  EventDetailsDialogComponent,
+  EventEditDialogComponent,
+  ExportOptionsDialogComponent
 	],
 	imports: [
 		CommonModule,
@@ -60,6 +68,8 @@ import { BaseChartDirective } from 'ng2-charts';
 		MatExpansionModule,
 		MatStepperModule,
 		MatProgressBarModule,    // FIXES mat-progress-bar errors
+		MatDialogModule,
+		MatRadioModule
 	]
 })
 export class MedicalHistoryModule { }

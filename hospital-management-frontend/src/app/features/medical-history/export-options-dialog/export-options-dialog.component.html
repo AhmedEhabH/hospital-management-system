@@ -1,0 +1,46 @@
+<div class="export-options-dialog">
+	<div class="dialog-header">
+		<h2 mat-dialog-title>
+			<mat-icon>file_download</mat-icon>
+			Export Medical Timeline
+		</h2>
+		<button mat-icon-button (click)="onCancel()" class="close-button">
+			<mat-icon>close</mat-icon>
+		</button>
+	</div>
+
+	<mat-dialog-content class="dialog-content">
+		<div class="export-info">
+			<p><strong>Patient:</strong> {{ data.patientName }}</p>
+			<p><strong>Total Events:</strong> {{ data.totalEvents }}</p>
+		</div>
+
+		<div class="format-selection">
+			<h3>Select Export Format</h3>
+			<mat-radio-group [(ngModel)]="selectedFormat" class="format-options">
+				<div *ngFor="let format of exportFormats" class="format-option">
+					<mat-radio-button [value]="format.value" class="format-radio">
+						<div class="format-content">
+							<div class="format-header">
+								<mat-icon>{{ format.icon }}</mat-icon>
+								<span class="format-label">{{ format.label }}</span>
+							</div>
+							<p class="format-description">{{ format.description }}</p>
+						</div>
+					</mat-radio-button>
+				</div>
+			</mat-radio-group>
+		</div>
+	</mat-dialog-content>
+
+	<mat-dialog-actions class="dialog-actions">
+		<button mat-button (click)="onCancel()" class="cancel-button">
+			<mat-icon>close</mat-icon>
+			Cancel
+		</button>
+		<button mat-raised-button color="primary" (click)="onExport()" class="export-button">
+			<mat-icon>file_download</mat-icon>
+			Export Timeline
+		</button>
+	</mat-dialog-actions>
+</div>

@@ -1,4 +1,57 @@
-<header class="app-header">
-	<h1>Hospital Management System</h1>
-	<app-theme-toggle></app-theme-toggle>
+<header class="app-header medical-gradient">
+	<div class="header-container">
+		<div class="header-left">
+			<div class="logo-section">
+				<mat-icon class="logo-icon">local_hospital</mat-icon>
+				<h1 class="app-title">MediCare Pro</h1>
+			</div>
+
+			<nav class="main-navigation" *ngIf="currentUser">
+				<a routerLink="/patient-dashboard" routerLinkActive="active" *ngIf="currentUser?.userType === 'Patient'"
+					class="nav-link">
+					<mat-icon>dashboard</mat-icon>
+					Dashboard
+				</a>
+				<a routerLink="/doctor-dashboard" routerLinkActive="active" *ngIf="currentUser?.userType === 'Doctor'"
+					class="nav-link">
+					<mat-icon>medical_services</mat-icon>
+					Dashboard
+				</a>
+				<a routerLink="/admin-dashboard" routerLinkActive="active" *ngIf="currentUser?.userType === 'Admin'"
+					class="nav-link">
+					<mat-icon>admin_panel_settings</mat-icon>
+					Dashboard
+				</a>
+				<a routerLink="/medical-history/timeline" routerLinkActive="active" class="nav-link">
+					<mat-icon>timeline</mat-icon>
+					Medical History
+				</a>
+				<a routerLink="/lab-reports" routerLinkActive="active" class="nav-link">
+					<mat-icon>science</mat-icon>
+					Lab Reports
+				</a>
+				<a routerLink="/messaging" routerLinkActive="active" class="nav-link">
+					<mat-icon>mail</mat-icon>
+					Messages
+				</a>
+			</nav>
+		</div>
+
+		<div class="header-right">
+			<div class="user-info" *ngIf="currentUser">
+				<div class="user-avatar">
+					<mat-icon>person</mat-icon>
+				</div>
+				<div class="user-details">
+					<span class="user-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</span>
+					<span class="user-role">{{ currentUser.userType }}</span>
+				</div>
+			</div>
+
+			<div class="header-actions">
+				<app-theme-toggle></app-theme-toggle>
+				<app-logout-button *ngIf="currentUser"></app-logout-button>
+			</div>
+		</div>
+	</div>
 </header>

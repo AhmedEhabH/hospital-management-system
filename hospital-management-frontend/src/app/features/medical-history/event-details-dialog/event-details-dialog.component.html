@@ -1,0 +1,202 @@
+<div class="event-details-dialog">
+	<div class="dialog-header" [style.background-color]="event.color">
+		<div class="header-content">
+			<div class="event-icon">
+				<mat-icon>{{ event.icon }}</mat-icon>
+			</div>
+			<div class="event-title-section">
+				<h2 mat-dialog-title>{{ event.title }}</h2>
+				<div class="event-meta">
+					<span class="event-date">{{ formatDate(event.date) }}</span>
+					<div class="event-badges">
+						<span class="type-badge" [class]="getEventTypeClass(event.type)">
+							{{ event.type | titlecase }}
+						</span>
+						<span class="priority-badge" [class]="getPriorityClass(event.priority)">
+							{{ event.priority | titlecase }} Priority
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+		<button mat-icon-button (click)="onClose()" class="close-button">
+			<mat-icon>close</mat-icon>
+		</button>
+	</div>
+
+	<mat-dialog-content class="dialog-content">
+		<!-- Event Description -->
+		<div class="content-section">
+			<h3>
+				<mat-icon>description</mat-icon>
+				Description
+			</h3>
+			<p class="event-description">{{ event.description }}</p>
+		</div>
+
+		<!-- Event Tags -->
+		<div class="content-section" *ngIf="event.tags.length > 0">
+			<h3>
+				<mat-icon>label</mat-icon>
+				Tags
+			</h3>
+			<div class="tags-container">
+				<mat-chip-listbox>
+					<mat-chip *ngFor="let tag of event.tags" class="event-tag">
+						{{ tag }}
+					</mat-chip>
+				</mat-chip-listbox>
+			</div>
+		</div>
+
+		<!-- Medical Data Section -->
+		<div class="content-section" *ngIf="event.data">
+			<h3>
+				<mat-icon>medical_services</mat-icon>
+				Medical Information
+			</h3>
+
+			<!-- Medical History Data -->
+			<div *ngIf="event.type === 'medical'" class="medical-data">
+				<div class="data-grid">
+					<div class="data-item" *ngIf="event.data.personalHistory">
+						<strong>Personal History:</strong>
+						<span>{{ event.data.personalHistory }}</span>
+					</div>
+					<div class="data-item" *ngIf="event.data.familyHistory">
+						<strong>Family History:</strong>
+						<span>{{ event.data.familyHistory }}</span>
+					</div>
+					<div class="data-item" *ngIf="event.data.allergies">
+						<strong>Allergies:</strong>
+						<span>{{ event.data.allergies }}</span>
+					</div>
+					<div class="data-item" *ngIf="event.data.currentMedications">
+						<strong>Current Medications:</strong>
+						<span>{{ event.data.currentMedications }}</span>
+					</div>
+				</div>
+
+				<div class="conditions-section">
+					<h4>Medical Conditions</h4>
+					<div class="conditions-grid">
+						<div *ngIf="event.data.hasAsthma" class="condition-item">
+							<mat-icon>air</mat-icon>
+							<span>Asthma</span>
+						</div>
+						<div *ngIf="event.data.hasDiabetes" class="condition-item">
+							<mat-icon>bloodtype</mat-icon>
+							<span>Diabetes</span>
+						</div>
+						<div *ngIf="event.data.hasBloodPressure" class="condition-item">
+							<mat-icon>favorite</mat-icon>
+							<span>Hypertension</span>
+						</div>
+						<div *ngIf="event.data.hasHeartDisease" class="condition-item">
+							<mat-icon>monitor_heart</mat-icon>
+							<span>Heart Disease</span>
+						</div>
+						<div *ngIf="event.data.hasCholesterol" class="condition-item">
+							<mat-icon>opacity</mat-icon>
+							<span>High Cholesterol</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Appointment Data -->
+			<div *ngIf="event.type === 'appointment'" class="appointment-data">
+				<div class="data-grid">
+					<div class="data-item" *ngIf="event.data.doctor">
+						<mat-icon>person</mat-icon>
+						<div>
+							<strong>Doctor:</strong>
+							<span>{{ event.data.doctor }}</span>
+						</div>
+					</div>
+					<div class="data-item" *ngIf="event.data.department">
+						<mat-icon>local_hospital</mat-icon>
+						<div>
+							<strong>Department:</strong>
+							<span>{{ event.data.department }}</span>
+						</div>
+					</div>
+					<div class="data-item" *ngIf="event.data.duration">
+						<mat-icon>schedule</mat-icon>
+						<div>
+							<strong>Duration:</strong>
+							<span>{{ event.data.duration }}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Medication Data -->
+			<div *ngIf="event.type === 'medication'" class="medication-data">
+				<div class="data-grid">
+					<div class="data-item" *ngIf="event.data.medication">
+						<mat-icon>medication</mat-icon>
+						<div>
+							<strong>Medication:</strong>
+							<span>{{ event.data.medication }}</span>
+						</div>
+					</div>
+					<div class="data-item" *ngIf="event.data.dosage">
+						<mat-icon>schedule</mat-icon>
+						<div>
+							<strong>Dosage:</strong>
+							<span>{{ event.data.dosage }}</span>
+						</div>
+					</div>
+					<div class="data-item" *ngIf="event.data.prescribedBy">
+						<mat-icon>person</mat-icon>
+						<div>
+							<strong>Prescribed By:</strong>
+							<span>{{ event.data.prescribedBy }}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Test/Lab Data -->
+			<div *ngIf="event.type === 'test'" class="test-data">
+				<div class="data-grid">
+					<div class="data-item" *ngIf="event.data.testType">
+						<mat-icon>science</mat-icon>
+						<div>
+							<strong>Test Type:</strong>
+							<span>{{ event.data.testType }}</span>
+						</div>
+					</div>
+					<div class="data-item" *ngIf="event.data.status">
+						<mat-icon>check_circle</mat-icon>
+						<div>
+							<strong>Status:</strong>
+							<span class="status-badge" [class]="'status-' + event.data.status.toLowerCase()">
+								{{ event.data.status }}
+							</span>
+						</div>
+					</div>
+					<div class="data-item" *ngIf="event.data.results">
+						<mat-icon>assignment</mat-icon>
+						<div>
+							<strong>Results:</strong>
+							<span>{{ event.data.results }}</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</mat-dialog-content>
+
+	<mat-dialog-actions class="dialog-actions">
+		<button mat-button (click)="onClose()" class="cancel-button">
+			<mat-icon>close</mat-icon>
+			Close
+		</button>
+		<button mat-raised-button color="primary" (click)="onEdit()" class="edit-button">
+			<mat-icon>edit</mat-icon>
+			Edit Event
+		</button>
+	</mat-dialog-actions>
+</div>

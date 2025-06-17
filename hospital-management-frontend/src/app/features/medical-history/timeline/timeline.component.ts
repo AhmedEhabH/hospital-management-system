@@ -5,6 +5,12 @@ import { MedicalHistoryService, MedicalHistory } from '../../../core/services/me
 import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { Chart, ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { ExportService } from '../../../core/services/export.service';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { EventDetailsDialogComponent } from '../event-details-dialog/event-details-dialog.component';
+import { EventEditDialogComponent } from '../event-edit-dialog/event-edit-dialog.component';
+import { ExportOptionsDialogComponent } from '../export-options-dialog/export-options-dialog.component';
 
 interface TimelineEvent {
 	id: string;
@@ -28,7 +34,7 @@ interface FilterOptions {
 
 @Component({
 	selector: 'app-timeline',
-	standalone:false,
+	standalone: false,
 	templateUrl: './timeline.component.html',
 	styleUrls: ['./timeline.component.scss']
 })
@@ -120,7 +126,10 @@ export class TimelineComponent implements OnInit, OnDestroy {
 	constructor(
 		private medicalHistoryService: MedicalHistoryService,
 		private authService: AuthService,
-		private themeService: ThemeService
+		private themeService: ThemeService,
+		private dialog: MatDialog,
+		private snackBar: MatSnackBar,
+		private exportService: ExportService
 	) { }
 
 	ngOnInit(): void {
@@ -426,18 +435,82 @@ export class TimelineComponent implements OnInit, OnDestroy {
 		return `priority-${priority}`;
 	}
 
+	// Update these methods
 	viewEventDetails(event: TimelineEvent): void {
-		console.log('View event details:', event);
-		// Implement detailed event viewer
+		const dialogRef = this.dialog.open(EventDetailsDialogComponent, {
+			width: '800px',
+			maxWidth: '90vw',
+			data: event,
+			panelClass: 'event-details-dialog-panel'
+		});
+
+		dialogRef.afterClosed().subscribe(result => {
+			if (result === 'edit') {
+				this.editEvent(event);
+			}
+		});
 	}
 
 	editEvent(event: TimelineEvent): void {
-		console.log('Edit event:', event);
-		// Implement event editing
+		const dialogRef = this.dialog.open(EventEditDialogComponent, {
+			width: '600px',
+			maxWidth: '90vw',
+			data: event,
+			panelClass: 'event-edit-dialog-panel'
+		});
+
+		dialogRef.afterClosed().subscribe(result => {
+			if (result) {
+				// Update the event in the timeline
+				const index = this.allTimelineEvents.findIndex(e => e.id === event.id);
+				if (index > -1) {
+					this.allTimelineEvents[index] = result;
+					this.applyFilters();
+
+					this.snackBar.open('Event updated successfully', 'Close', {
+						duration: 3000,
+						panelClass: ['success-snackbar'],
+						horizontalPosition: 'end',
+						verticalPosition: 'top'
+					});
+				}
+			}
+		});
 	}
 
 	exportTimeline(): void {
-		console.log('Export timeline');
-		// Implement timeline export functionality
+		const dialogRef = this.dialog.open(ExportOptionsDialogComponent, {
+			width: '400px',
+			data: {
+				totalEvents: this.filteredTimelineEvents.length,
+				patientName: `${this.currentUser?.firstName} ${this.currentUser?.lastName}`
+			}
+		});
+
+		dialogRef.afterClosed().subscribe(result => {
+			if (result) {
+				const patientName = `${this.currentUser?.firstName || 'Patient'} ${this.currentUser?.lastName || ''}`.trim();
+				const filename = `medical-timeline-${new Date().toISOString().split('T')[0]}`;
+
+				switch (result.format) {
+					case 'csv':
+						this.exportService.exportTimelineToCSV(this.filteredTimelineEvents, filename);
+						break;
+					case 'pdf':
+						this.exportService.exportTimelineToPDF(this.filteredTimelineEvents, patientName);
+						break;
+					case 'json':
+						this.exportService.exportTimelineToJSON(this.filteredTimelineEvents, filename);
+						break;
+				}
+
+				this.snackBar.open(`Timeline exported as ${result.format.toUpperCase()}`, 'Close', {
+					duration: 3000,
+					panelClass: ['success-snackbar'],
+					horizontalPosition: 'end',
+					verticalPosition: 'top'
+				});
+			}
+		});
 	}
 }

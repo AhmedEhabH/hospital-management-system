@@ -35,7 +35,7 @@ import { LogoutButtonComponent } from './components/logout-button/logout-button.
 		MatSlideToggleModule,
 		MatTooltipModule,
 		MatProgressBarModule,
-		MatSnackBarModule
+		MatSnackBarModule,
 	],
 	exports: [
 		// Export components

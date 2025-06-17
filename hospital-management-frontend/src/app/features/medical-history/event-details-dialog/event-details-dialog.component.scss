@@ -1,0 +1,286 @@
+.event-details-dialog {
+	.dialog-header {
+		color: white;
+		margin: -24px -24px 24px -24px;
+		padding: 24px;
+		position: relative;
+
+		.header-content {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+
+			.event-icon {
+				width: 3rem;
+				height: 3rem;
+				background: rgba(255, 255, 255, 0.2);
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+
+				mat-icon {
+					font-size: 1.5rem;
+					color: white;
+				}
+			}
+
+			.event-title-section {
+				flex: 1;
+
+				h2 {
+					margin: 0;
+					font-size: 1.5rem;
+					font-weight: 600;
+				}
+
+				.event-meta {
+					display: flex;
+					align-items: center;
+					gap: 1rem;
+					margin-top: 0.5rem;
+
+					.event-date {
+						opacity: 0.9;
+						font-size: 0.875rem;
+					}
+
+					.event-badges {
+						display: flex;
+						gap: 0.5rem;
+
+						.type-badge,
+						.priority-badge {
+							background: rgba(255, 255, 255, 0.2);
+							padding: 0.25rem 0.5rem;
+							border-radius: 12px;
+							font-size: 0.75rem;
+							font-weight: 500;
+						}
+					}
+				}
+			}
+		}
+
+		.close-button {
+			position: absolute;
+			top: 1rem;
+			right: 1rem;
+			color: white;
+		}
+	}
+
+	.dialog-content {
+		max-height: 60vh;
+		overflow-y: auto;
+
+		.content-section {
+			margin-bottom: 2rem;
+
+			h3 {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				margin: 0 0 1rem;
+				color: var(--text-primary);
+				font-size: 1.1rem;
+				font-weight: 600;
+
+				mat-icon {
+					color: var(--primary-color);
+				}
+			}
+
+			h4 {
+				margin: 1rem 0 0.5rem;
+				color: var(--text-primary);
+				font-size: 1rem;
+				font-weight: 500;
+			}
+
+			.event-description {
+				color: var(--text-primary);
+				line-height: 1.6;
+				margin: 0;
+			}
+
+			.tags-container {
+				.event-tag {
+					background: rgba(var(--primary-color), 0.1);
+					color: var(--primary-color);
+					margin-right: 0.5rem;
+					margin-bottom: 0.5rem;
+				}
+			}
+
+			.data-grid {
+				display: grid;
+				gap: 1rem;
+
+				.data-item {
+					display: flex;
+					align-items: flex-start;
+					gap: 0.75rem;
+					padding: 1rem;
+					background: var(--surface-color);
+					border: 1px solid var(--border-color);
+					border-radius: 8px;
+
+					mat-icon {
+						color: var(--primary-color);
+						margin-top: 0.125rem;
+					}
+
+					div {
+						flex: 1;
+
+						strong {
+							display: block;
+							color: var(--text-primary);
+							margin-bottom: 0.25rem;
+						}
+
+						span {
+							color: var(--text-secondary);
+						}
+					}
+
+					>strong {
+						color: var(--text-primary);
+						min-width: 120px;
+					}
+
+					>span {
+						color: var(--text-secondary);
+						flex: 1;
+					}
+				}
+			}
+
+			.conditions-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+				gap: 0.75rem;
+
+				.condition-item {
+					display: flex;
+					align-items: center;
+					gap: 0.5rem;
+					padding: 0.75rem;
+					background: rgba(var(--primary-color), 0.1);
+					border-radius: 8px;
+					color: var(--primary-color);
+					font-weight: 500;
+
+					mat-icon {
+						font-size: 1.25rem;
+					}
+				}
+			}
+
+			.status-badge {
+				padding: 0.25rem 0.5rem;
+				border-radius: 12px;
+				font-size: 0.75rem;
+				font-weight: 500;
+
+				&.status-normal,
+				&.status-completed {
+					background: rgba(76, 175, 80, 0.1);
+					color: var(--medical-green);
+				}
+
+				&.status-abnormal,
+				&.status-pending {
+					background: rgba(255, 152, 0, 0.1);
+					color: var(--medical-orange);
+				}
+
+				&.status-critical {
+					background: rgba(244, 67, 54, 0.1);
+					color: var(--medical-red);
+				}
+			}
+		}
+	}
+
+	.dialog-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 1rem;
+		margin-top: 1rem;
+
+		.cancel-button {
+			mat-icon {
+				margin-right: 0.5rem;
+			}
+		}
+
+		.edit-button {
+			mat-icon {
+				margin-right: 0.5rem;
+			}
+		}
+	}
+}
+
+// Dark theme adjustments
+:host-context(.dark-theme) {
+	.event-details-dialog {
+		.content-section {
+			.data-grid {
+				.data-item {
+					background: var(--surface-color);
+					border-color: var(--border-color);
+				}
+			}
+		}
+	}
+}
+
+// Responsive design
+@media (max-width: 768px) {
+	.event-details-dialog {
+		.dialog-header {
+			.header-content {
+				flex-direction: column;
+				text-align: center;
+				gap: 0.75rem;
+
+				.event-title-section {
+					.event-meta {
+						flex-direction: column;
+						gap: 0.5rem;
+					}
+				}
+			}
+		}
+
+		.dialog-content {
+			.content-section {
+				.conditions-grid {
+					grid-template-columns: 1fr;
+				}
+
+				.data-grid {
+					.data-item {
+						flex-direction: column;
+						gap: 0.5rem;
+
+						mat-icon {
+							align-self: flex-start;
+						}
+					}
+				}
+			}
+		}
+
+		.dialog-actions {
+			flex-direction: column;
+
+			button {
+				width: 100%;
+			}
+		}
+	}
+}

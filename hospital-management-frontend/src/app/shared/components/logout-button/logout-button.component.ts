@@ -5,7 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
 	selector: 'app-logout-button',
-	standalone:false,
+	standalone: false,
 	templateUrl: './logout-button.component.html',
 	styleUrls: ['./logout-button.component.scss']
 })

@@ -14,24 +14,29 @@ import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
-import { MatChipsModule } from '@angular/material/chips';
+
+import { CommonModule } from '@angular/common';
+
+import { SharedModule } from './shared/shared.module';
 
 @NgModule({
 	declarations: [
-		AppComponent
+		AppComponent,
 	],
 	imports: [
-		BrowserModule,
-		AppRoutingModule,
-		BrowserAnimationsModule,
-		HttpClientModule,
-
-		// Angular Material Core Modules - GLOBAL AVAILABILITY
-		MatIconModule,
-		MatButtonModule,
-		MatProgressBarModule,
-		
-	],
+    CommonModule,
+    BrowserModule,
+    AppRoutingModule,
+    BrowserAnimationsModule,
+    HttpClientModule,
+    // CRITICAL: Import SharedModule to make app-header available
+    SharedModule,
+    // Angular Material Core Modules - GLOBAL AVAILABILITY
+    MatIconModule,
+    MatButtonModule,
+    MatProgressBarModule,
+    SharedModule
+],
 	providers: [
 		{
 			provide: HTTP_INTERCEPTORS,

@@ -1,4 +1,35 @@
-:host {
-	display: block;
-	height: 100vh;
+.app-container {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background: var(--background-color);
+	color: var(--text-primary);
+
+	.main-content {
+		flex: 1;
+		transition: all 0.3s ease;
+
+		&.with-header {
+			margin-top: 0; // Header is sticky, no margin needed
+		}
+	}
+}
+
+// Dark theme adjustments
+:host-context(.dark-theme) {
+	.app-container {
+		background: var(--background-color);
+		color: var(--text-primary);
+	}
+}
+
+// Responsive design
+@media (max-width: 768px) {
+	.app-container {
+		.main-content {
+			&.with-header {
+				margin-top: 0;
+			}
+		}
+	}
 }
