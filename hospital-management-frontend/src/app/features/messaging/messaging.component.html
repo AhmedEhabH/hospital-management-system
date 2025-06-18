@@ -1,1 +1,134 @@
-<p>messaging works!</p>
+<div class="messaging-container" [class.dark-theme]="isDarkMode">
+	<!-- Header -->
+	<div class="messaging-header medical-gradient header-layout">
+		<div class="header-content">
+			<h1>
+				<mat-icon>mail</mat-icon>
+				Medical Messaging
+			</h1>
+			<p>Secure communication platform for healthcare professionals</p>
+		</div>
+
+		<div class="header-actions">
+			<div class="connection-status" [class]="getConnectionStatusClass()">
+				<mat-icon>{{ isConnected ? 'wifi' : 'wifi_off' }}</mat-icon>
+				<span>{{ getConnectionStatusText() }}</span>
+			</div>
+			<app-theme-toggle></app-theme-toggle>
+			<app-logout-button></app-logout-button>
+		</div>
+	</div>
+
+	<!-- Loading State -->
+	<div *ngIf="isLoading" class="loading-container">
+		<mat-progress-bar mode="indeterminate"></mat-progress-bar>
+		<div class="loading-content">
+			<mat-icon class="loading-icon pulse-animation">mail</mat-icon>
+			<p>Loading your conversations...</p>
+		</div>
+	</div>
+
+	<!-- Main Messaging Interface -->
+	<div *ngIf="!isLoading" class="messaging-main">
+		<div class="container">
+
+			<!-- Conversations and Chat Layout -->
+			<div class="messaging-layout">
+
+				<!-- Conversations List -->
+				<div class="conversations-panel">
+					<mat-card class="conversations-card medical-card">
+						<mat-card-header>
+							<mat-icon mat-card-avatar>chat</mat-icon>
+							<mat-card-title>Conversations</mat-card-title>
+							<mat-card-subtitle>{{ conversations.length }} active chats</mat-card-subtitle>
+						</mat-card-header>
+
+						<mat-card-content>
+							<div class="conversations-list">
+								<div *ngFor="let conversation of conversations" class="conversation-item"
+									[class.active]="activeConversation?.id === conversation.id"
+									(click)="selectConversation(conversation)">
+
+									<div class="conversation-avatar">
+										<mat-icon>person</mat-icon>
+									</div>
+
+									<div class="conversation-content">
+										<div class="conversation-header">
+											<h4 class="conversation-title">{{ conversation.title || 'Medical
+												Consultation' }}</h4>
+											<span class="conversation-time">{{
+												formatMessageTime(conversation.lastMessageAt) }}</span>
+										</div>
+
+										<div class="conversation-preview">
+											<p class="last-message">{{ conversation.lastMessage?.message || 'No messages
+												yet' }}</p>
+											<mat-chip *ngIf="conversation.unreadCount > 0" class="unread-badge">
+												{{ conversation.unreadCount }}
+											</mat-chip>
+										</div>
+									</div>
+								</div>
+							</div>
+						</mat-card-content>
+					</mat-card>
+				</div>
+
+				<!-- Chat Window -->
+				<div class="chat-panel">
+					<mat-card class="chat-card medical-card" *ngIf="activeConversation">
+						<mat-card-header>
+							<mat-icon mat-card-avatar>chat_bubble</mat-icon>
+							<mat-card-title>{{ activeConversation.title || 'Medical Consultation' }}</mat-card-title>
+							<mat-card-subtitle>{{ activeConversation.participants.length }}
+								participants</mat-card-subtitle>
+						</mat-card-header>
+
+						<mat-card-content class="chat-content">
+							<!-- Messages -->
+							<div class="messages-container">
+								<div *ngFor="let message of messages" class="message-item"
+									[class.my-message]="isMyMessage(message)"
+									[class.other-message]="!isMyMessage(message)">
+
+									<div class="message-bubble">
+										<div class="message-header">
+											<span class="sender-name">{{ message.senderName }}</span>
+											<span class="message-time">{{ formatMessageTime(message.timestamp) }}</span>
+										</div>
+										<div class="message-content">
+											<p>{{ message.message }}</p>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<!-- Message Input -->
+							<div class="message-input-container">
+								<mat-form-field class="message-input" appearance="outline">
+									<mat-label>Type your message...</mat-label>
+									<input matInput [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
+										placeholder="Type your secure message here..." [disabled]="!isConnected">
+									<button mat-icon-button matSuffix (click)="sendMessage()"
+										[disabled]="!newMessage.trim() || !isConnected">
+										<mat-icon>send</mat-icon>
+									</button>
+								</mat-form-field>
+							</div>
+						</mat-card-content>
+					</mat-card>
+
+					<!-- No Conversation Selected -->
+					<div *ngIf="!activeConversation" class="no-conversation">
+						<mat-icon class="no-conversation-icon">chat</mat-icon>
+						<h3>Select a Conversation</h3>
+						<p>Choose a conversation from the list to start messaging</p>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+</div>
