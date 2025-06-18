@@ -1,0 +1,622 @@
+.lab-reports-container {
+	min-height: 100vh;
+	background: var(--background-color);
+	transition: all 0.3s ease;
+
+	.lab-reports-header {
+		color: white;
+		padding: 3rem 0;
+		margin-bottom: 2rem;
+		position: relative;
+		overflow: hidden;
+
+		&::before {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: linear-gradient(135deg, var(--medical-blue) 0%, var(--medical-green) 100%);
+			opacity: 0.95;
+		}
+
+		.header-content {
+			position: relative;
+			z-index: 2;
+			max-width: 1400px;
+			margin: 0 auto;
+			padding: 0 2rem;
+
+			.header-main {
+				text-align: center;
+				margin-bottom: 3rem;
+
+				.page-title {
+					margin: 0;
+					font-size: 2.5rem;
+					font-weight: 700;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					gap: 1rem;
+					text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+
+					mat-icon {
+						font-size: 3rem;
+						width: 3rem;
+						height: 3rem;
+					}
+				}
+
+				.page-subtitle {
+					margin: 1rem 0 0;
+					font-size: 1.25rem;
+					opacity: 0.9;
+					font-weight: 300;
+				}
+			}
+
+			.stats-cards {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+				gap: 2rem;
+				max-width: 1000px;
+				margin: 0 auto;
+
+				.stat-card {
+					background: rgba(255, 255, 255, 0.15);
+					backdrop-filter: blur(10px);
+					border: 1px solid rgba(255, 255, 255, 0.2);
+					border-radius: 16px;
+					padding: 2rem;
+					text-align: center;
+					transition: all 0.3s ease;
+					position: relative;
+					overflow: hidden;
+
+					&::before {
+						content: '';
+						position: absolute;
+						top: 0;
+						left: 0;
+						right: 0;
+						height: 4px;
+						background: rgba(255, 255, 255, 0.3);
+					}
+
+					&:hover {
+						transform: translateY(-8px);
+						background: rgba(255, 255, 255, 0.2);
+						box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+					}
+
+					&.critical::before {
+						background: var(--medical-red);
+					}
+
+					mat-icon {
+						font-size: 3rem;
+						width: 3rem;
+						height: 3rem;
+						margin-bottom: 1rem;
+						opacity: 0.9;
+					}
+
+					.stat-info {
+						.stat-number {
+							display: block;
+							font-size: 2.5rem;
+							font-weight: 700;
+							line-height: 1;
+							margin-bottom: 0.5rem;
+						}
+
+						.stat-label {
+							font-size: 1rem;
+							opacity: 0.8;
+							font-weight: 500;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	.loading-container {
+		padding: 4rem 2rem;
+		text-align: center;
+
+		.loading-bar {
+			margin-bottom: 2rem;
+		}
+
+		.loading-content {
+			.loading-icon {
+				font-size: 4rem;
+				width: 4rem;
+				height: 4rem;
+				color: var(--primary-color);
+				margin-bottom: 1rem;
+			}
+
+			p {
+				color: var(--text-secondary);
+				font-size: 1.1rem;
+			}
+		}
+	}
+
+	.lab-reports-content {
+		padding: 0 0 4rem;
+
+		.container {
+			max-width: 1400px;
+			margin: 0 auto;
+			padding: 0 2rem;
+		}
+
+		.filters-section {
+			margin-bottom: 2rem;
+
+			.filter-card {
+				border-radius: 16px;
+				overflow: hidden;
+
+				.search-section {
+					margin-bottom: 1.5rem;
+
+					.search-field {
+						width: 100%;
+					}
+				}
+
+				.filter-controls {
+					.filter-row {
+						display: grid;
+						grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+						gap: 1rem;
+						margin-bottom: 1rem;
+					}
+				}
+
+				.filter-actions {
+					display: flex;
+					justify-content: space-between;
+					align-items: center;
+					gap: 1rem;
+					margin-top: 1.5rem;
+					padding-top: 1.5rem;
+					border-top: 1px solid var(--border-color);
+				}
+			}
+		}
+
+		.reports-table-section {
+			margin-bottom: 3rem;
+
+			.table-card {
+				border-radius: 16px;
+				overflow: hidden;
+
+				.table-container {
+					overflow-x: auto;
+
+					.lab-reports-table {
+						width: 100%;
+
+						.mat-mdc-header-cell {
+							background: var(--primary-color);
+							color: white;
+							font-weight: 600;
+							font-size: 0.875rem;
+							text-transform: uppercase;
+							letter-spacing: 0.5px;
+						}
+
+						.mat-mdc-cell {
+							padding: 1rem 0.75rem;
+							border-bottom: 1px solid var(--border-color);
+
+							.date-cell,
+							.test-type-cell,
+							.doctor-cell,
+							.department-cell {
+								display: flex;
+								align-items: center;
+								gap: 0.75rem;
+
+								mat-icon {
+									color: var(--primary-color);
+									font-size: 1.25rem;
+								}
+							}
+
+							.actions-cell {
+								display: flex;
+								gap: 0.5rem;
+
+								button {
+									transition: all 0.3s ease;
+
+									&:hover {
+										transform: scale(1.1);
+									}
+								}
+							}
+						}
+
+						.report-row {
+							transition: all 0.3s ease;
+
+							&:hover {
+								background: rgba(var(--primary-color), 0.05);
+								transform: translateX(4px);
+							}
+						}
+					}
+
+					.table-paginator {
+						border-top: 1px solid var(--border-color);
+						background: var(--surface-color);
+					}
+				}
+			}
+		}
+
+		.quick-nav-section {
+			.medical-tabs {
+				border-radius: 16px;
+				overflow: hidden;
+				background: var(--surface-color);
+				box-shadow: 0 8px 32px var(--shadow-color);
+
+				::ng-deep .mat-mdc-tab-header {
+					background: var(--primary-color);
+
+					.mat-mdc-tab-label {
+						color: rgba(255, 255, 255, 0.7);
+						font-weight: 500;
+
+						&.mdc-tab--active {
+							color: white;
+						}
+
+						.mat-mdc-tab-label-content {
+							display: flex;
+							align-items: center;
+							gap: 0.5rem;
+
+							mat-icon {
+								font-size: 1.25rem;
+							}
+
+							.alert-badge {
+								background: var(--medical-red);
+								color: white;
+								font-size: 0.75rem;
+								padding: 0.25rem 0.5rem;
+								border-radius: 12px;
+								margin-left: 0.5rem;
+							}
+						}
+					}
+				}
+
+				.tab-content {
+					padding: 2rem;
+					min-height: 400px;
+				}
+			}
+		}
+	}
+}
+
+// Status and Priority Styling
+.status-critical {
+	background: rgba(244, 67, 54, 0.1) !important;
+	color: var(--medical-red) !important;
+	border: 1px solid rgba(244, 67, 54, 0.3) !important;
+}
+
+.status-warning {
+	background: rgba(255, 152, 0, 0.1) !important;
+	color: var(--medical-orange) !important;
+	border: 1px solid rgba(255, 152, 0, 0.3) !important;
+}
+
+.status-stable {
+	background: rgba(76, 175, 80, 0.1) !important;
+	color: var(--medical-green) !important;
+	border: 1px solid rgba(76, 175, 80, 0.3) !important;
+}
+
+.status-info {
+	background: rgba(66, 153, 237, 0.1) !important;
+	color: var(--medical-blue) !important;
+	border: 1px solid rgba(66, 153, 237, 0.3) !important;
+}
+
+.priority-critical {
+	background: var(--medical-red) !important;
+	color: white !important;
+}
+
+.priority-high {
+	background: var(--medical-orange) !important;
+	color: white !important;
+}
+
+.priority-medium {
+	background: var(--medical-blue) !important;
+	color: white !important;
+}
+
+.priority-low {
+	background: var(--medical-green) !important;
+	color: white !important;
+}
+
+// Dark Theme Adjustments
+:host-context(.dark-theme) {
+	.lab-reports-container {
+		.lab-reports-header {
+			&::before {
+				background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+			}
+
+			.stats-cards {
+				.stat-card {
+					background: rgba(255, 255, 255, 0.05);
+					border: 1px solid rgba(255, 255, 255, 0.1);
+
+					&:hover {
+						background: rgba(255, 255, 255, 0.1);
+					}
+				}
+			}
+		}
+
+		.filter-card,
+		.table-card {
+			background: var(--surface-color);
+			border: 1px solid var(--border-color);
+		}
+
+		.lab-reports-table {
+			.mat-mdc-header-cell {
+				background: var(--primary-color);
+			}
+
+			.report-row:hover {
+				background: rgba(var(--primary-color), 0.1);
+			}
+		}
+	}
+}
+
+// Responsive Design
+@media (max-width: 1200px) {
+	.lab-reports-container {
+		.lab-reports-content {
+			.container {
+				padding: 0 1rem;
+			}
+
+			.filters-section {
+				.filter-controls {
+					.filter-row {
+						grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+					}
+				}
+			}
+		}
+	}
+}
+
+@media (max-width: 768px) {
+	.lab-reports-container {
+		.lab-reports-header {
+			padding: 2rem 0;
+
+			.header-content {
+				padding: 0 1rem;
+
+				.header-main {
+					.page-title {
+						font-size: 2rem;
+						flex-direction: column;
+						gap: 0.5rem;
+
+						mat-icon {
+							font-size: 2.5rem;
+							width: 2.5rem;
+							height: 2.5rem;
+						}
+					}
+
+					.page-subtitle {
+						font-size: 1rem;
+					}
+				}
+
+				.stats-cards {
+					grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+					gap: 1rem;
+
+					.stat-card {
+						padding: 1.5rem;
+
+						mat-icon {
+							font-size: 2.5rem;
+							width: 2.5rem;
+							height: 2.5rem;
+						}
+
+						.stat-info {
+							.stat-number {
+								font-size: 2rem;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		.lab-reports-content {
+			.filters-section {
+				.filter-controls {
+					.filter-row {
+						grid-template-columns: 1fr;
+						gap: 0.75rem;
+					}
+				}
+
+				.filter-actions {
+					flex-direction: column;
+					gap: 0.75rem;
+
+					button {
+						width: 100%;
+					}
+				}
+			}
+
+			.reports-table-section {
+				.table-container {
+					.lab-reports-table {
+						.mat-mdc-cell {
+							padding: 0.75rem 0.5rem;
+							font-size: 0.875rem;
+
+							.date-cell,
+							.test-type-cell,
+							.doctor-cell,
+							.department-cell {
+								flex-direction: column;
+								gap: 0.25rem;
+								text-align: center;
+
+								mat-icon {
+									font-size: 1rem;
+								}
+							}
+
+							.actions-cell {
+								flex-direction: column;
+								gap: 0.25rem;
+							}
+						}
+					}
+				}
+			}
+
+			.quick-nav-section {
+				.tab-content {
+					padding: 1rem;
+				}
+			}
+		}
+	}
+}
+
+@media (max-width: 480px) {
+	.lab-reports-container {
+		.lab-reports-header {
+			.header-content {
+				.stats-cards {
+					grid-template-columns: 1fr;
+
+					.stat-card {
+						padding: 1rem;
+					}
+				}
+			}
+		}
+
+		.lab-reports-content {
+			.container {
+				padding: 0 0.5rem;
+			}
+
+			.filters-section {
+				.filter-card {
+					.search-section {
+						margin-bottom: 1rem;
+					}
+				}
+			}
+		}
+	}
+}
+
+// Animation Classes
+.pulse-animation {
+	animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+	0% {
+		transform: scale(1);
+	}
+
+	50% {
+		transform: scale(1.05);
+	}
+
+	100% {
+		transform: scale(1);
+	}
+}
+
+.fade-in {
+	animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+// Medical Card Enhancements
+.medical-card {
+	background: var(--surface-color);
+	border-radius: 16px;
+	box-shadow: 0 8px 32px var(--shadow-color);
+	border: 1px solid var(--border-color);
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	backdrop-filter: blur(10px);
+
+	&:hover {
+		transform: translateY(-4px);
+		box-shadow: 0 16px 48px var(--shadow-color);
+	}
+}
+
+// Professional Healthcare Styling
+.healthcare-professional {
+	background: linear-gradient(135deg, var(--medical-navy), var(--medical-blue));
+	color: white;
+	padding: 1rem;
+	border-radius: 12px;
+	margin: 1rem 0;
+}
+
+.trust-indicator {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: var(--medical-green);
+	font-weight: 500;
+
+	mat-icon {
+		color: var(--medical-green);
+	}
+}

@@ -1,1 +1,144 @@
-<p>lab-trends-analysis works!</p>
+<div class="lab-trends-analysis" [class.dark-theme]="isDarkMode">
+	<!-- Header Section -->
+	<div class="trends-header">
+		<div class="header-content">
+			<h3>
+				<mat-icon>trending_up</mat-icon>
+				Lab Values Trend Analysis
+			</h3>
+			<p class="header-subtitle">Track your health metrics over time</p>
+		</div>
+
+		<!-- Controls -->
+		<div class="trends-controls">
+			<mat-form-field appearance="outline" class="test-selector">
+				<mat-label>Select Tests</mat-label>
+				<mat-select [(value)]="selectedTests" multiple (selectionChange)="onTestSelectionChange()">
+					<mat-option *ngFor="let test of availableTests" [value]="test">
+						{{ test }}
+					</mat-option>
+				</mat-select>
+			</mat-form-field>
+
+			<button mat-raised-button color="accent" (click)="exportTrends()">
+				<mat-icon>file_download</mat-icon>
+				Export
+			</button>
+		</div>
+	</div>
+
+	<!-- Loading State -->
+	<div *ngIf="isLoading" class="loading-container">
+		<mat-progress-bar mode="indeterminate"></mat-progress-bar>
+		<p>Loading trend analysis...</p>
+	</div>
+
+	<!-- Trends Content -->
+	<div *ngIf="!isLoading" class="trends-content">
+
+		<!-- Statistics Cards -->
+		<div class="trend-stats">
+			<div class="stat-card trend-improving">
+				<mat-icon>trending_up</mat-icon>
+				<div class="stat-info">
+					<span class="stat-number">{{ trendStats.improvingTrends }}</span>
+					<span class="stat-label">Improving</span>
+				</div>
+			</div>
+
+			<div class="stat-card trend-stable">
+				<mat-icon>trending_flat</mat-icon>
+				<div class="stat-info">
+					<span class="stat-number">{{ trendStats.stableTrends }}</span>
+					<span class="stat-label">Stable</span>
+				</div>
+			</div>
+
+			<div class="stat-card trend-worsening">
+				<mat-icon>trending_down</mat-icon>
+				<div class="stat-info">
+					<span class="stat-number">{{ trendStats.worseningTrends }}</span>
+					<span class="stat-label">Needs Attention</span>
+				</div>
+			</div>
+
+			<div class="stat-card critical-values">
+				<mat-icon>priority_high</mat-icon>
+				<div class="stat-info">
+					<span class="stat-number">{{ trendStats.criticalValues }}</span>
+					<span class="stat-label">Critical Values</span>
+				</div>
+			</div>
+		</div>
+
+		<!-- Trends Chart -->
+		<div class="chart-section">
+			<mat-card class="chart-card medical-card">
+				<mat-card-header>
+					<mat-icon mat-card-avatar>show_chart</mat-icon>
+					<mat-card-title>Lab Values Trends</mat-card-title>
+					<mat-card-subtitle>6-month trend analysis for selected tests</mat-card-subtitle>
+				</mat-card-header>
+
+				<mat-card-content>
+					<div class="chart-container">
+						<canvas baseChart [data]="trendsChartData" [options]="chartOptions" [type]="trendsChartType">
+						</canvas>
+					</div>
+				</mat-card-content>
+			</mat-card>
+		</div>
+
+		<!-- Trend Insights -->
+		<div class="trend-insights">
+			<mat-card class="insights-card medical-card">
+				<mat-card-header>
+					<mat-icon mat-card-avatar>insights</mat-icon>
+					<mat-card-title>Health Insights</mat-card-title>
+					<mat-card-subtitle>AI-powered analysis of your lab trends</mat-card-subtitle>
+				</mat-card-header>
+
+				<mat-card-content>
+					<div class="insights-list">
+						<div class="insight-item" *ngIf="trendStats.improvingTrends > 0">
+							<mat-icon class="insight-icon improving">check_circle</mat-icon>
+							<div class="insight-content">
+								<h4>Positive Trends Detected</h4>
+								<p>{{ trendStats.improvingTrends }} of your lab values are showing improvement. Keep up
+									the good work!</p>
+							</div>
+						</div>
+
+						<div class="insight-item" *ngIf="trendStats.worseningTrends > 0">
+							<mat-icon class="insight-icon warning">warning</mat-icon>
+							<div class="insight-content">
+								<h4>Areas for Attention</h4>
+								<p>{{ trendStats.worseningTrends }} lab values may need attention. Consider discussing
+									with your doctor.</p>
+							</div>
+						</div>
+
+						<div class="insight-item" *ngIf="trendStats.criticalValues > 0">
+							<mat-icon class="insight-icon critical">error</mat-icon>
+							<div class="insight-content">
+								<h4>Critical Values Found</h4>
+								<p>{{ trendStats.criticalValues }} critical values detected. Please consult your
+									healthcare provider immediately.</p>
+							</div>
+						</div>
+
+						<div class="insight-item" *ngIf="trendStats.stableTrends === selectedTests.length">
+							<mat-icon class="insight-icon stable">verified</mat-icon>
+							<div class="insight-content">
+								<h4>Stable Health Metrics</h4>
+								<p>All your selected lab values are within stable ranges. Continue your current health
+									routine.</p>
+							</div>
+						</div>
+					</div>
+				</mat-card-content>
+			</mat-card>
+		</div>
+
+	</div>
+</div>
