@@ -50,11 +50,11 @@ import { CriticalAlertsComponent } from './critical-alerts/critical-alerts.compo
 		LabReportsComponent,
 		ViewerComponent,
 		TrendsComponent,
-		CriticalAlertsComponent
+		CriticalAlertsComponent,
 	],
 	imports: [
 		CommonModule,
-		
+		LabReportsRoutingModule,
 		ReactiveFormsModule,
 		FormsModule,
 

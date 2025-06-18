@@ -1,4 +1,4 @@
-<header class="app-header medical-gradient">
+<header class="app-header medical-gradient" [class.dark-theme]="isDarkMode">
 	<div class="header-container">
 		<div class="header-left">
 			<div class="logo-section">
@@ -10,29 +10,29 @@
 				<a routerLink="/patient-dashboard" routerLinkActive="active" *ngIf="currentUser?.userType === 'Patient'"
 					class="nav-link">
 					<mat-icon>dashboard</mat-icon>
-					Dashboard
+					<span>Dashboard</span>
 				</a>
 				<a routerLink="/doctor-dashboard" routerLinkActive="active" *ngIf="currentUser?.userType === 'Doctor'"
 					class="nav-link">
 					<mat-icon>medical_services</mat-icon>
-					Dashboard
+					<span>Dashboard</span>
 				</a>
 				<a routerLink="/admin-dashboard" routerLinkActive="active" *ngIf="currentUser?.userType === 'Admin'"
 					class="nav-link">
 					<mat-icon>admin_panel_settings</mat-icon>
-					Dashboard
+					<span>Dashboard</span>
 				</a>
 				<a routerLink="/medical-history/timeline" routerLinkActive="active" class="nav-link">
 					<mat-icon>timeline</mat-icon>
-					Medical History
+					<span>Medical History</span>
 				</a>
 				<a routerLink="/lab-reports" routerLinkActive="active" class="nav-link">
 					<mat-icon>science</mat-icon>
-					Lab Reports
+					<span>Lab Reports</span>
 				</a>
 				<a routerLink="/messaging" routerLinkActive="active" class="nav-link">
 					<mat-icon>mail</mat-icon>
-					Messages
+					<span>Messages</span>
 				</a>
 			</nav>
 		</div>

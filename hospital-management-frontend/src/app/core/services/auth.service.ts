@@ -60,9 +60,22 @@ export class AuthService {
 		private router: Router
 	) {
 		// Initialize user from localStorage on service creation
+		this.initializeFromStorage();
+	}
+
+	private initializeFromStorage(): void {
 		const storedUser = localStorage.getItem('currentUser');
-		if (storedUser) {
-			this.currentUserSubject.next(JSON.parse(storedUser));
+		const storedToken = localStorage.getItem('authToken');
+
+		if (storedUser && storedToken) {
+			try {
+				const user = JSON.parse(storedUser);
+				this.currentUserSubject.next(user);
+				console.log('User initialized from storage:', user);
+			} catch (error) {
+				console.error('Error parsing stored user:', error);
+				this.logout();
+			}
 		}
 	}
 

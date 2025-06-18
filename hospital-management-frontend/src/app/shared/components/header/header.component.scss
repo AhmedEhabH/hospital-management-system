@@ -4,6 +4,63 @@
 	z-index: 1000;
 	color: white;
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	transition: all 0.3s ease;
+
+	// Light theme header
+	&:not(.dark-theme) {
+		background: linear-gradient(135deg, var(--medical-blue), var(--medical-green));
+	}
+
+	// Dark theme header - CRITICAL FOR DARK MODE
+	&.dark-theme {
+		background: linear-gradient(135deg, #1a1a2e, #16213e);
+		color: #ffffff;
+
+		.header-container {
+			.header-left {
+				.logo-section {
+
+					.logo-icon,
+					.app-title {
+						color: #ffffff;
+					}
+				}
+
+				.main-navigation {
+					.nav-link {
+						color: #ffffff;
+
+						&:hover {
+							background: rgba(255, 255, 255, 0.1);
+						}
+
+						&.active {
+							background: rgba(255, 255, 255, 0.2);
+						}
+					}
+				}
+			}
+
+			.header-right {
+				.user-info {
+					background: rgba(255, 255, 255, 0.1);
+					border: 1px solid rgba(255, 255, 255, 0.2);
+
+					.user-avatar {
+						background: rgba(255, 255, 255, 0.2);
+					}
+
+					.user-details {
+
+						.user-name,
+						.user-role {
+							color: #ffffff;
+						}
+					}
+				}
+			}
+		}
+	}
 
 	.header-container {
 		max-width: 1400px;
