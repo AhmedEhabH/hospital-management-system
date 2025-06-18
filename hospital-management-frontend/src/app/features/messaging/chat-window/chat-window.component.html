@@ -1,1 +1,162 @@
-<p>chat-window works!</p>
+<div class="chat-window-container" [class.dark-theme]="isDarkMode">
+	<!-- Chat Header -->
+	<div class="chat-header" *ngIf="conversation">
+		<div class="participant-info">
+			<div class="participant-avatar">
+				<mat-icon>{{ conversation.conversationType === 'group' ? 'group' : 'person' }}</mat-icon>
+			</div>
+			<div class="participant-details">
+				<h3 class="participant-name">{{ conversation.title || 'Medical Consultation' }}</h3>
+				<p class="participant-status">
+					{{ conversation.participants.length }} participants
+					<span *ngIf="typingUsers.length > 0" class="typing-indicator">
+						• {{ typingUsers.join(', ') }} {{ typingUsers.length === 1 ? 'is' : 'are' }} typing...
+					</span>
+				</p>
+			</div>
+		</div>
+
+		<div class="chat-actions">
+			<button mat-icon-button matTooltip="Video Call">
+				<mat-icon>videocam</mat-icon>
+			</button>
+			<button mat-icon-button matTooltip="Voice Call">
+				<mat-icon>phone</mat-icon>
+			</button>
+			<button mat-icon-button matTooltip="More Options">
+				<mat-icon>more_vert</mat-icon>
+			</button>
+		</div>
+	</div>
+
+	<!-- Messages Container -->
+	<div class="messages-container" #messagesContainer (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)"
+		(drop)="onDrop($event)" [class.drag-over]="isDragOver">
+
+		<!-- Loading State -->
+		<div *ngIf="isLoading" class="loading-state">
+			<mat-progress-bar mode="indeterminate"></mat-progress-bar>
+			<p>Loading messages...</p>
+		</div>
+
+		<!-- Messages List -->
+		<div class="messages-list" *ngIf="!isLoading">
+			<div *ngFor="let message of messages; trackBy: trackByMessageId" class="message-wrapper"
+				[class.my-message]="isMyMessage(message)" [class.other-message]="!isMyMessage(message)">
+
+				<!-- Message Bubble -->
+				<div class="message-bubble">
+					<!-- Message Header -->
+					<div class="message-header" *ngIf="!isMyMessage(message)">
+						<span class="sender-name">{{ message.senderName }}</span>
+						<span class="message-time">{{ formatMessageTime(message.sentDate) }}</span>
+					</div>
+
+					<!-- Text Message -->
+					<div *ngIf="message.messageType === 'text'" class="message-content">
+						<p>{{ message.messageContent }}</p>
+					</div>
+
+					<!-- Image Message -->
+					<div *ngIf="message.messageType === 'image'" class="image-message">
+						<img [src]="message.attachmentUrl" [alt]="message.attachmentName" class="message-image"
+							(click)="openImageViewer(message.attachmentUrl)">
+						<p *ngIf="message.messageContent !== 'File: ' + message.attachmentName">
+							{{ message.messageContent }}
+						</p>
+					</div>
+
+					<!-- File Message -->
+					<div *ngIf="message.messageType === 'file'" class="file-message">
+						<div class="file-info" (click)="downloadAttachment(message)">
+							<mat-icon class="file-icon">{{ getFileIcon(message.messageType) }}</mat-icon>
+							<div class="file-details">
+								<span class="file-name">{{ message.attachmentName }}</span>
+								<span class="file-action">Click to download</span>
+							</div>
+						</div>
+						<p *ngIf="message.messageContent !== 'File: ' + message.attachmentName">
+							{{ message.messageContent }}
+						</p>
+					</div>
+
+					<!-- Message Footer for own messages -->
+					<div class="message-footer" *ngIf="isMyMessage(message)">
+						<span class="message-time">{{ formatMessageTime(message.sentDate) }}</span>
+						<mat-icon class="read-status" [class.read]="message.isRead"
+							matTooltip="{{ message.isRead ? 'Read' : 'Delivered' }}">
+							{{ message.isRead ? 'done_all' : 'done' }}
+						</mat-icon>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Drag and Drop Overlay -->
+		<div *ngIf="isDragOver" class="drag-overlay">
+			<div class="drag-content">
+				<mat-icon class="drag-icon">cloud_upload</mat-icon>
+				<h3>Drop files here to send</h3>
+				<p>Images, documents, and other files are supported</p>
+			</div>
+		</div>
+
+		<!-- Empty State -->
+		<div *ngIf="!isLoading && messages.length === 0" class="empty-state">
+			<mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
+			<h3>No messages yet</h3>
+			<p>Start the conversation by sending a message below</p>
+		</div>
+	</div>
+
+	<!-- File Preview Section -->
+	<div *ngIf="selectedFiles.length > 0" class="file-preview-section">
+		<div class="file-preview-header">
+			<h4>Files to send ({{ selectedFiles.length }})</h4>
+			<button mat-icon-button (click)="selectedFiles = []" matTooltip="Clear all files">
+				<mat-icon>clear</mat-icon>
+			</button>
+		</div>
+		<div class="file-preview-list">
+			<div *ngFor="let file of selectedFiles; let i = index" class="file-preview-item">
+				<mat-icon class="file-preview-icon">
+					{{ file.type.startsWith('image/') ? 'image' : 'attach_file' }}
+				</mat-icon>
+				<div class="file-preview-info">
+					<span class="file-preview-name">{{ file.name }}</span>
+					<span class="file-preview-size">{{ (file.size / 1024 / 1024).toFixed(2) }} MB</span>
+				</div>
+				<button mat-icon-button (click)="removeFile(i)" matTooltip="Remove file">
+					<mat-icon>close</mat-icon>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Message Input -->
+	<div class="message-input-container">
+		<div class="input-actions">
+			<button mat-icon-button (click)="openFileDialog()" matTooltip="Attach files">
+				<mat-icon>attach_file</mat-icon>
+			</button>
+			<input type="file" #fileInput (change)="onFileSelected($event)" multiple style="display: none;"
+				[accept]="allowedFileTypes.join(',')">
+		</div>
+
+		<mat-form-field class="message-input" appearance="outline">
+			<mat-label>Type your message...</mat-label>
+			<textarea matInput [(ngModel)]="newMessage" (input)="onTyping()" (keydown)="onKeyDown($event)"
+				placeholder="Type your secure message here..." rows="1" cdkTextareaAutosize cdkAutosizeMinRows="1"
+				cdkAutosizeMaxRows="4" [disabled]="!conversation || !signalRService.isConnected()">
+      </textarea>
+		</mat-form-field>
+
+		<div class="send-actions">
+			<button mat-icon-button (click)="sendMessage()"
+				[disabled]="(!newMessage.trim() && selectedFiles.length === 0) || !conversation || !signalRService.isConnected()"
+				matTooltip="Send message" class="send-button">
+				<mat-icon>send</mat-icon>
+			</button>
+		</div>
+	</div>
+</div>

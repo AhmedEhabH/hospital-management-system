@@ -63,8 +63,16 @@
 										</div>
 
 										<div class="conversation-preview">
-											<p class="last-message">{{ conversation.lastMessage?.message || 'No messages
-												yet' }}</p>
+											<!-- FIXED: Change message.message to message.messageContent -->
+											<p class="last-message">
+												<span
+													*ngIf="conversation.lastMessage && conversation.lastMessage.senderName"
+													class="sender-name">
+													{{ conversation.lastMessage.senderName }}:
+												</span>
+												{{ conversation.lastMessage?.messageContent || 'No messages yet' }}
+											</p>
+
 											<mat-chip *ngIf="conversation.unreadCount > 0" class="unread-badge">
 												{{ conversation.unreadCount }}
 											</mat-chip>
@@ -78,47 +86,8 @@
 
 				<!-- Chat Window -->
 				<div class="chat-panel">
-					<mat-card class="chat-card medical-card" *ngIf="activeConversation">
-						<mat-card-header>
-							<mat-icon mat-card-avatar>chat_bubble</mat-icon>
-							<mat-card-title>{{ activeConversation.title || 'Medical Consultation' }}</mat-card-title>
-							<mat-card-subtitle>{{ activeConversation.participants.length }}
-								participants</mat-card-subtitle>
-						</mat-card-header>
-
-						<mat-card-content class="chat-content">
-							<!-- Messages -->
-							<div class="messages-container">
-								<div *ngFor="let message of messages" class="message-item"
-									[class.my-message]="isMyMessage(message)"
-									[class.other-message]="!isMyMessage(message)">
-
-									<div class="message-bubble">
-										<div class="message-header">
-											<span class="sender-name">{{ message.senderName }}</span>
-											<span class="message-time">{{ formatMessageTime(message.timestamp) }}</span>
-										</div>
-										<div class="message-content">
-											<p>{{ message.message }}</p>
-										</div>
-									</div>
-								</div>
-							</div>
-
-							<!-- Message Input -->
-							<div class="message-input-container">
-								<mat-form-field class="message-input" appearance="outline">
-									<mat-label>Type your message...</mat-label>
-									<input matInput [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
-										placeholder="Type your secure message here..." [disabled]="!isConnected">
-									<button mat-icon-button matSuffix (click)="sendMessage()"
-										[disabled]="!newMessage.trim() || !isConnected">
-										<mat-icon>send</mat-icon>
-									</button>
-								</mat-form-field>
-							</div>
-						</mat-card-content>
-					</mat-card>
+					<app-chat-window *ngIf="activeConversation" [conversation]="activeConversation">
+					</app-chat-window>
 
 					<!-- No Conversation Selected -->
 					<div *ngIf="!activeConversation" class="no-conversation">

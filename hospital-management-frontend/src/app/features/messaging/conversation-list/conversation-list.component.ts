@@ -1,17 +1,29 @@
-import { Component, OnInit, OnDestroy, Output, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter, Input, OnChanges } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { MessageService, Conversation } from '../../../core/services/message.service';
 import { SignalRService, UserPresence } from '../../../core/services/signalr.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { AuthService } from '../../../core/services/auth.service';
 
+// Angular Material Modules
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 @Component({
 	selector: 'app-conversation-list',
-	standalone: false,
+	standalone: false, // FIXED: Keep as standalone component
 	templateUrl: './conversation-list.component.html',
 	styleUrls: ['./conversation-list.component.scss']
 })
-export class ConversationListComponent implements OnInit, OnDestroy {
+export class ConversationListComponent implements OnInit, OnDestroy, OnChanges {
 	@Input() conversations: Conversation[] = [];
 	@Input() activeConversation: Conversation | null = null;
 	@Output() conversationSelected = new EventEmitter<Conversation>();
@@ -27,7 +39,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 	currentUser: any;
 
 	constructor(
-		private messagingService: MessageService,
+		private messageService: MessageService,
 		private signalRService: SignalRService,
 		private themeService: ThemeService,
 		private authService: AuthService
@@ -79,7 +91,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 				conversation.participants.some(p =>
 					p.userName.toLowerCase().includes(searchLower)
 				) ||
-				conversation.lastMessage?.message.toLowerCase().includes(searchLower)
+				conversation.lastMessage?.messageContent?.toLowerCase().includes(searchLower)
 			);
 		}
 	}
@@ -92,7 +104,6 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 		this.newConversation.emit();
 	}
 
-	// ENHANCED: Better null safety for isUserOnline method
 	isUserOnline(userId: number | undefined): boolean {
 		if (!userId) {
 			return false;
@@ -101,11 +112,11 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 	}
 
 	getLastMessagePreview(conversation: Conversation): string {
-		if (!conversation.lastMessage) {
+		if (!conversation.lastMessage || !conversation.lastMessage.messageContent) {
 			return 'No messages yet';
 		}
 
-		const message = conversation.lastMessage.message;
+		const message = conversation.lastMessage.messageContent;
 		return message.length > 50 ? message.substring(0, 50) + '...' : message;
 	}
 

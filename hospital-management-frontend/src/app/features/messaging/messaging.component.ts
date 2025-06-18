@@ -1,14 +1,14 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { SignalRService, ChatMessage, Notification } from '../../core/services/signalr.service';
-import { MessageService, Conversation } from '../../core/services/message.service';
+import { MessageService, Message, Conversation } from '../../core/services/message.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
 	selector: 'app-messaging',
-	standalone: false,
+	standalone:false,
 	templateUrl: './messaging.component.html',
 	styleUrls: ['./messaging.component.scss']
 })
@@ -23,7 +23,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 	// Messaging Data
 	conversations: Conversation[] = [];
 	activeConversation: Conversation | null = null;
-	messages: ChatMessage[] = [];
+	messages: Message[] = [];
 	newMessage = '';
 
 	// Real-time Data
@@ -33,7 +33,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 	constructor(
 		private signalRService: SignalRService,
-		private messagingService: MessageService,
+		private messageService: MessageService,
 		private authService: AuthService,
 		private themeService: ThemeService,
 		private snackBar: MatSnackBar
@@ -66,35 +66,31 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 	private async initializeSignalR(): Promise<void> {
 		try {
-			// Request notification permission
 			await this.signalRService.requestNotificationPermission();
-
-			// Start SignalR connection
 			await this.signalRService.startConnection();
 			this.isConnected = true;
 
-			// Subscribe to connection state
 			this.signalRService.connectionState$
 				.pipe(takeUntil(this.destroy$))
 				.subscribe(state => {
 					this.isConnected = state === 'Connected';
 				});
 
-			// Subscribe to real-time messages
+			// FIXED: Handle ChatMessage and convert to Message
 			this.signalRService.messageReceived$
 				.pipe(takeUntil(this.destroy$))
-				.subscribe((message: ChatMessage) => {
+				.subscribe((chatMessage: ChatMessage) => {
+					// Convert ChatMessage to Message for consistency
+					const message = this.messageService.convertChatMessageToMessage(chatMessage);
 					this.handleIncomingMessage(message);
 				});
 
-			// Subscribe to notifications
 			this.signalRService.notificationReceived$
 				.pipe(takeUntil(this.destroy$))
 				.subscribe((notification: Notification) => {
 					this.handleNotification(notification);
 				});
 
-			// Subscribe to online users
 			this.signalRService.onlineUsers$
 				.pipe(takeUntil(this.destroy$))
 				.subscribe(users => {
@@ -110,7 +106,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 	private loadConversations(): void {
 		this.isLoading = true;
 
-		this.messagingService.getConversations()
+		this.messageService.getConversations()
 			.pipe(takeUntil(this.destroy$))
 			.subscribe({
 				next: (conversations: Conversation[]) => {
@@ -130,19 +126,15 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		this.unreadCount = this.conversations.reduce((total, conv) => total + conv.unreadCount, 0);
 	}
 
-	// Message handling methods
-	private handleIncomingMessage(message: ChatMessage): void {
-		// Add message to current conversation if it matches
+	// FIXED: Handle Message type instead of ChatMessage
+	private handleIncomingMessage(message: Message): void {
 		if (this.activeConversation && message.conversationId === this.activeConversation.id) {
 			this.messages.push(message);
-			// Mark as read if conversation is active
-			this.markMessageAsRead(message.id);
+			this.markMessageAsRead(message.id.toString());
 		}
 
-		// Update conversation list
-		this.messagingService.updateConversationLastMessage(message.conversationId, message);
+		this.messageService.updateConversationLastMessage(message.conversationId!, message);
 
-		// Show notification if not in active conversation
 		if (!this.activeConversation || message.conversationId !== this.activeConversation.id) {
 			this.showMessageNotification(message);
 		}
@@ -151,13 +143,12 @@ export class MessagingComponent implements OnInit, OnDestroy {
 	private handleNotification(notification: Notification): void {
 		this.notifications.unshift(notification);
 
-		// Show snackbar for important notifications
 		if (notification.priority === 'high' || notification.priority === 'critical') {
 			this.showNotificationSnackbar(notification);
 		}
 	}
 
-	// FIXED: Correct sendMessage method call with proper arguments
+	// FIXED: Update sendMessage method with proper type handling
 	async sendMessage(): Promise<void> {
 		if (!this.newMessage.trim() || !this.activeConversation || !this.isConnected) {
 			return;
@@ -167,28 +158,29 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		this.newMessage = '';
 
 		try {
-			// FIXED: Use messagingService.sendMessage with correct parameters
-			this.messagingService.sendMessage(
+			// FIXED: Handle Message type properly
+			this.messageService.sendMessage(
 				this.activeConversation.id,
 				messageText,
 				'text'
 			).pipe(takeUntil(this.destroy$))
 				.subscribe({
-					next: (sentMessage: ChatMessage) => {
-						// FIXED: Handle ChatMessage type correctly
+					next: (sentMessage: Message) => {
+						// FIXED: Use Message type directly
 						this.messages.push(sentMessage);
-						this.messagingService.updateConversationLastMessage(this.activeConversation!.id, sentMessage);
+						this.messageService.updateConversationLastMessage(this.activeConversation!.id, sentMessage);
 
-						// Send via SignalR for real-time delivery
+						// Convert to ChatMessage for SignalR
+						const chatMessage = this.messageService.convertMessageToChatMessage(sentMessage);
 						this.signalRService.sendMessage({
-							senderId: sentMessage.senderId,
-							senderName: sentMessage.senderName,
-							receiverId: sentMessage.receiverId,
-							receiverName: sentMessage.receiverName,
-							message: sentMessage.message,
-							conversationId: sentMessage.conversationId,
-							messageType: sentMessage.messageType,
-							isRead: sentMessage.isRead
+							senderId: chatMessage.senderId,
+							senderName: chatMessage.senderName,
+							receiverId: chatMessage.receiverId,
+							receiverName: chatMessage.receiverName,
+							message: chatMessage.message,
+							conversationId: chatMessage.conversationId,
+							messageType: chatMessage.messageType,
+							isRead: chatMessage.isRead
 						});
 					},
 					error: (error: any) => {
@@ -205,18 +197,19 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 	selectConversation(conversation: Conversation): void {
 		this.activeConversation = conversation;
-		this.messagingService.setActiveConversation(conversation);
+		this.messageService.setActiveConversation(conversation);
 		this.loadMessages(conversation.id);
 
-		// Reset unread count for this conversation
-		this.messagingService.resetUnreadCount(conversation.id);
+		// FIXED: Use correct method name
+		this.messageService.resetUnreadCount(conversation.id);
 	}
 
 	private loadMessages(conversationId: string): void {
-		this.messagingService.getMessages(conversationId)
+		// FIXED: Handle Message[] type properly
+		this.messageService.getMessages(conversationId)
 			.pipe(takeUntil(this.destroy$))
 			.subscribe({
-				next: (messages: ChatMessage[]) => {
+				next: (messages: Message[]) => {
 					this.messages = messages;
 					this.markAllMessagesAsRead();
 				},
@@ -232,10 +225,11 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 		const unreadMessageIds = this.messages
 			.filter(msg => !msg.isRead && msg.receiverId === this.currentUser?.id)
-			.map(msg => msg.id);
+			.map(msg => msg.id.toString());
 
 		if (unreadMessageIds.length > 0) {
-			this.messagingService.markMessagesAsRead(this.activeConversation.id, unreadMessageIds)
+			// FIXED: Use correct method name
+			this.messageService.markMessagesAsRead(this.activeConversation.id, unreadMessageIds)
 				.pipe(takeUntil(this.destroy$))
 				.subscribe();
 		}
@@ -245,7 +239,6 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		this.signalRService.markMessageAsRead(messageId);
 	}
 
-	// File handling methods
 	onFileSelected(event: any): void {
 		const files = event.target.files;
 		if (files && files.length > 0) {
@@ -255,20 +248,19 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 	private uploadFiles(files: File[]): void {
 		files.forEach(file => {
-			this.messagingService.uploadAttachment(file)
+			this.messageService.uploadAttachment(file)
 				.pipe(takeUntil(this.destroy$))
 				.subscribe({
-					next: (attachment:any) => {
-						// Send file message
+					next: (attachment) => {
 						if (this.activeConversation) {
-							this.messagingService.sendMessage(
+							this.messageService.sendMessage(
 								this.activeConversation.id,
 								`File: ${attachment.fileName}`,
 								'file'
 							).subscribe();
 						}
 					},
-					error: (error:any) => {
+					error: (error) => {
 						console.error('Error uploading file:', error);
 						this.showErrorMessage('Failed to upload file');
 					}
@@ -276,10 +268,10 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		});
 	}
 
-	// Notification methods
-	private showMessageNotification(message: ChatMessage): void {
+	// FIXED: Update notification methods to use Message type
+	private showMessageNotification(message: Message): void {
 		this.snackBar.open(
-			`New message from ${message.senderName}: ${message.message}`,
+			`New message from ${message.senderName}: ${message.messageContent}`,
 			'View',
 			{
 				duration: 5000,
@@ -332,7 +324,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	isMyMessage(message: ChatMessage): boolean {
+	isMyMessage(message: Message): boolean {
 		return message.senderId === this.currentUser?.id;
 	}
 

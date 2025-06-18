@@ -1,0 +1,711 @@
+.chat-window-container {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	background: var(--background-color);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: 0 8px 32px var(--shadow-color);
+
+	.chat-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 1rem 1.5rem;
+		background: var(--surface-color);
+		border-bottom: 1px solid var(--border-color);
+		position: sticky;
+		top: 0;
+		z-index: 10;
+
+		.participant-info {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+
+			.participant-avatar {
+				width: 3rem;
+				height: 3rem;
+				background: var(--primary-color);
+				border-radius: 50%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				color: white;
+
+				mat-icon {
+					font-size: 1.5rem;
+				}
+			}
+
+			.participant-details {
+				.participant-name {
+					margin: 0;
+					font-size: 1.125rem;
+					font-weight: 600;
+					color: var(--text-primary);
+				}
+
+				.participant-status {
+					margin: 0.25rem 0 0;
+					font-size: 0.875rem;
+					color: var(--text-secondary);
+
+					.typing-indicator {
+						color: var(--primary-color);
+						font-style: italic;
+						animation: pulse 1.5s infinite;
+					}
+				}
+			}
+		}
+
+		.chat-actions {
+			display: flex;
+			gap: 0.5rem;
+
+			button {
+				color: var(--text-secondary);
+				transition: all 0.3s ease;
+
+				&:hover {
+					color: var(--primary-color);
+					transform: scale(1.1);
+				}
+			}
+		}
+	}
+
+	.messages-container {
+		flex: 1;
+		overflow-y: auto;
+		position: relative;
+		background: var(--background-color);
+
+		&.drag-over {
+			background: rgba(var(--primary-color), 0.05);
+		}
+
+		.loading-state {
+			padding: 2rem;
+			text-align: center;
+
+			p {
+				margin-top: 1rem;
+				color: var(--text-secondary);
+			}
+		}
+
+		.messages-list {
+			padding: 1rem;
+			min-height: 100%;
+
+			.message-wrapper {
+				margin-bottom: 1rem;
+				display: flex;
+
+				&.my-message {
+					justify-content: flex-end;
+
+					.message-bubble {
+						background: var(--primary-color);
+						color: white;
+						border-radius: 18px 18px 4px 18px;
+						max-width: 70%;
+					}
+				}
+
+				&.other-message {
+					justify-content: flex-start;
+
+					.message-bubble {
+						background: var(--surface-color);
+						border: 1px solid var(--border-color);
+						border-radius: 18px 18px 18px 4px;
+						max-width: 70%;
+					}
+				}
+
+				.message-bubble {
+					padding: 0.75rem 1rem;
+					box-shadow: 0 2px 8px var(--shadow-color);
+					transition: all 0.3s ease;
+					word-wrap: break-word;
+
+					&:hover {
+						transform: translateY(-1px);
+						box-shadow: 0 4px 12px var(--shadow-color);
+					}
+
+					.message-header {
+						display: flex;
+						justify-content: space-between;
+						align-items: center;
+						margin-bottom: 0.5rem;
+						font-size: 0.75rem;
+
+						.sender-name {
+							font-weight: 600;
+							color: var(--primary-color);
+						}
+
+						.message-time {
+							opacity: 0.7;
+						}
+					}
+
+					.message-content {
+						p {
+							margin: 0;
+							line-height: 1.4;
+							white-space: pre-wrap;
+						}
+					}
+
+					.image-message {
+						.message-image {
+							max-width: 100%;
+							max-height: 300px;
+							border-radius: 8px;
+							cursor: pointer;
+							transition: all 0.3s ease;
+
+							&:hover {
+								transform: scale(1.02);
+							}
+						}
+
+						p {
+							margin: 0.5rem 0 0;
+							font-size: 0.875rem;
+						}
+					}
+
+					.file-message {
+						.file-info {
+							display: flex;
+							align-items: center;
+							gap: 0.75rem;
+							padding: 0.75rem;
+							background: rgba(var(--primary-color), 0.1);
+							border-radius: 8px;
+							cursor: pointer;
+							transition: all 0.3s ease;
+
+							&:hover {
+								background: rgba(var(--primary-color), 0.15);
+							}
+
+							.file-icon {
+								color: var(--primary-color);
+								font-size: 1.5rem;
+							}
+
+							.file-details {
+								flex: 1;
+
+								.file-name {
+									display: block;
+									font-weight: 500;
+									color: var(--text-primary);
+								}
+
+								.file-action {
+									display: block;
+									font-size: 0.75rem;
+									color: var(--text-secondary);
+								}
+							}
+						}
+
+						p {
+							margin: 0.5rem 0 0;
+							font-size: 0.875rem;
+						}
+					}
+
+					.message-footer {
+						display: flex;
+						justify-content: flex-end;
+						align-items: center;
+						gap: 0.5rem;
+						margin-top: 0.5rem;
+						font-size: 0.75rem;
+
+						.message-time {
+							opacity: 0.7;
+						}
+
+						.read-status {
+							font-size: 1rem;
+							opacity: 0.7;
+
+							&.read {
+								color: var(--medical-blue);
+								opacity: 1;
+							}
+						}
+					}
+				}
+			}
+		}
+
+		.drag-overlay {
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(var(--primary-color), 0.1);
+			border: 2px dashed var(--primary-color);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 20;
+
+			.drag-content {
+				text-align: center;
+				color: var(--primary-color);
+
+				.drag-icon {
+					font-size: 4rem;
+					width: 4rem;
+					height: 4rem;
+					margin-bottom: 1rem;
+				}
+
+				h3 {
+					margin: 0 0 0.5rem;
+					font-size: 1.5rem;
+					font-weight: 600;
+				}
+
+				p {
+					margin: 0;
+					font-size: 1rem;
+					opacity: 0.8;
+				}
+			}
+		}
+
+		.empty-state {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			height: 100%;
+			text-align: center;
+			color: var(--text-secondary);
+
+			.empty-icon {
+				font-size: 4rem;
+				width: 4rem;
+				height: 4rem;
+				margin-bottom: 1rem;
+				opacity: 0.5;
+			}
+
+			h3 {
+				margin: 0 0 1rem;
+				color: var(--text-primary);
+				font-size: 1.25rem;
+			}
+
+			p {
+				margin: 0;
+				font-size: 1rem;
+			}
+		}
+	}
+
+	.file-preview-section {
+		background: var(--surface-color);
+		border-top: 1px solid var(--border-color);
+		padding: 1rem;
+
+		.file-preview-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 0.75rem;
+
+			h4 {
+				margin: 0;
+				font-size: 0.875rem;
+				font-weight: 600;
+				color: var(--text-primary);
+			}
+		}
+
+		.file-preview-list {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.75rem;
+
+			.file-preview-item {
+				display: flex;
+				align-items: center;
+				gap: 0.5rem;
+				padding: 0.5rem;
+				background: var(--background-color);
+				border: 1px solid var(--border-color);
+				border-radius: 8px;
+				font-size: 0.875rem;
+
+				.file-preview-icon {
+					color: var(--primary-color);
+				}
+
+				.file-preview-info {
+					display: flex;
+					flex-direction: column;
+
+					.file-preview-name {
+						font-weight: 500;
+						color: var(--text-primary);
+					}
+
+					.file-preview-size {
+						font-size: 0.75rem;
+						color: var(--text-secondary);
+					}
+				}
+			}
+		}
+	}
+
+	.message-input-container {
+		display: flex;
+		align-items: flex-end;
+		gap: 0.75rem;
+		padding: 1rem;
+		background: var(--surface-color);
+		border-top: 1px solid var(--border-color);
+
+		.input-actions {
+			display: flex;
+			align-items: center;
+		}
+
+		.message-input {
+			flex: 1;
+
+			::ng-deep .mat-mdc-form-field-wrapper {
+				padding-bottom: 0;
+			}
+
+			::ng-deep .mat-mdc-text-field-wrapper {
+				border-radius: 24px;
+			}
+		}
+
+		.send-actions {
+			.send-button {
+				background: var(--primary-color);
+				color: white;
+				transition: all 0.3s ease;
+
+				&:hover:not(:disabled) {
+					background: var(--primary-dark);
+					transform: scale(1.1);
+				}
+
+				&:disabled {
+					background: var(--border-color);
+					color: var(--text-secondary);
+				}
+			}
+		}
+	}
+}
+
+// Dark theme adjustments
+.dark-theme {
+	.chat-window-container {
+		.message-wrapper {
+			&.my-message {
+				.message-bubble {
+					background: var(--primary-color);
+				}
+			}
+
+			&.other-message {
+				.message-bubble {
+					background: var(--surface-color);
+					border-color: var(--border-color);
+				}
+			}
+		}
+	}
+}
+
+// Responsive design
+@media (max-width: 768px) {
+	.chat-window-container {
+		.chat-header {
+			padding: 0.75rem 1rem;
+
+			.participant-info {
+				.participant-avatar {
+					width: 2.5rem;
+					height: 2.5rem;
+
+					mat-icon {
+						font-size: 1.25rem;
+					}
+				}
+
+				.participant-details {
+					.participant-name {
+						font-size: 1rem;
+					}
+
+					.participant-status {
+						font-size: 0.8125rem;
+					}
+				}
+			}
+		}
+
+		.messages-list {
+			padding: 0.75rem;
+
+			.message-wrapper {
+				.message-bubble {
+					max-width: 85%;
+					padding: 0.625rem 0.875rem;
+				}
+			}
+		}
+
+		.message-input-container {
+			padding: 0.75rem;
+			gap: 0.5rem;
+		}
+	}
+}
+
+// Animations
+@keyframes pulse {
+
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.5;
+	}
+}
+
+// Remove the empty .message-wrapper rule and replace with:
+.message-wrapper {
+	// Performance optimization for Angular trackBy
+	contain: layout style paint;
+
+	&:last-child {
+		margin-bottom: 0;
+	}
+
+	// Smooth entrance animation
+	animation: messageSlideIn 0.3s ease-out;
+}
+
+@keyframes messageSlideIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+// Enhanced message context menu
+.message-context-menu {
+	position: absolute;
+	background: var(--surface-color);
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	box-shadow: 0 4px 12px var(--shadow-color);
+	z-index: 1000;
+	min-width: 150px;
+
+	.menu-item {
+		padding: 0.75rem 1rem;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		transition: background-color 0.2s ease;
+
+		&:hover {
+			background: rgba(var(--primary-color), 0.1);
+		}
+
+		&:first-child {
+			border-radius: 8px 8px 0 0;
+		}
+
+		&:last-child {
+			border-radius: 0 0 8px 8px;
+		}
+
+		mat-icon {
+			font-size: 1rem;
+			width: 1rem;
+			height: 1rem;
+		}
+	}
+}
+
+// Message status indicators
+.message-status {
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+	font-size: 0.75rem;
+	color: var(--text-secondary);
+
+	&.sending {
+		color: var(--medical-orange);
+	}
+
+	&.sent {
+		color: var(--medical-blue);
+	}
+
+	&.delivered {
+		color: var(--medical-green);
+	}
+
+	&.read {
+		color: var(--medical-green);
+		font-weight: 500;
+	}
+
+	&.failed {
+		color: var(--medical-red);
+	}
+}
+
+// Enhanced file preview styling
+.file-preview-enhanced {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 1rem;
+	background: rgba(var(--primary-color), 0.05);
+	border: 1px solid rgba(var(--primary-color), 0.2);
+	border-radius: 12px;
+	transition: all 0.3s ease;
+
+	&:hover {
+		background: rgba(var(--primary-color), 0.1);
+		transform: translateY(-1px);
+	}
+
+	.file-icon-enhanced {
+		width: 2.5rem;
+		height: 2.5rem;
+		background: var(--primary-color);
+		border-radius: 8px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		color: white;
+
+		mat-icon {
+			font-size: 1.25rem;
+		}
+	}
+
+	.file-details-enhanced {
+		flex: 1;
+		min-width: 0;
+
+		.file-name-enhanced {
+			font-weight: 500;
+			color: var(--text-primary);
+			margin-bottom: 0.25rem;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.file-meta-enhanced {
+			display: flex;
+			gap: 1rem;
+			font-size: 0.75rem;
+			color: var(--text-secondary);
+
+			.file-size {
+				font-weight: 500;
+			}
+
+			.file-type {
+				text-transform: uppercase;
+			}
+		}
+	}
+
+	.file-actions-enhanced {
+		display: flex;
+		gap: 0.5rem;
+
+		button {
+			min-width: auto;
+			width: 2rem;
+			height: 2rem;
+
+			mat-icon {
+				font-size: 1rem;
+			}
+		}
+	}
+}
+
+// Medical-themed message styling
+.medical-message {
+	border-left: 4px solid var(--medical-blue);
+	background: rgba(var(--medical-blue), 0.05);
+
+	&.urgent {
+		border-left-color: var(--medical-red);
+		background: rgba(var(--medical-red), 0.05);
+	}
+
+	&.prescription {
+		border-left-color: var(--medical-green);
+		background: rgba(var(--medical-green), 0.05);
+	}
+
+	&.lab-result {
+		border-left-color: var(--medical-purple);
+		background: rgba(var(--medical-purple), 0.05);
+	}
+}
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+	.message-wrapper {
+		animation: none;
+	}
+
+	* {
+		transition: none !important;
+	}
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+	.message-bubble {
+		border: 2px solid var(--text-primary);
+	}
+
+	.file-preview-enhanced {
+		border: 2px solid var(--primary-color);
+	}
+}

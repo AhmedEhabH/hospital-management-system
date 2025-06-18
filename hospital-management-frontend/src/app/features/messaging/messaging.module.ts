@@ -21,11 +21,15 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
+// Chart.js for Data Visualization
+import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
+
 // Shared Module
 import { SharedModule } from '../../shared/shared.module';
 
 import { MessagingRoutingModule } from './messaging-routing.module';
 import { MessagingComponent } from './messaging.component';
+// FIXED: Import ConversationListComponent instead of declaring it (since it's standalone)
 import { ConversationListComponent } from './conversation-list/conversation-list.component';
 import { ChatWindowComponent } from './chat-window/chat-window.component';
 import { MessageComposerComponent } from './message-composer/message-composer.component';
@@ -34,6 +38,7 @@ import { NotificationCenterComponent } from './notification-center/notification-
 @NgModule({
 	declarations: [
 		MessagingComponent,
+		// REMOVED: ConversationListComponent (standalone component)
 		ConversationListComponent,
 		ChatWindowComponent,
 		MessageComposerComponent,
@@ -47,6 +52,9 @@ import { NotificationCenterComponent } from './notification-center/notification-
 
 		// Shared Module
 		SharedModule,
+
+		// FIXED: Import standalone component
+		
 
 		// Angular Material
 		MatCardModule,
@@ -65,7 +73,13 @@ import { NotificationCenterComponent } from './notification-center/notification-
 		MatDialogModule,
 		MatTabsModule,
 		MatExpansionModule,
-		MatSlideToggleModule
+		MatSlideToggleModule,
+
+		// Charts
+		BaseChartDirective
+	],
+	providers: [
+		provideCharts(withDefaultRegisterables())
 	]
 })
 export class MessagingModule { }

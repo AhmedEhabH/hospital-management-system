@@ -36,7 +36,7 @@
 				<mat-icon [class]="'avatar-' + conversation.conversationType">
 					{{ getConversationIcon(conversation) }}
 				</mat-icon>
-				<!-- FIXED: Added null safety check for participants array and userId -->
+				<!-- FIXED: Enhanced null safety check for participants array and userId -->
 				<div *ngIf="conversation.conversationType === 'private' && 
                     conversation.participants && 
                     conversation.participants.length > 0 &&
@@ -57,7 +57,7 @@
 
 				<div class="conversation-preview">
 					<p class="last-message">
-						<!-- FIXED: Added null safety check for lastMessage and senderName -->
+						<!-- FIXED: Line 62 - Enhanced null safety check for lastMessage and senderName -->
 						<span *ngIf="conversation.lastMessage && conversation.lastMessage.senderName"
 							class="sender-name">
 							{{ conversation.lastMessage.senderName }}:
