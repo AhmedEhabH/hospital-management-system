@@ -17,7 +17,6 @@ import { MatListModule } from '@angular/material/list';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -27,13 +26,23 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatStepperModule } from '@angular/material/stepper';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
-// PrimeNG Modules
-import { TimelineModule } from 'primeng/timeline';
+// PrimeNG Modules for Advanced Data Tables
+import { TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
+import { ChartModule } from 'primeng/chart';
+import { ToastModule } from 'primeng/toast';
+import { DropdownModule } from 'primeng/dropdown';
+import { CalendarModule } from 'primeng/calendar';
+import { TagModule } from 'primeng/tag';
+import { ProgressBarModule } from 'primeng/progressbar';
 
-// Chart.js
+// Chart.js for Data Visualization
 import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 // Shared Module
@@ -41,16 +50,20 @@ import { SharedModule } from '../../shared/shared.module';
 
 import { LabReportsRoutingModule } from './lab-reports-routing.module';
 import { LabReportsComponent } from './lab-reports.component';
-import { ViewerComponent } from './viewer/viewer.component';
-import { TrendsComponent } from './trends/trends.component';
+import { LabReportViewerComponent } from './lab-report-viewer/lab-report-viewer.component';
+import { LabTrendsAnalysisComponent } from './lab-trends-analysis/lab-trends-analysis.component';
 import { CriticalAlertsComponent } from './critical-alerts/critical-alerts.component';
+import { LabReportFormComponent } from './lab-report-form/lab-report-form.component';
+import { LabComparisonComponent } from './lab-comparison/lab-comparison.component';
 
 @NgModule({
 	declarations: [
 		LabReportsComponent,
-		ViewerComponent,
-		TrendsComponent,
+		LabReportViewerComponent,
+		LabTrendsAnalysisComponent,
 		CriticalAlertsComponent,
+		LabReportFormComponent,
+		LabComparisonComponent
 	],
 	imports: [
 		CommonModule,
@@ -76,7 +89,6 @@ import { CriticalAlertsComponent } from './critical-alerts/critical-alerts.compo
 		MatBadgeModule,
 		MatMenuModule,
 		MatToolbarModule,
-		MatSidenavModule,
 		MatFormFieldModule,
 		MatInputModule,
 		MatSelectModule,
@@ -86,11 +98,21 @@ import { CriticalAlertsComponent } from './critical-alerts/critical-alerts.compo
 		MatSnackBarModule,
 		MatExpansionModule,
 		MatStepperModule,
+		MatSlideToggleModule,
+		MatCheckboxModule,
+		MatRadioModule,
+		MatTooltipModule,
 
 		// PrimeNG
-		TimelineModule,
+		TableModule,
 		CardModule,
 		ButtonModule,
+		ChartModule,
+		ToastModule,
+		DropdownModule,
+		CalendarModule,
+		TagModule,
+		ProgressBarModule,
 
 		// Charts
 		BaseChartDirective
