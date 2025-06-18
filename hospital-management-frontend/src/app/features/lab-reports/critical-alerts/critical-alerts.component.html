@@ -1,1 +1,178 @@
-<div>Critical Alerts Component</div>
+<div class="critical-alerts-container" [class.dark-theme]="isDarkMode">
+	<!-- Header Section -->
+	<div class="alerts-header">
+		<div class="header-content">
+			<h3>
+				<mat-icon>priority_high</mat-icon>
+				Critical Lab Alerts
+			</h3>
+			<p class="header-subtitle">Real-time monitoring of critical lab values</p>
+		</div>
+
+		<!-- Alert Controls -->
+		<div class="alert-controls">
+			<mat-slide-toggle [(ngModel)]="showAcknowledged" (change)="applyFilters()">
+				Show Acknowledged
+			</mat-slide-toggle>
+
+			<button mat-raised-button color="warn" (click)="acknowledgeAll()" [disabled]="filteredAlerts.length === 0">
+				<mat-icon>check_circle</mat-icon>
+				Acknowledge All
+			</button>
+		</div>
+	</div>
+
+	<!-- Loading State -->
+	<div *ngIf="isLoading" class="loading-container">
+		<mat-progress-bar mode="indeterminate"></mat-progress-bar>
+		<p>Loading critical alerts...</p>
+	</div>
+
+	<!-- Alert Statistics -->
+	<div *ngIf="!isLoading" class="alert-stats">
+		<div class="stat-card critical">
+			<mat-icon>error</mat-icon>
+			<div class="stat-info">
+				<span class="stat-number">{{ alertStats.criticalAlerts }}</span>
+				<span class="stat-label">Critical</span>
+			</div>
+		</div>
+
+		<div class="stat-card new">
+			<mat-icon>notification_important</mat-icon>
+			<div class="stat-info">
+				<span class="stat-number">{{ alertStats.newAlerts }}</span>
+				<span class="stat-label">New Alerts</span>
+			</div>
+		</div>
+
+		<div class="stat-card acknowledged">
+			<mat-icon>check_circle</mat-icon>
+			<div class="stat-info">
+				<span class="stat-number">{{ alertStats.acknowledgedAlerts }}</span>
+				<span class="stat-label">Acknowledged</span>
+			</div>
+		</div>
+
+		<div class="stat-card total">
+			<mat-icon>assessment</mat-icon>
+			<div class="stat-info">
+				<span class="stat-number">{{ alertStats.totalAlerts }}</span>
+				<span class="stat-label">Total</span>
+			</div>
+		</div>
+	</div>
+
+	<!-- Filter Section -->
+	<div class="filter-section">
+		<mat-card class="filter-card medical-card">
+			<mat-card-content>
+				<div class="filter-controls">
+					<mat-form-field appearance="outline">
+						<mat-label>Severity</mat-label>
+						<mat-select [(value)]="selectedSeverity" (selectionChange)="applyFilters()">
+							<mat-option *ngFor="let severity of severityOptions" [value]="severity">
+								{{ severity }}
+							</mat-option>
+						</mat-select>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Status</mat-label>
+						<mat-select [(value)]="selectedStatus" (selectionChange)="applyFilters()">
+							<mat-option *ngFor="let status of statusOptions" [value]="status">
+								{{ status }}
+							</mat-option>
+						</mat-select>
+					</mat-form-field>
+				</div>
+			</mat-card-content>
+		</mat-card>
+	</div>
+
+	<!-- Critical Alerts List -->
+	<div class="alerts-content">
+		<div class="alerts-list">
+			<div *ngFor="let alert of filteredAlerts" class="alert-item medical-card"
+				[class]="getSeverityClass(alert.severity)" [class.urgent]="isUrgent(alert)"
+				[class.acknowledged]="alert.acknowledged">
+
+				<!-- Alert Header -->
+				<div class="alert-header">
+					<div class="alert-icon">
+						<mat-icon [class]="getSeverityClass(alert.severity)">
+							{{ getSeverityIcon(alert.severity) }}
+						</mat-icon>
+					</div>
+
+					<div class="alert-info">
+						<h4 class="alert-title">{{ alert.testName }}</h4>
+						<div class="alert-meta">
+							<span class="patient-name">{{ alert.patientName }}</span>
+							<span class="alert-time">{{ formatTimestamp(alert.timestamp) }}</span>
+						</div>
+					</div>
+
+					<div class="alert-badges">
+						<mat-chip [class]="getSeverityClass(alert.severity)">
+							{{ alert.severity }}
+						</mat-chip>
+						<mat-chip *ngIf="alert.acknowledged" class="acknowledged-badge">
+							Acknowledged
+						</mat-chip>
+						<mat-chip *ngIf="alert.doctorNotified" class="notified-badge">
+							Doctor Notified
+						</mat-chip>
+					</div>
+				</div>
+
+				<!-- Alert Content -->
+				<div class="alert-content">
+					<div class="value-section">
+						<div class="value-display">
+							<span class="value-label">Current Value:</span>
+							<span class="value-number" [class]="getSeverityClass(alert.severity)">
+								{{ alert.value }} {{ alert.unit }}
+							</span>
+						</div>
+						<div class="reference-range">
+							<span class="range-label">Reference Range:</span>
+							<span class="range-value">{{ alert.referenceRange }}</span>
+						</div>
+					</div>
+
+					<div class="notes-section" *ngIf="alert.notes">
+						<h5>Clinical Notes:</h5>
+						<p>{{ alert.notes }}</p>
+					</div>
+				</div>
+
+				<!-- Alert Actions -->
+				<div class="alert-actions">
+					<button mat-button color="primary" (click)="viewReport(alert)">
+						<mat-icon>visibility</mat-icon>
+						View Report
+					</button>
+
+					<button mat-button color="accent" (click)="acknowledgeAlert(alert)" [disabled]="alert.acknowledged">
+						<mat-icon>check</mat-icon>
+						{{ alert.acknowledged ? 'Acknowledged' : 'Acknowledge' }}
+					</button>
+
+					<button mat-button color="warn" (click)="notifyDoctor(alert)" [disabled]="alert.doctorNotified">
+						<mat-icon>notification_important</mat-icon>
+						{{ alert.doctorNotified ? 'Doctor Notified' : 'Notify Doctor' }}
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Empty State -->
+		<div *ngIf="filteredAlerts.length === 0" class="empty-state">
+			<mat-icon class="empty-icon">check_circle</mat-icon>
+			<h3>No Critical Alerts</h3>
+			<p *ngIf="criticalAlerts.length === 0">All lab values are within normal ranges.</p>
+			<p *ngIf="criticalAlerts.length > 0">No alerts match your current filters.</p>
+		</div>
+	</div>
+</div>
