@@ -1,1 +1,93 @@
-<p>conversation-list works!</p>
+<div class="conversation-list-container" [class.dark-theme]="isDarkMode">
+	<!-- Header -->
+	<div class="conversation-header">
+		<h3>
+			<mat-icon>chat</mat-icon>
+			Conversations
+		</h3>
+		<button mat-icon-button (click)="onNewConversationClick()" matTooltip="Start New Conversation">
+			<mat-icon>add</mat-icon>
+		</button>
+	</div>
+
+	<!-- Search -->
+	<div class="search-section">
+		<mat-form-field appearance="outline" class="search-field">
+			<mat-label>Search conversations</mat-label>
+			<input matInput [(ngModel)]="searchTerm" (input)="onSearchChange()"
+				placeholder="Search by name or message...">
+			<mat-icon matSuffix>search</mat-icon>
+		</mat-form-field>
+	</div>
+
+	<!-- Loading State -->
+	<div *ngIf="isLoading" class="loading-state">
+		<mat-progress-bar mode="indeterminate"></mat-progress-bar>
+		<p>Loading conversations...</p>
+	</div>
+
+	<!-- Conversations List -->
+	<div class="conversations-list" *ngIf="!isLoading">
+		<div *ngFor="let conversation of filteredConversations" class="conversation-item"
+			[class.active]="activeConversation?.id === conversation.id" (click)="onConversationClick(conversation)">
+
+			<!-- Conversation Avatar -->
+			<div class="conversation-avatar">
+				<mat-icon [class]="'avatar-' + conversation.conversationType">
+					{{ getConversationIcon(conversation) }}
+				</mat-icon>
+				<!-- FIXED: Added null safety check for participants array and userId -->
+				<div *ngIf="conversation.conversationType === 'private' && 
+                    conversation.participants && 
+                    conversation.participants.length > 0 &&
+                    conversation.participants[0]?.userId &&
+                    isUserOnline(conversation.participants[0].userId)" class="online-indicator"></div>
+			</div>
+
+			<!-- Conversation Content -->
+			<div class="conversation-content">
+				<div class="conversation-header-info">
+					<h4 class="conversation-title">
+						{{ conversation.title || getConversationParticipants(conversation) }}
+					</h4>
+					<span class="conversation-time">
+						{{ formatLastMessageTime(conversation) }}
+					</span>
+				</div>
+
+				<div class="conversation-preview">
+					<p class="last-message">
+						<!-- FIXED: Added null safety check for lastMessage and senderName -->
+						<span *ngIf="conversation.lastMessage && conversation.lastMessage.senderName"
+							class="sender-name">
+							{{ conversation.lastMessage.senderName }}:
+						</span>
+						{{ getLastMessagePreview(conversation) }}
+					</p>
+
+					<div class="conversation-badges">
+						<mat-chip *ngIf="conversation.unreadCount > 0" class="unread-badge">
+							{{ getUnreadCountDisplay(conversation.unreadCount) }}
+						</mat-chip>
+						<mat-icon *ngIf="conversation.conversationType === 'medical_team'" class="medical-badge"
+							matTooltip="Medical Team">
+							medical_services
+						</mat-icon>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Empty State -->
+	<div *ngIf="!isLoading && filteredConversations.length === 0" class="empty-state">
+		<mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
+		<h4>No Conversations</h4>
+		<p *ngIf="searchTerm">No conversations match your search.</p>
+		<p *ngIf="!searchTerm">Start a new conversation to begin messaging.</p>
+		<button mat-raised-button color="primary" (click)="onNewConversationClick()">
+			<mat-icon>add</mat-icon>
+			Start Conversation
+		</button>
+	</div>
+</div>

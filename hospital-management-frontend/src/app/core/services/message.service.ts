@@ -15,10 +15,19 @@ export interface Message {
 	sentDate?: Date;
 }
 
+export interface ConversationParticipant {
+	userId: number;
+	userName: string;
+	userType: 'Patient' | 'Doctor' | 'Admin';
+	avatar?: string;
+	isOnline: boolean;
+	lastSeen: Date;
+}
+
 export interface Conversation {
 	id: string;
-	participants: ConversationParticipant[];
-	lastMessage?: ChatMessage;
+	participants: ConversationParticipant[]; // Ensure this is always an array
+	lastMessage?: ChatMessage | null; // Allow null for better type safety
 	lastMessageAt: Date;
 	unreadCount: number;
 	conversationType: 'private' | 'group' | 'medical_team';
@@ -28,14 +37,6 @@ export interface Conversation {
 	updatedAt: Date;
 }
 
-export interface ConversationParticipant {
-	userId: number;
-	userName: string;
-	userType: 'Patient' | 'Doctor' | 'Admin';
-	avatar?: string;
-	isOnline: boolean;
-	lastSeen: Date;
-}
 
 export interface MessageAttachment {
 	id: string;

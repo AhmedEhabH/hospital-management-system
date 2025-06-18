@@ -214,8 +214,9 @@
 											<mat-icon class="report-icon">science</mat-icon>
 											<div class="report-info">
 												<span class="test-name">{{ report.reportType }}</span>
-												<p class="report-date">{{ report.testedDate | date:'mediumDate' }}</p>
-												<p class="report-doctor">Tested by: {{ report.testedBy }}</p>
+												<p class="report-date">{{ report.testDate | date:'mediumDate' }}</p>
+												<p class="report-doctor">Tested by: {{ report.doctorName }}</p>
+
 											</div>
 											<div class="report-status">
 												<mat-chip class="status-chip">Completed</mat-chip>

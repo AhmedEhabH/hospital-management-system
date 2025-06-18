@@ -7,7 +7,7 @@ import { AuthService } from './auth.service';
 export interface ChatMessage {
 	id: string;
 	senderId: number;
-	senderName: string;
+	senderName: string | null; // Allow null for better type safety
 	receiverId: number;
 	receiverName: string;
 	message: string;
