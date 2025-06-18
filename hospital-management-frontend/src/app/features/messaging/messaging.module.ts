@@ -2,6 +2,9 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
+// Quill Editor
+import { QuillModule } from 'ngx-quill';
+
 // Angular Material Modules
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,6 +23,9 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSelectModule } from '@angular/material/select';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatOptionModule } from '@angular/material/core';
 
 // Chart.js for Data Visualization
 import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
@@ -38,7 +44,6 @@ import { NotificationCenterComponent } from './notification-center/notification-
 @NgModule({
 	declarations: [
 		MessagingComponent,
-		// REMOVED: ConversationListComponent (standalone component)
 		ConversationListComponent,
 		ChatWindowComponent,
 		MessageComposerComponent,
@@ -53,7 +58,8 @@ import { NotificationCenterComponent } from './notification-center/notification-
 		// Shared Module
 		SharedModule,
 
-		// FIXED: Import standalone component
+
+		QuillModule.forRoot(),
 		
 
 		// Angular Material
@@ -74,6 +80,9 @@ import { NotificationCenterComponent } from './notification-center/notification-
 		MatTabsModule,
 		MatExpansionModule,
 		MatSlideToggleModule,
+		MatProgressBarModule,
+		MatProgressSpinnerModule,
+		MatOptionModule,
 
 		// Charts
 		BaseChartDirective

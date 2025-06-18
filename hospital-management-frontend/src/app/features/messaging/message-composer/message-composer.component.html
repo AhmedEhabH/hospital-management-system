@@ -1,1 +1,198 @@
-<p>message-composer works!</p>
+<div class="message-composer-container" [class.dark-theme]="isDarkMode">
+	<!-- Header -->
+	<div class="composer-header">
+		<div class="header-content">
+			<h3>
+				<mat-icon>edit</mat-icon>
+				Compose Secure Medical Message
+			</h3>
+			<p class="header-subtitle">Professional healthcare communication</p>
+		</div>
+
+		<div class="header-actions">
+			<button mat-button (click)="loadDraft()" matTooltip="Load Draft">
+				<mat-icon>drafts</mat-icon>
+				Load Draft
+			</button>
+			<button mat-button (click)="saveDraft()" matTooltip="Save Draft">
+				<mat-icon>save</mat-icon>
+				Save Draft
+			</button>
+		</div>
+	</div>
+
+	<!-- Medical Templates Section -->
+	<div class="templates-section">
+		<mat-card class="templates-card medical-card">
+			<mat-card-header>
+				<mat-icon mat-card-avatar>template_add</mat-icon>
+				<mat-card-title>Medical Templates</mat-card-title>
+				<mat-card-subtitle>Quick start with professional medical templates</mat-card-subtitle>
+			</mat-card-header>
+
+			<mat-card-content>
+				<div class="template-categories">
+					<div *ngFor="let category of templateCategories" class="template-category">
+						<div class="category-header" [style.border-left-color]="category.color">
+							<mat-icon [style.color]="category.color">{{ category.icon }}</mat-icon>
+							<h4>{{ category.label }}</h4>
+						</div>
+
+						<div class="template-buttons">
+							<button *ngFor="let template of getTemplatesByCategory(category.value)" mat-stroked-button
+								class="template-button" (click)="applyTemplate(template)"
+								[matTooltip]="'Apply ' + template.name + ' template'">
+								{{ template.name }}
+							</button>
+						</div>
+					</div>
+				</div>
+			</mat-card-content>
+		</mat-card>
+	</div>
+
+	<!-- Message Form -->
+	<form [formGroup]="messageForm" class="message-form">
+
+		<!-- Recipient and Subject -->
+		<div class="form-row">
+			<mat-form-field appearance="outline" class="recipient-field">
+				<mat-label>To</mat-label>
+				<input matInput [value]="recipientName || 'Select recipient'" readonly>
+				<mat-icon matSuffix>person</mat-icon>
+			</mat-form-field>
+
+			<mat-form-field appearance="outline" class="subject-field">
+				<mat-label>Subject</mat-label>
+				<input matInput formControlName="subject" placeholder="Enter message subject">
+				<mat-icon matSuffix>subject</mat-icon>
+				<mat-error *ngIf="messageForm.get('subject')?.hasError('required')">
+					Subject is required
+				</mat-error>
+				<mat-error *ngIf="messageForm.get('subject')?.hasError('maxlength')">
+					Subject must be less than 200 characters
+				</mat-error>
+			</mat-form-field>
+		</div>
+
+		<!-- Priority and Urgent Toggle -->
+		<div class="form-row">
+			<mat-form-field appearance="outline" class="priority-field">
+				<mat-label>Priority</mat-label>
+				<mat-select formControlName="priority">
+					<mat-option value="low">
+						<mat-icon>low_priority</mat-icon>
+						Low Priority
+					</mat-option>
+					<mat-option value="medium">
+						<mat-icon>flag</mat-icon>
+						Medium Priority
+					</mat-option>
+					<mat-option value="high">
+						<mat-icon>priority_high</mat-icon>
+						High Priority
+					</mat-option>
+				</mat-select>
+			</mat-form-field>
+
+			<div class="urgent-toggle">
+				<mat-slide-toggle formControlName="isUrgent" color="warn">
+					<mat-icon>emergency</mat-icon>
+					Mark as Urgent
+				</mat-slide-toggle>
+			</div>
+		</div>
+
+		<!-- Rich Text Editor -->
+		<div class="editor-section">
+			<mat-card class="editor-card medical-card">
+				<mat-card-header>
+					<mat-icon mat-card-avatar>edit_note</mat-icon>
+					<mat-card-title>Message Content</mat-card-title>
+					<mat-card-subtitle>Use rich text formatting for professional communication</mat-card-subtitle>
+				</mat-card-header>
+
+				<mat-card-content>
+					<quill-editor [(ngModel)]="editorContent" [modules]="quillConfig"
+						(onEditorCreated)="onEditorCreated($event)" (onContentChanged)="onContentChanged($event)"
+						class="medical-editor">
+					</quill-editor>
+
+					<mat-error
+						*ngIf="messageForm.get('content')?.hasError('required') && messageForm.get('content')?.touched">
+						Message content is required
+					</mat-error>
+					<mat-error
+						*ngIf="messageForm.get('content')?.hasError('minlength') && messageForm.get('content')?.touched">
+						Message must be at least 10 characters long
+					</mat-error>
+				</mat-card-content>
+			</mat-card>
+		</div>
+
+		<!-- File Attachments -->
+		<div class="attachments-section">
+			<mat-card class="attachments-card medical-card">
+				<mat-card-header>
+					<mat-icon mat-card-avatar>attach_file</mat-icon>
+					<mat-card-title>Medical Attachments</mat-card-title>
+					<mat-card-subtitle>Attach medical documents, images, or reports</mat-card-subtitle>
+				</mat-card-header>
+
+				<mat-card-content>
+					<!-- File Drop Zone -->
+					<div class="file-drop-zone" (dragover)="onDragOver($event)" (drop)="onDrop($event)">
+						<mat-icon class="drop-icon">cloud_upload</mat-icon>
+						<h4>Drag and drop files here</h4>
+						<p>or click to browse files</p>
+						<input type="file" #fileInput (change)="onFileSelected($event)" multiple style="display: none;"
+							accept="image/*,.pdf,.doc,.docx,.txt">
+						<button mat-raised-button color="primary" (click)="fileInput.click()">
+							<mat-icon>add</mat-icon>
+							Select Files
+						</button>
+					</div>
+
+					<!-- Selected Files List -->
+					<div *ngIf="selectedFiles.length > 0" class="selected-files">
+						<h4>Selected Files ({{ selectedFiles.length }})</h4>
+						<div class="files-list">
+							<div *ngFor="let file of selectedFiles; let i = index" class="file-item">
+								<mat-icon class="file-icon">{{ getFileIcon(file.name) }}</mat-icon>
+								<div class="file-info">
+									<span class="file-name">{{ file.name }}</span>
+									<span class="file-size">{{ formatFileSize(file.size) }}</span>
+								</div>
+								<button mat-icon-button (click)="removeFile(i)" matTooltip="Remove file">
+									<mat-icon>close</mat-icon>
+								</button>
+							</div>
+						</div>
+					</div>
+				</mat-card-content>
+			</mat-card>
+		</div>
+
+		<!-- Action Buttons -->
+		<div class="action-buttons">
+			<button mat-button type="button" (click)="onCancel()" [disabled]="isSending">
+				<mat-icon>cancel</mat-icon>
+				Cancel
+			</button>
+
+			<button mat-button type="button" (click)="saveDraft()" [disabled]="isSending">
+				<mat-icon>save</mat-icon>
+				Save Draft
+			</button>
+
+			<button mat-raised-button color="primary" type="submit" (click)="sendMessage()"
+				[disabled]="messageForm.invalid || isSending">
+				<mat-icon>send</mat-icon>
+				<span *ngIf="!isSending">Send Secure Message</span>
+				<span *ngIf="isSending">Sending...</span>
+				<mat-progress-spinner *ngIf="isSending" diameter="20" mode="indeterminate">
+				</mat-progress-spinner>
+			</button>
+		</div>
+	</form>
+</div>
