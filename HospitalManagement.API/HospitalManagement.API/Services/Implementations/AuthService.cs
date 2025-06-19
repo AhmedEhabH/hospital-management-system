@@ -1,83 +1,151 @@
-﻿using HospitalManagement.API.Models.DTOs;
+﻿using AutoMapper;
+using HospitalManagement.API.Models.DTOs;
 using HospitalManagement.API.Models.Entities;
 using HospitalManagement.API.Repositories.Interfaces;
 using HospitalManagement.API.Services.Interfaces;
-using HospitalManagement.API.Utilities;
-using AutoMapper;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace HospitalManagement.API.Services.Implementations
 {
-    public class AuthService : IAuthService
+    public class AuthService : IAuthService, IDisposable
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly ILogger<AuthService> _logger;
         private readonly IJwtHelper _jwtHelper;
-        private readonly Serilog.ILogger _logger;
+        private bool _disposed = false;
 
         public AuthService(
             IUserRepository userRepository,
             IMapper mapper,
+            ILogger<AuthService> logger,
             IJwtHelper jwtHelper)
         {
             _userRepository = userRepository;
             _mapper = mapper;
+            _logger = logger;
             _jwtHelper = jwtHelper;
-            _logger = Log.ForContext<AuthService>();
         }
 
         public async Task<AuthResultDto> LoginAsync(LoginDto loginDto)
         {
-            _logger.Information("Login attempt for UserId: {UserId}", loginDto.UserId);
-            var user = await _userRepository.GetByUserIdAsync(loginDto.UserId);
-            if (user == null || !PasswordHelper.VerifyPassword(loginDto.Password, user.PasswordHash))
+            try
             {
-                _logger.Warning("Invalid login for UserId: {UserId}", loginDto.UserId);
-                return new AuthResultDto { Success = false, Message = "Invalid credentials." };
+                var user = await _userRepository.GetByUserIdAsync(loginDto.UserId);
+
+                if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
+                {
+                    _logger.LogWarning("Login attempt failed for user: {UserId}", loginDto.UserId);
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        Message = "Invalid credentials"
+                    };
+                }
+
+                if (user.UserType != loginDto.UserType)
+                {
+                    _logger.LogWarning("User type mismatch for user: {UserId}. Expected: {ExpectedType}, Actual: {ActualType}",
+                        loginDto.UserId, loginDto.UserType, user.UserType);
+                    return new AuthResultDto
+                    {
+                        Success = false,
+                        Message = "Invalid credentials"
+                    };
+                }
+
+                var token = _jwtHelper.GenerateToken(user);
+                var userInfo = _mapper.Map<UserInfoDto>(user);
+
+                _logger.LogInformation("User logged in successfully: {UserId}", user.UserId);
+                return new AuthResultDto
+                {
+                    Success = true,
+                    Message = "Login successful",
+                    Token = token,
+                    User = userInfo
+                };
             }
-
-            var token = _jwtHelper.GenerateToken(user);
-            _logger.Information("Login successful for UserId: {UserId}", loginDto.UserId);
-
-            return new AuthResultDto
+            catch (Exception ex)
             {
-                Success = true,
-                Message = "Login successful.",
-                Token = token,
-                User = _mapper.Map<UserInfoDto>(user)
-            };
+                _logger.LogError(ex, "Error during login for user: {UserId}", loginDto.UserId);
+                return new AuthResultDto
+                {
+                    Success = false,
+                    Message = "An unexpected error occurred during login"
+                };
+            }
         }
 
         public async Task<RegistrationResultDto> RegisterAsync(UserRegistrationDto registrationDto)
         {
-            _logger.Information("Registration attempt for Email: {Email}", registrationDto.Email);
-
-            if (await _userRepository.GetByEmailAsync(registrationDto.Email) != null)
+            try
             {
-                _logger.Warning("Registration failed: Email already exists ({Email})", registrationDto.Email);
-                return new RegistrationResultDto { Success = false, Message = "Email already exists." };
+                // Check if user already exists
+                if (await _userRepository.UserExistsAsync(registrationDto.Email))
+                {
+                    _logger.LogWarning("Registration attempt with existing email: {Email}", registrationDto.Email);
+                    return new RegistrationResultDto
+                    {
+                        Success = false,
+                        Message = "User with this email already exists."
+                    };
+                }
+
+                if (await _userRepository.UserIdExistsAsync(registrationDto.UserId))
+                {
+                    _logger.LogWarning("Registration attempt with existing user ID: {UserId}", registrationDto.UserId);
+                    return new RegistrationResultDto
+                    {
+                        Success = false,
+                        Message = "User ID already exists."
+                    };
+                }
+
+                // Create new user
+                var user = _mapper.Map<User>(registrationDto);
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(registrationDto.Password);
+                user.CreatedAt = DateTime.UtcNow;
+                user.UpdatedAt = DateTime.UtcNow;
+
+                var createdUser = await _userRepository.AddAsync(user);
+
+                _logger.LogInformation("User registered successfully: {Email}", createdUser.Email);
+
+                return new RegistrationResultDto
+                {
+                    Success = true,
+                    Message = "User registered successfully.",
+                    UserId = createdUser.Id
+                };
             }
-
-            if (await _userRepository.GetByUserIdAsync(registrationDto.UserId) != null)
+            catch (Exception ex)
             {
-                _logger.Warning("Registration failed: UserId already exists ({UserId})", registrationDto.UserId);
-                return new RegistrationResultDto { Success = false, Message = "UserId already exists." };
+                _logger.LogError(ex, "Error during user registration for email: {Email}", registrationDto.Email);
+                return new RegistrationResultDto
+                {
+                    Success = false,
+                    Message = "An unexpected error occurred during registration"
+                };
             }
+        }
 
-            var user = _mapper.Map<User>(registrationDto);
-            user.PasswordHash = PasswordHelper.HashPassword(registrationDto.Password);
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-            await _userRepository.AddAsync(user);
-            await _userRepository.SaveChangesAsync();
-
-            _logger.Information("Registration successful for UserId: {UserId}", user.UserId);
-
-            return new RegistrationResultDto
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
             {
-                Success = true,
-                Message = "Registration successful.",
-                UserId = user.Id
-            };
+                if (disposing)
+                {
+                    // Dispose managed resources if any
+                }
+                _disposed = true;
+            }
         }
     }
 }

@@ -4,10 +4,11 @@ namespace HospitalManagement.API.Services.Interfaces
 {
     public interface IMedicalHistoryService
     {
-        Task<IEnumerable<MedicalHistoryDto>> GetMedicalHistoriesByUserIdAsync(int userId);
+        // FIXED: Match method names and return types with implementation
+        Task<MedicalHistoryDto> CreateMedicalHistoryAsync(MedicalHistoryDto medicalHistoryDto);
         Task<MedicalHistoryDto?> GetMedicalHistoryByIdAsync(int id);
-        Task<MedicalHistoryDto> AddMedicalHistoryAsync(MedicalHistoryDto dto);
-        Task<bool> UpdateMedicalHistoryAsync(int id, MedicalHistoryDto dto);
-        Task<bool> DeleteMedicalHistoryAsync(int id);
+        Task<IEnumerable<MedicalHistoryDto>> GetMedicalHistoryByUserIdAsync(int userId);
+        Task UpdateMedicalHistoryAsync(MedicalHistoryDto medicalHistoryDto);
+        Task DeleteMedicalHistoryAsync(int id);
     }
 }

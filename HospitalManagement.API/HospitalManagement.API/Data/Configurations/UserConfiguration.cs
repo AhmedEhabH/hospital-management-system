@@ -1,6 +1,6 @@
-﻿using HospitalManagement.API.Models.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using HospitalManagement.API.Models.Entities;
 
 namespace HospitalManagement.API.Data.Configurations
 {
@@ -9,6 +9,7 @@ namespace HospitalManagement.API.Data.Configurations
         public void Configure(EntityTypeBuilder<User> builder)
         {
             builder.ToTable("Users");
+
             builder.HasKey(u => u.Id);
 
             builder.Property(u => u.FirstName)
@@ -23,19 +24,24 @@ namespace HospitalManagement.API.Data.Configurations
                 .IsRequired()
                 .HasMaxLength(10);
 
-            builder.Property(u => u.Age)
-                .IsRequired();
-
             builder.Property(u => u.UserId)
                 .IsRequired()
                 .HasMaxLength(50);
 
+            builder.HasIndex(u => u.UserId)
+                .IsUnique();
+
+            // FIXED: Use PasswordHash property as requested
             builder.Property(u => u.PasswordHash)
-                .IsRequired();
+                .IsRequired()
+                .HasMaxLength(255);
 
             builder.Property(u => u.Email)
                 .IsRequired()
                 .HasMaxLength(100);
+
+            builder.HasIndex(u => u.Email)
+                .IsUnique();
 
             builder.Property(u => u.Address)
                 .IsRequired()
@@ -62,35 +68,31 @@ namespace HospitalManagement.API.Data.Configurations
                 .HasMaxLength(20);
 
             builder.Property(u => u.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
+                .IsRequired();
 
-            builder.Property(u => u.UpdatedAt)
-                .IsRequired(false);
+            builder.Property(u => u.UpdatedAt);
 
-            // Unique indexes
-            builder.HasIndex(u => u.UserId).IsUnique();
-            builder.HasIndex(u => u.Email).IsUnique();
-
-            // Relationships
+            // Configure DoctorProfile relationship
             builder.HasOne(u => u.DoctorProfile)
                 .WithOne(dp => dp.User)
                 .HasForeignKey<DoctorProfile>(dp => dp.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Configure relationships with other entities
             builder.HasMany(u => u.MedicalHistories)
                 .WithOne(mh => mh.User)
                 .HasForeignKey(mh => mh.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasMany(u => u.Feedbacks)
+                .WithOne(f => f.User)
+                .HasForeignKey(f => f.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             builder.HasMany(u => u.LabReports)
                 .WithOne(lr => lr.Patient)
                 .HasForeignKey(lr => lr.PatientId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasMany(u => u.Feedbacks)
-                .WithOne(fb => fb.User)
-                .HasForeignKey(fb => fb.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany(u => u.SentMessages)
                 .WithOne(m => m.Sender)

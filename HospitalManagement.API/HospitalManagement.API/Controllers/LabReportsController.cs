@@ -1,83 +1,106 @@
-﻿using HospitalManagement.API.Models.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HospitalManagement.API.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Serilog;
+using HospitalManagement.API.Models.DTOs;
 
 namespace HospitalManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class LabReportsController : ControllerBase
     {
-
         private readonly ILabReportService _labReportService;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<LabReportsController> _logger;
 
-        public LabReportsController(ILabReportService labReportService)
+        public LabReportsController(ILabReportService labReportService, ILogger<LabReportsController> logger)
         {
             _labReportService = labReportService;
-            _logger = Log.ForContext<LabReportsController>();
+            _logger = logger;
         }
 
-        // GET: api/labreports/patient/{patientId}
         [HttpGet("patient/{patientId}")]
-        public async Task<ActionResult<IEnumerable<LabReportDto>>> GetByPatientId(int patientId)
+        public async Task<ActionResult<IEnumerable<LabReportDto>>> GetLabReportsByPatientId(int patientId)
         {
-            _logger.Information("GET lab reports for PatientId: {PatientId}", patientId);
-            var result = await _labReportService.GetLabReportsByPatientIdAsync(patientId);
-            return Ok(result);
+            try
+            {
+                var labReports = await _labReportService.GetLabReportsByPatientIdAsync(patientId);
+                return Ok(labReports);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting lab reports for patient {patientId}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // GET: api/labreports/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<LabReportDto>> GetById(int id)
+        public async Task<ActionResult<LabReportDto>> GetLabReport(int id)
         {
-            _logger.Information("GET lab report by Id: {Id}", id);
-            var result = await _labReportService.GetLabReportByIdAsync(id);
-            if (result == null)
+            try
             {
-                _logger.Warning("Lab report not found for Id: {Id}", id);
-                return NotFound();
+                var labReport = await _labReportService.GetLabReportByIdAsync(id);
+                if (labReport == null)
+                {
+                    return NotFound();
+                }
+                return Ok(labReport);
             }
-            return Ok(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting lab report {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // POST: api/labreports
         [HttpPost]
-        public async Task<ActionResult<LabReportDto>> Create(LabReportDto dto)
+        public async Task<ActionResult<LabReportDto>> CreateLabReport(LabReportDto labReportDto)
         {
-            _logger.Information("POST create lab report for PatientId: {PatientId}", dto.PatientId);
-            var created = await _labReportService.AddLabReportAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            try
+            {
+                var createdLabReport = await _labReportService.CreateLabReportAsync(labReportDto);
+                return CreatedAtAction(nameof(GetLabReport), new { id = createdLabReport.Id }, createdLabReport);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating lab report");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // PUT: api/labreports/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, LabReportDto dto)
+        public async Task<IActionResult> UpdateLabReport(int id, LabReportDto labReportDto)
         {
-            _logger.Information("PUT update lab report for Id: {Id}", id);
-            var updated = await _labReportService.UpdateLabReportAsync(id, dto);
-            if (!updated)
+            try
             {
-                _logger.Warning("Update failed: Lab report not found for Id: {Id}", id);
-                return NotFound();
+                if (id != labReportDto.Id)
+                {
+                    return BadRequest("ID mismatch");
+                }
+
+                await _labReportService.UpdateLabReportAsync(labReportDto);
+                return Ok();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating lab report {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // DELETE: api/labreports/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteLabReport(int id)
         {
-            _logger.Information("DELETE lab report for Id: {Id}", id);
-            var deleted = await _labReportService.DeleteLabReportAsync(id);
-            if (!deleted)
+            try
             {
-                _logger.Warning("Delete failed: Lab report not found for Id: {Id}", id);
-                return NotFound();
+                await _labReportService.DeleteLabReportAsync(id);
+                return Ok();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting lab report {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }

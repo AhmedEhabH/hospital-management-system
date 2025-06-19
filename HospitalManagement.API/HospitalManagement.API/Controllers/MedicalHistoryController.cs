@@ -1,82 +1,106 @@
-﻿using HospitalManagement.API.Models.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HospitalManagement.API.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Serilog;
+using HospitalManagement.API.Models.DTOs;
 
 namespace HospitalManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class MedicalHistoryController : ControllerBase
     {
         private readonly IMedicalHistoryService _medicalHistoryService;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<MedicalHistoryController> _logger;
 
-        public MedicalHistoryController(IMedicalHistoryService medicalHistoryService)
+        public MedicalHistoryController(IMedicalHistoryService medicalHistoryService, ILogger<MedicalHistoryController> logger)
         {
             _medicalHistoryService = medicalHistoryService;
-            _logger = Log.ForContext<MedicalHistoryController>();
+            _logger = logger;
         }
 
-        // GET: api/medicalhistory/user/{userId}
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<MedicalHistoryDto>>> GetByUserId(int userId)
+        public async Task<ActionResult<IEnumerable<MedicalHistoryDto>>> GetMedicalHistoryByUserId(int userId)
         {
-            _logger.Information("GET medical histories for UserId: {UserId}", userId);
-            var result = await _medicalHistoryService.GetMedicalHistoriesByUserIdAsync(userId);
-            return Ok(result);
+            try
+            {
+                var medicalHistories = await _medicalHistoryService.GetMedicalHistoryByUserIdAsync(userId);
+                return Ok(medicalHistories);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting medical history for user {userId}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // GET: api/medicalhistory/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<MedicalHistoryDto>> GetById(int id)
+        public async Task<ActionResult<MedicalHistoryDto>> GetMedicalHistory(int id)
         {
-            _logger.Information("GET medical history by Id: {Id}", id);
-            var result = await _medicalHistoryService.GetMedicalHistoryByIdAsync(id);
-            if (result == null)
+            try
             {
-                _logger.Warning("Medical history not found for Id: {Id}", id);
-                return NotFound();
+                var medicalHistory = await _medicalHistoryService.GetMedicalHistoryByIdAsync(id);
+                if (medicalHistory == null)
+                {
+                    return NotFound();
+                }
+                return Ok(medicalHistory);
             }
-            return Ok(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting medical history {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // POST: api/medicalhistory
         [HttpPost]
-        public async Task<ActionResult<MedicalHistoryDto>> Create(MedicalHistoryDto dto)
+        public async Task<ActionResult<MedicalHistoryDto>> CreateMedicalHistory(MedicalHistoryDto medicalHistoryDto)
         {
-            _logger.Information("POST create medical history for UserId: {UserId}", dto.UserId);
-            var created = await _medicalHistoryService.AddMedicalHistoryAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            try
+            {
+                var createdMedicalHistory = await _medicalHistoryService.CreateMedicalHistoryAsync(medicalHistoryDto);
+                return CreatedAtAction(nameof(GetMedicalHistory), new { id = createdMedicalHistory.Id }, createdMedicalHistory);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating medical history");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // PUT: api/medicalhistory/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, MedicalHistoryDto dto)
+        public async Task<IActionResult> UpdateMedicalHistory(int id, MedicalHistoryDto medicalHistoryDto)
         {
-            _logger.Information("PUT update medical history for Id: {Id}", id);
-            var updated = await _medicalHistoryService.UpdateMedicalHistoryAsync(id, dto);
-            if (!updated)
+            try
             {
-                _logger.Warning("Update failed: Medical history not found for Id: {Id}", id);
-                return NotFound();
+                if (id != medicalHistoryDto.Id)
+                {
+                    return BadRequest("ID mismatch");
+                }
+
+                await _medicalHistoryService.UpdateMedicalHistoryAsync(medicalHistoryDto);
+                return Ok();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating medical history {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // DELETE: api/medicalhistory/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteMedicalHistory(int id)
         {
-            _logger.Information("DELETE medical history for Id: {Id}", id);
-            var deleted = await _medicalHistoryService.DeleteMedicalHistoryAsync(id);
-            if (!deleted)
+            try
             {
-                _logger.Warning("Delete failed: Medical history not found for Id: {Id}", id);
-                return NotFound();
+                await _medicalHistoryService.DeleteMedicalHistoryAsync(id);
+                return Ok();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting medical history {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }

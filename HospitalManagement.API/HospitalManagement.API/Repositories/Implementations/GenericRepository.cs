@@ -1,62 +1,100 @@
 ﻿using HospitalManagement.API.Data;
 using HospitalManagement.API.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Serilog;
 using System.Linq.Expressions;
 
 namespace HospitalManagement.API.Repositories.Implementations
 {
     public class GenericRepository<T> : IGenericRepository<T> where T : class
     {
-
         protected readonly HospitalDbContext _context;
-        protected readonly Serilog.ILogger _logger;
-        public GenericRepository(HospitalDbContext context)
+        protected readonly DbSet<T> _dbSet;
+        protected readonly ILogger<GenericRepository<T>> _logger;
+
+        public GenericRepository(HospitalDbContext context, ILogger<GenericRepository<T>> logger)
         {
             _context = context;
-            _logger = Log.ForContext<T>();
+            _dbSet = context.Set<T>();
+            _logger = logger;
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
+        public virtual async Task<T?> GetByIdAsync(int id)
         {
-            _logger.Information("Fetching all records of type {EntityType}", typeof(T).Name);
-            return await _context.Set<T>().ToListAsync();
+            return await _dbSet.FindAsync(id);
         }
 
-        public async Task<T?> GetByIdAsync(int id)
+        public virtual async Task<IEnumerable<T>> GetAllAsync()
         {
-            _logger.Information("Fetching {EntityType} with ID {Id}", typeof(T).Name, id);
-            return await _context.Set<T>().FindAsync(id);
+            return await _dbSet.ToListAsync();
         }
 
-        public async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate)
+        public virtual async Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> expression)
         {
-            _logger.Information("Finding {EntityType} with predicate", typeof(T).Name);
-            return await _context.Set<T>().Where(predicate).ToListAsync();
+            return await _dbSet.Where(expression).ToListAsync();
         }
 
-        public async Task AddAsync(T entity)
+        // FIXED: Implement all missing async methods
+        public virtual async Task<T> AddAsync(T entity)
         {
-            _logger.Information("Adding new {EntityType}", typeof(T).Name);
-            await _context.Set<T>().AddAsync(entity);
+            var result = await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return result.Entity;
         }
 
-        public void Update(T entity)
+        public virtual async Task<T> CreateAsync(T entity)
         {
-            _logger.Information("Updating {EntityType}", typeof(T).Name);
-            _context.Set<T>().Update(entity);
+            var result = await _dbSet.AddAsync(entity);
+            await _context.SaveChangesAsync();
+            return result.Entity;
         }
 
-        public void Remove(T entity)
+        public virtual async Task UpdateAsync(T entity)
         {
-            _logger.Information("Removing {EntityType}", typeof(T).Name);
-            _context.Set<T>().Remove(entity);
+            _dbSet.Update(entity);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<int> SaveChangesAsync()
+        // FIXED: Add synchronous Update method for compatibility
+        public virtual async Task Update(T entity)
         {
-            _logger.Information("Saving changes to database for {EntityType}", typeof(T).Name);
-            return await _context.SaveChangesAsync();
+            _dbSet.Update(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public virtual async Task DeleteAsync(int id)
+        {
+            var entity = await GetByIdAsync(id);
+            if (entity != null)
+            {
+                await DeleteAsync(entity);
+            }
+        }
+
+        public virtual async Task DeleteAsync(T entity)
+        {
+            _dbSet.Remove(entity);
+            await _context.SaveChangesAsync();
+        }
+
+        public virtual async Task<bool> ExistsAsync(int id)
+        {
+            var entity = await GetByIdAsync(id);
+            return entity != null;
+        }
+
+        public virtual async Task<int> CountAsync()
+        {
+            return await _dbSet.CountAsync();
+        }
+
+        public virtual async Task<int> CountAsync(Expression<Func<T, bool>> expression)
+        {
+            return await _dbSet.CountAsync(expression);
+        }
+
+        public virtual async Task SaveChangesAsync()
+        {
+            await _context.SaveChangesAsync();
         }
     }
 }

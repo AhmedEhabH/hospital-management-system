@@ -1,82 +1,109 @@
-﻿using HospitalManagement.API.Models.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HospitalManagement.API.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Serilog;
+using HospitalManagement.API.Models.DTOs;
 
 namespace HospitalManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class HospitalController : ControllerBase
     {
         private readonly IHospitalService _hospitalService;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<HospitalController> _logger;
 
-        public HospitalController(IHospitalService hospitalService)
+        public HospitalController(IHospitalService hospitalService, ILogger<HospitalController> logger)
         {
             _hospitalService = hospitalService;
-            _logger = Log.ForContext<HospitalController>();
+            _logger = logger;
         }
 
-        // GET: api/hospital
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<HospitalInfoDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<HospitalInfoDto>>> GetAllHospitalInfo()
         {
-            _logger.Information("GET all hospital info requested.");
-            var result = await _hospitalService.GetAllHospitalInfosAsync();
-            return Ok(result);
+            try
+            {
+                // FIXED: Use correct method name
+                var hospitalInfos = await _hospitalService.GetAllHospitalInfoAsync();
+                return Ok(hospitalInfos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all hospital info");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // GET: api/hospital/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<HospitalInfoDto>> GetById(int id)
+        public async Task<ActionResult<HospitalInfoDto>> GetHospitalInfo(int id)
         {
-            _logger.Information("GET hospital info by Id: {Id}", id);
-            var result = await _hospitalService.GetHospitalInfoByIdAsync(id);
-            if (result == null)
+            try
             {
-                _logger.Warning("Hospital info not found for Id: {Id}", id);
-                return NotFound();
+                var hospitalInfo = await _hospitalService.GetHospitalInfoByIdAsync(id);
+                if (hospitalInfo == null)
+                {
+                    return NotFound();
+                }
+                return Ok(hospitalInfo);
             }
-            return Ok(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting hospital info {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // POST: api/hospital
         [HttpPost]
-        public async Task<ActionResult<HospitalInfoDto>> Create(HospitalInfoDto dto)
+        public async Task<ActionResult<HospitalInfoDto>> CreateHospitalInfo(HospitalInfoDto hospitalInfoDto)
         {
-            _logger.Information("POST create hospital info requested.");
-            var created = await _hospitalService.AddHospitalInfoAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            try
+            {
+                // FIXED: Use correct method name
+                var createdHospitalInfo = await _hospitalService.CreateHospitalInfoAsync(hospitalInfoDto);
+                return CreatedAtAction(nameof(GetHospitalInfo), new { id = createdHospitalInfo.Id }, createdHospitalInfo);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating hospital info");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // PUT: api/hospital/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, HospitalInfoDto dto)
+        public async Task<IActionResult> UpdateHospitalInfo(int id, HospitalInfoDto hospitalInfoDto)
         {
-            _logger.Information("PUT update hospital info for Id: {Id}", id);
-            var updated = await _hospitalService.UpdateHospitalInfoAsync(id, dto);
-            if (!updated)
+            try
             {
-                _logger.Warning("Update failed: Hospital info not found for Id: {Id}", id);
-                return NotFound();
+                if (id != hospitalInfoDto.Id)
+                {
+                    return BadRequest("ID mismatch");
+                }
+
+                // FIXED: Use correct method signature
+                await _hospitalService.UpdateHospitalInfoAsync(hospitalInfoDto);
+                return Ok();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating hospital info {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // DELETE: api/hospital/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteHospitalInfo(int id)
         {
-            _logger.Information("DELETE hospital info for Id: {Id}", id);
-            var deleted = await _hospitalService.DeleteHospitalInfoAsync(id);
-            if (!deleted)
+            try
             {
-                _logger.Warning("Delete failed: Hospital info not found for Id: {Id}", id);
-                return NotFound();
+                await _hospitalService.DeleteHospitalInfoAsync(id);
+                return Ok();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting hospital info {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }

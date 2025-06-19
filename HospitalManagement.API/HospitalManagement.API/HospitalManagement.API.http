@@ -1,6 +1,19 @@
-@HospitalManagement.API_HostAddress = http://localhost:5023
+@HospitalManagement.API_HostAddress = https://localhost:7268
 
 GET {{HospitalManagement.API_HostAddress}}/weatherforecast/
 Accept: application/json
+
+###
+
+GET {{HospitalManagement.API_HostAddress}}/api/hospital
+
+###
+
+POST {{HospitalManagement.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  
+}
 
 ###

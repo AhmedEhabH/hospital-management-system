@@ -7,14 +7,22 @@ namespace HospitalManagement.API.Repositories.Implementations
 {
     public class MedicalHistoryRepository : GenericRepository<MedicalHistory>, IMedicalHistoryRepository
     {
-        public MedicalHistoryRepository(HospitalDbContext context) : base(context) { }
+        public MedicalHistoryRepository(HospitalDbContext context, ILogger<MedicalHistoryRepository> logger)
+            : base(context, logger)
+        {
+        }
 
         public async Task<IEnumerable<MedicalHistory>> GetByUserIdAsync(int userId)
         {
-            _logger.Information("Fetching MedicalHistories for UserId: {UserId}", userId);
-            return await _context.MedicalHistories
-                .Where(mh => mh.UserId == userId)
-                .ToListAsync();
+            try
+            {
+                return await _dbSet.Where(mh => mh.UserId == userId).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting medical history for user: {userId}");
+                throw;
+            }
         }
     }
 }

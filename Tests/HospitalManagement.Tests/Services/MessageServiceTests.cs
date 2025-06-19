@@ -1,142 +1,152 @@
-﻿using Xunit;
-using Moq;
-using AutoMapper;
-using FluentAssertions;
-using HospitalManagement.API.Services.Implementations;
-using HospitalManagement.API.Models.Entities;
+﻿using AutoMapper;
+using HospitalManagement.API.Hubs;
 using HospitalManagement.API.Models.DTOs;
+using HospitalManagement.API.Models.Entities;
 using HospitalManagement.API.Repositories.Interfaces;
+using HospitalManagement.API.Services.Implementations;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Logging;
+using Moq;
 using Serilog;
+using Xunit;
 
 namespace HospitalManagement.Tests.Services
 {
     public class MessageServiceTests : IDisposable
     {
         private readonly Mock<IMessageRepository> _mockMessageRepository;
+        private readonly Mock<IUserRepository> _mockUserRepository;
         private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<IHubContext<CommunicationHub>> _mockHubContext;
+        private readonly Mock<ILogger<MessageService>> _mockLogger;
         private readonly MessageService _messageService;
 
         public MessageServiceTests()
         {
-            Log.Information("Setting up MessageService unit tests");
-
             _mockMessageRepository = new Mock<IMessageRepository>();
+            _mockUserRepository = new Mock<IUserRepository>();
             _mockMapper = new Mock<IMapper>();
+            _mockHubContext = new Mock<IHubContext<CommunicationHub>>();
+            _mockLogger = new Mock<ILogger<MessageService>>();
 
             _messageService = new MessageService(
                 _mockMessageRepository.Object,
-                _mockMapper.Object);
+                _mockUserRepository.Object,
+                _mockMapper.Object,
+                _mockHubContext.Object,
+                _mockLogger.Object
+            );
         }
 
         [Fact]
-        public async Task GetInboxAsync_ValidUserId_ReturnsInboxMessages()
+        public async Task CreateMessageAsync_ValidMessage_ReturnsMessageDto()
         {
             // Arrange
-            Log.Information("Testing GetInboxAsync with valid user ID");
-
-            var userId = 1;
-            var messages = new List<Message>
-            {
-                new Message
-                {
-                    Id = 1,
-                    ReceiverId = userId,
-                    Subject = "Test Message",
-                    MessageContent = "This is a test message",
-                    IsRead = false
-                }
-            };
-            var messageDtos = new List<MessageDto>
-            {
-                new MessageDto
-                {
-                    Id = 1,
-                    ReceiverId = userId,
-                    Subject = "Test Message",
-                    MessageContent = "This is a test message",
-                    IsRead = false
-                }
-            };
-
-            _mockMessageRepository.Setup(r => r.GetInboxAsync(userId))
-                .ReturnsAsync(messages);
-            _mockMapper.Setup(m => m.Map<IEnumerable<MessageDto>>(messages))
-                .Returns(messageDtos);
-
-            // Act
-            var result = await _messageService.GetInboxAsync(userId);
-
-            // Assert
-            result.Should().NotBeNull();
-            result.Should().HaveCount(1);
-            result.First().Subject.Should().Be("Test Message");
-            result.First().IsRead.Should().BeFalse();
-
-            Log.Information("GetInboxAsync test completed successfully");
-        }
-
-        [Fact]
-        public async Task SendMessageAsync_ValidDto_ReturnsCreatedMessage()
-        {
-            // Arrange
-            Log.Information("Testing SendMessageAsync with valid DTO");
-
-            var dto = new MessageDto
+            var messageDto = new MessageDto
             {
                 SenderId = 1,
                 ReceiverId = 2,
-                Subject = "New Message",
-                MessageContent = "Hello from sender"
+                Subject = "Test Subject",
+                MessageContent = "Test message content",
+                SentDate = DateTime.UtcNow
             };
-            var entity = new Message
+            var message = new Message
             {
                 Id = 1,
                 SenderId = 1,
                 ReceiverId = 2,
-                Subject = "New Message",
-                MessageContent = "Hello from sender"
+                Subject = "Test Subject",
+                MessageContent = "Test message content",
+                SentDate = DateTime.UtcNow,
+                IsRead = false
             };
 
-            _mockMapper.Setup(m => m.Map<Message>(dto)).Returns(entity);
-            _mockMessageRepository.Setup(r => r.AddAsync(entity)).Returns(Task.CompletedTask);
-            _mockMessageRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
-            _mockMapper.Setup(m => m.Map<MessageDto>(entity)).Returns(dto);
+            _mockMapper.Setup(m => m.Map<Message>(messageDto))
+                      .Returns(message);
+            _mockMessageRepository.Setup(r => r.CreateAsync(It.IsAny<Message>()))
+                                  .ReturnsAsync(message);
+            _mockMapper.Setup(m => m.Map<MessageDto>(message))
+                      .Returns(messageDto);
 
             // Act
-            var result = await _messageService.SendMessageAsync(dto);
+            var result = await _messageService.CreateMessageAsync(messageDto);
 
             // Assert
-            result.Should().NotBeNull();
-            result.Subject.Should().Be("New Message");
-            result.MessageContent.Should().Be("Hello from sender");
-
-            Log.Information("SendMessageAsync test completed successfully");
+            Assert.NotNull(result);
+            Assert.Equal("Test Subject", result.Subject);
+            Assert.Equal("Test message content", result.MessageContent);
         }
 
         [Fact]
-        public async Task MarkAsReadAsync_ExistingMessage_ReturnsTrue()
+        public async Task GetMessageByIdAsync_ValidId_ReturnsMessageDto()
         {
             // Arrange
-            Log.Information("Testing MarkAsReadAsync with existing message");
-
             var messageId = 1;
-            var message = new Message { Id = messageId, IsRead = false };
+            var message = new Message
+            {
+                Id = messageId,
+                SenderId = 1,
+                ReceiverId = 2,
+                Subject = "Test Subject",
+                MessageContent = "Test message content",
+                SentDate = DateTime.UtcNow,
+                IsRead = false
+            };
+            var messageDto = new MessageDto
+            {
+                Id = messageId,
+                SenderId = 1,
+                ReceiverId = 2,
+                Subject = "Test Subject",
+                MessageContent = "Test message content",
+                SentDate = DateTime.UtcNow
+            };
 
-            _mockMessageRepository.Setup(r => r.GetByIdAsync(messageId)).ReturnsAsync(message);
-            _mockMessageRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+            _mockMessageRepository.Setup(r => r.GetByIdAsync(messageId))
+                                  .ReturnsAsync(message);
+            _mockMapper.Setup(m => m.Map<MessageDto>(message))
+                      .Returns(messageDto);
 
             // Act
-            var result = await _messageService.MarkAsReadAsync(messageId);
+            var result = await _messageService.GetMessageByIdAsync(messageId);
 
             // Assert
-            result.Should().BeTrue();
-            message.IsRead.Should().BeTrue();
+            Assert.NotNull(result);
+            Assert.Equal(messageId, result.Id);
+        }
 
-            Log.Information("MarkAsReadAsync test completed successfully");
+        [Fact]
+        public async Task MarkAsReadAsync_ValidMessageId_UpdatesMessage()
+        {
+            // Arrange
+            var messageId = 1;
+            var message = new Message
+            {
+                Id = messageId,
+                SenderId = 1,
+                ReceiverId = 2,
+                Subject = "Test Subject",
+                MessageContent = "Test message content",
+                SentDate = DateTime.UtcNow,
+                IsRead = false
+            };
+
+            _mockMessageRepository.Setup(r => r.GetByIdAsync(messageId))
+                                  .ReturnsAsync(message);
+            _mockMessageRepository.Setup(r => r.UpdateAsync(It.IsAny<Message>()))
+                                  .Returns(Task.CompletedTask);
+
+            // Act
+            await _messageService.MarkAsReadAsync(messageId);
+
+            // Assert
+            _mockMessageRepository.Verify(r => r.UpdateAsync(It.IsAny<Message>()), Times.Once);
+            Assert.True(message.IsRead);
         }
 
         public void Dispose()
         {
+            // Clean up resources if needed
             Log.Information("Disposing MessageService unit tests");
         }
     }

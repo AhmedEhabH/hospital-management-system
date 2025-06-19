@@ -3,73 +3,123 @@ using HospitalManagement.API.Models.DTOs;
 using HospitalManagement.API.Models.Entities;
 using HospitalManagement.API.Repositories.Interfaces;
 using HospitalManagement.API.Services.Interfaces;
-using Serilog;
 
 namespace HospitalManagement.API.Services.Implementations
 {
-    public class LabReportService : ILabReportService
+    public class LabReportService : ILabReportService, IDisposable
     {
         private readonly ILabReportRepository _labReportRepository;
         private readonly IMapper _mapper;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<LabReportService> _logger;
+        private bool _disposed = false;
 
-        public LabReportService(ILabReportRepository labReportRepository, IMapper mapper)
+        public LabReportService(
+            ILabReportRepository labReportRepository,
+            IMapper mapper,
+            ILogger<LabReportService> logger)
         {
             _labReportRepository = labReportRepository;
             _mapper = mapper;
-            _logger = Log.ForContext<LabReportService>();
+            _logger = logger;
         }
 
-        public async Task<IEnumerable<LabReportDto>> GetLabReportsByPatientIdAsync(int patientId)
+        public async Task<LabReportDto> CreateLabReportAsync(LabReportDto labReportDto)
         {
-            _logger.Information("Fetching lab reports for PatientId: {PatientId}", patientId);
-            var reports = await _labReportRepository.GetByPatientIdAsync(patientId);
-            return _mapper.Map<IEnumerable<LabReportDto>>(reports);
+            try
+            {
+                var labReport = _mapper.Map<LabReport>(labReportDto);
+                labReport.CreatedAt = DateTime.UtcNow;
+                labReport.TestedDate = DateTime.UtcNow;
+
+                var createdLabReport = await _labReportRepository.AddAsync(labReport);
+                var result = _mapper.Map<LabReportDto>(createdLabReport);
+
+                _logger.LogInformation($"Lab report created with ID: {createdLabReport.Id}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating lab report");
+                throw;
+            }
         }
 
         public async Task<LabReportDto?> GetLabReportByIdAsync(int id)
         {
-            _logger.Information("Fetching lab report with Id: {Id}", id);
-            var report = await _labReportRepository.GetByIdAsync(id);
-            return report == null ? null : _mapper.Map<LabReportDto>(report);
-        }
-
-        public async Task<LabReportDto> AddLabReportAsync(LabReportDto dto)
-        {
-            _logger.Information("Adding new lab report for PatientId: {PatientId}", dto.PatientId);
-            var entity = _mapper.Map<LabReport>(dto);
-            await _labReportRepository.AddAsync(entity);
-            await _labReportRepository.SaveChangesAsync();
-            return _mapper.Map<LabReportDto>(entity);
-        }
-
-        public async Task<bool> UpdateLabReportAsync(int id, LabReportDto dto)
-        {
-            _logger.Information("Updating lab report with Id: {Id}", id);
-            var entity = await _labReportRepository.GetByIdAsync(id);
-            if (entity == null)
+            try
             {
-                _logger.Warning("Lab report not found for Id: {Id}", id);
-                return false;
+                var labReport = await _labReportRepository.GetByIdAsync(id);
+                return labReport != null ? _mapper.Map<LabReportDto>(labReport) : null;
             }
-            _mapper.Map(dto, entity);
-            _labReportRepository.Update(entity);
-            await _labReportRepository.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting lab report by id: {id}");
+                throw;
+            }
         }
 
-        public async Task<bool> DeleteLabReportAsync(int id)
+        public async Task<IEnumerable<LabReportDto>> GetLabReportsByPatientIdAsync(int patientId)
         {
-            _logger.Information("Deleting lab report with Id: {Id}", id);
-            var entity = await _labReportRepository.GetByIdAsync(id);
-            if (entity == null)
+            try
             {
-                _logger.Warning("Lab report not found for Id: {Id}", id);
-                return false;
+                var labReports = await _labReportRepository.GetByPatientIdAsync(patientId);
+                return _mapper.Map<IEnumerable<LabReportDto>>(labReports);
             }
-            _labReportRepository.Remove(entity);
-            await _labReportRepository.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting lab reports for patient: {patientId}");
+                throw;
+            }
+        }
+
+        public async Task UpdateLabReportAsync(LabReportDto labReportDto)
+        {
+            try
+            {
+                var labReport = _mapper.Map<LabReport>(labReportDto);
+                await _labReportRepository.Update(labReport);
+                _logger.LogInformation($"Lab report updated with ID: {labReport.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating lab report with ID: {labReportDto.Id}");
+                throw;
+            }
+        }
+
+        public async Task DeleteLabReportAsync(int id)
+        {
+            try
+            {
+                await _labReportRepository.DeleteAsync(id);
+                _logger.LogInformation($"Lab report deleted with ID: {id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting lab report with ID: {id}");
+                throw;
+            }
+        }
+
+        // ADDED: IDisposable implementation
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Dispose managed resources if any
+                    // Note: In this case, we don't have any disposable resources to clean up
+                    // but this pattern is here for future extensibility
+                }
+                _disposed = true;
+            }
         }
     }
 }

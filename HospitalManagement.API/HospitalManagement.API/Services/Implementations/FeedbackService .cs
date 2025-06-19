@@ -3,7 +3,6 @@ using HospitalManagement.API.Models.DTOs;
 using HospitalManagement.API.Models.Entities;
 using HospitalManagement.API.Repositories.Interfaces;
 using HospitalManagement.API.Services.Interfaces;
-using Serilog;
 
 namespace HospitalManagement.API.Services.Implementations
 {
@@ -11,65 +10,95 @@ namespace HospitalManagement.API.Services.Implementations
     {
         private readonly IFeedbackRepository _feedbackRepository;
         private readonly IMapper _mapper;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<FeedbackService> _logger;
 
-        public FeedbackService(IFeedbackRepository feedbackRepository, IMapper mapper)
+        public FeedbackService(
+            IFeedbackRepository feedbackRepository,
+            IMapper mapper,
+            ILogger<FeedbackService> logger)
         {
             _feedbackRepository = feedbackRepository;
             _mapper = mapper;
-            _logger = Log.ForContext<FeedbackService>();
+            _logger = logger;
         }
 
-        public async Task<IEnumerable<FeedbackDto>> GetFeedbacksByUserIdAsync(int userId)
+        public async Task<FeedbackDto> CreateFeedbackAsync(FeedbackDto feedbackDto)
         {
-            _logger.Information("Fetching feedbacks for UserId: {UserId}", userId);
-            var feedbacks = await _feedbackRepository.GetByUserIdAsync(userId);
-            return _mapper.Map<IEnumerable<FeedbackDto>>(feedbacks);
+            try
+            {
+                var feedback = _mapper.Map<Feedback>(feedbackDto);
+                feedback.CreatedAt = DateTime.UtcNow;
+
+                // FIXED: Use AddAsync method
+                var createdFeedback = await _feedbackRepository.AddAsync(feedback);
+                var result = _mapper.Map<FeedbackDto>(createdFeedback);
+
+                _logger.LogInformation($"Feedback created with ID: {createdFeedback.Id}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating feedback");
+                throw;
+            }
         }
 
         public async Task<FeedbackDto?> GetFeedbackByIdAsync(int id)
         {
-            _logger.Information("Fetching feedback with Id: {Id}", id);
-            var feedback = await _feedbackRepository.GetByIdAsync(id);
-            return feedback == null ? null : _mapper.Map<FeedbackDto>(feedback);
-        }
-
-        public async Task<FeedbackDto> AddFeedbackAsync(FeedbackDto dto)
-        {
-            _logger.Information("Adding new feedback for UserId: {UserId}", dto.UserId);
-            var entity = _mapper.Map<Feedback>(dto);
-            await _feedbackRepository.AddAsync(entity);
-            await _feedbackRepository.SaveChangesAsync();
-            return _mapper.Map<FeedbackDto>(entity);
-        }
-
-        public async Task<bool> UpdateFeedbackAsync(int id, FeedbackDto dto)
-        {
-            _logger.Information("Updating feedback with Id: {Id}", id);
-            var entity = await _feedbackRepository.GetByIdAsync(id);
-            if (entity == null)
+            try
             {
-                _logger.Warning("Feedback not found for Id: {Id}", id);
-                return false;
+                var feedback = await _feedbackRepository.GetByIdAsync(id);
+                return feedback != null ? _mapper.Map<FeedbackDto>(feedback) : null;
             }
-            _mapper.Map(dto, entity);
-            _feedbackRepository.Update(entity);
-            await _feedbackRepository.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting feedback by id: {id}");
+                throw;
+            }
         }
 
-        public async Task<bool> DeleteFeedbackAsync(int id)
+        public async Task<IEnumerable<FeedbackDto>> GetFeedbackByUserIdAsync(int userId)
         {
-            _logger.Information("Deleting feedback with Id: {Id}", id);
-            var entity = await _feedbackRepository.GetByIdAsync(id);
-            if (entity == null)
+            try
             {
-                _logger.Warning("Feedback not found for Id: {Id}", id);
-                return false;
+                var feedbacks = await _feedbackRepository.GetByUserIdAsync(userId);
+                return _mapper.Map<IEnumerable<FeedbackDto>>(feedbacks);
             }
-            _feedbackRepository.Remove(entity);
-            await _feedbackRepository.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting feedback for user: {userId}");
+                throw;
+            }
+        }
+
+        public async Task UpdateFeedbackAsync(FeedbackDto feedbackDto)
+        {
+            try
+            {
+                var feedback = _mapper.Map<Feedback>(feedbackDto);
+                // FIXED: Use Update method
+                await _feedbackRepository.Update(feedback);
+                _logger.LogInformation($"Feedback updated with ID: {feedback.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating feedback with ID: {feedbackDto.Id}");
+                throw;
+            }
+        }
+
+        public async Task DeleteFeedbackAsync(int id)
+        {
+            try
+            {
+                await _feedbackRepository.DeleteAsync(id);
+                _logger.LogInformation($"Feedback deleted with ID: {id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting feedback with ID: {id}");
+                throw;
+            }
         }
     }
 }

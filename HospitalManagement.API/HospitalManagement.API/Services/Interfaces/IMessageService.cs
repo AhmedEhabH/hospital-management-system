@@ -4,11 +4,19 @@ namespace HospitalManagement.API.Services.Interfaces
 {
     public interface IMessageService
     {
-        Task<IEnumerable<MessageDto>> GetInboxAsync(int userId);
-        Task<IEnumerable<MessageDto>> GetSentAsync(int userId);
+        // CRUD operations
+        Task<MessageDto> CreateMessageAsync(MessageDto messageDto);
         Task<MessageDto?> GetMessageByIdAsync(int id);
-        Task<MessageDto> SendMessageAsync(MessageDto dto);
-        Task<bool> MarkAsReadAsync(int id);
-        Task<bool> DeleteMessageAsync(int id);
+        Task<IEnumerable<MessageDto>> GetInboxMessagesAsync(int userId);
+        Task<IEnumerable<MessageDto>> GetSentMessagesAsync(int userId);
+
+        // FIXED: Add missing methods that are implemented in MessageService
+        Task MarkAsReadAsync(int messageId);
+        Task DeleteMessageAsync(int messageId);
+
+        // Real-time notification methods
+        Task SendCriticalLabAlertAsync(int patientId, int labReportId, string alertMessage);
+        Task SendAppointmentReminderAsync(int patientId, DateTime appointmentDate, string doctorName);
+        Task NotifyDoctorsOfEmergencyAsync(int patientId, string emergencyDetails);
     }
 }

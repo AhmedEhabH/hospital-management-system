@@ -3,75 +3,121 @@ using HospitalManagement.API.Models.DTOs;
 using HospitalManagement.API.Models.Entities;
 using HospitalManagement.API.Repositories.Interfaces;
 using HospitalManagement.API.Services.Interfaces;
-using Serilog;
 
 namespace HospitalManagement.API.Services.Implementations
 {
-    public class MedicalHistoryService : IMedicalHistoryService
+    public class MedicalHistoryService : IMedicalHistoryService, IDisposable
     {
         private readonly IMedicalHistoryRepository _medicalHistoryRepository;
         private readonly IMapper _mapper;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<MedicalHistoryService> _logger;
+        private bool _disposed = false;
 
         public MedicalHistoryService(
             IMedicalHistoryRepository medicalHistoryRepository,
-            IMapper mapper)
+            IMapper mapper,
+            ILogger<MedicalHistoryService> logger)
         {
             _medicalHistoryRepository = medicalHistoryRepository;
             _mapper = mapper;
-            _logger = Log.ForContext<MedicalHistoryService>();
+            _logger = logger;
         }
 
-        public async Task<IEnumerable<MedicalHistoryDto>> GetMedicalHistoriesByUserIdAsync(int userId)
+        public async Task<MedicalHistoryDto> CreateMedicalHistoryAsync(MedicalHistoryDto medicalHistoryDto)
         {
-            _logger.Information("Fetching medical histories for UserId: {UserId}", userId);
-            var histories = await _medicalHistoryRepository.GetByUserIdAsync(userId);
-            return _mapper.Map<IEnumerable<MedicalHistoryDto>>(histories);
+            try
+            {
+                var medicalHistory = _mapper.Map<MedicalHistory>(medicalHistoryDto);
+
+                var createdMedicalHistory = await _medicalHistoryRepository.AddAsync(medicalHistory);
+                var result = _mapper.Map<MedicalHistoryDto>(createdMedicalHistory);
+
+                _logger.LogInformation($"Medical history created with ID: {createdMedicalHistory.Id}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating medical history");
+                throw;
+            }
         }
 
         public async Task<MedicalHistoryDto?> GetMedicalHistoryByIdAsync(int id)
         {
-            _logger.Information("Fetching medical history with Id: {Id}", id);
-            var history = await _medicalHistoryRepository.GetByIdAsync(id);
-            return history == null ? null : _mapper.Map<MedicalHistoryDto>(history);
-        }
-
-        public async Task<MedicalHistoryDto> AddMedicalHistoryAsync(MedicalHistoryDto dto)
-        {
-            _logger.Information("Adding new medical history for UserId: {UserId}", dto.UserId);
-            var entity = _mapper.Map<MedicalHistory>(dto);
-            await _medicalHistoryRepository.AddAsync(entity);
-            await _medicalHistoryRepository.SaveChangesAsync();
-            return _mapper.Map<MedicalHistoryDto>(entity);
-        }
-
-        public async Task<bool> UpdateMedicalHistoryAsync(int id, MedicalHistoryDto dto)
-        {
-            _logger.Information("Updating medical history with Id: {Id}", id);
-            var entity = await _medicalHistoryRepository.GetByIdAsync(id);
-            if (entity == null)
+            try
             {
-                _logger.Warning("Medical history not found for Id: {Id}", id);
-                return false;
+                var medicalHistory = await _medicalHistoryRepository.GetByIdAsync(id);
+                return medicalHistory != null ? _mapper.Map<MedicalHistoryDto>(medicalHistory) : null;
             }
-            _mapper.Map(dto, entity);
-            _medicalHistoryRepository.Update(entity);
-            await _medicalHistoryRepository.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting medical history by id: {id}");
+                throw;
+            }
         }
 
-        public async Task<bool> DeleteMedicalHistoryAsync(int id)
+        public async Task<IEnumerable<MedicalHistoryDto>> GetMedicalHistoryByUserIdAsync(int userId)
         {
-            _logger.Information("Deleting medical history with Id: {Id}", id);
-            var entity = await _medicalHistoryRepository.GetByIdAsync(id);
-            if (entity == null)
+            try
             {
-                _logger.Warning("Medical history not found for Id: {Id}", id);
-                return false;
+                var medicalHistories = await _medicalHistoryRepository.GetByUserIdAsync(userId);
+                return _mapper.Map<IEnumerable<MedicalHistoryDto>>(medicalHistories);
             }
-            _medicalHistoryRepository.Remove(entity);
-            await _medicalHistoryRepository.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting medical history for user: {userId}");
+                throw;
+            }
+        }
+
+        public async Task UpdateMedicalHistoryAsync(MedicalHistoryDto medicalHistoryDto)
+        {
+            try
+            {
+                var medicalHistory = _mapper.Map<MedicalHistory>(medicalHistoryDto);
+                await _medicalHistoryRepository.Update(medicalHistory);
+                _logger.LogInformation($"Medical history updated with ID: {medicalHistory.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating medical history with ID: {medicalHistoryDto.Id}");
+                throw;
+            }
+        }
+
+        public async Task DeleteMedicalHistoryAsync(int id)
+        {
+            try
+            {
+                await _medicalHistoryRepository.DeleteAsync(id);
+                _logger.LogInformation($"Medical history deleted with ID: {id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting medical history with ID: {id}");
+                throw;
+            }
+        }
+
+        // ADDED: IDisposable implementation
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    // Dispose managed resources if any
+                    // Note: In this case, we don't have any disposable resources to clean up
+                    // but this pattern is here for future extensibility
+                }
+                _disposed = true;
+            }
         }
     }
 }

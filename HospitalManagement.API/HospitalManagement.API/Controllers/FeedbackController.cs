@@ -1,82 +1,109 @@
-﻿using HospitalManagement.API.Models.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using HospitalManagement.API.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Serilog;
+using HospitalManagement.API.Models.DTOs;
 
 namespace HospitalManagement.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class FeedbackController : ControllerBase
     {
         private readonly IFeedbackService _feedbackService;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<FeedbackController> _logger;
 
-        public FeedbackController(IFeedbackService feedbackService)
+        public FeedbackController(IFeedbackService feedbackService, ILogger<FeedbackController> logger)
         {
             _feedbackService = feedbackService;
-            _logger = Log.ForContext<FeedbackController>();
+            _logger = logger;
         }
 
-        // GET: api/feedback/user/{userId}
         [HttpGet("user/{userId}")]
-        public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetByUserId(int userId)
+        public async Task<ActionResult<IEnumerable<FeedbackDto>>> GetFeedbacksByUserId(int userId)
         {
-            _logger.Information("GET feedbacks for UserId: {UserId}", userId);
-            var result = await _feedbackService.GetFeedbacksByUserIdAsync(userId);
-            return Ok(result);
+            try
+            {
+                // FIXED: Use correct method name
+                var feedbacks = await _feedbackService.GetFeedbackByUserIdAsync(userId);
+                return Ok(feedbacks);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting feedbacks for user {userId}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // GET: api/feedback/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<FeedbackDto>> GetById(int id)
+        public async Task<ActionResult<FeedbackDto>> GetFeedback(int id)
         {
-            _logger.Information("GET feedback by Id: {Id}", id);
-            var result = await _feedbackService.GetFeedbackByIdAsync(id);
-            if (result == null)
+            try
             {
-                _logger.Warning("Feedback not found for Id: {Id}", id);
-                return NotFound();
+                var feedback = await _feedbackService.GetFeedbackByIdAsync(id);
+                if (feedback == null)
+                {
+                    return NotFound();
+                }
+                return Ok(feedback);
             }
-            return Ok(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting feedback {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // POST: api/feedback
         [HttpPost]
-        public async Task<ActionResult<FeedbackDto>> Create(FeedbackDto dto)
+        public async Task<ActionResult<FeedbackDto>> CreateFeedback(FeedbackDto feedbackDto)
         {
-            _logger.Information("POST create feedback for UserId: {UserId}", dto.UserId);
-            var created = await _feedbackService.AddFeedbackAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            try
+            {
+                // FIXED: Use correct method name
+                var createdFeedback = await _feedbackService.CreateFeedbackAsync(feedbackDto);
+                return CreatedAtAction(nameof(GetFeedback), new { id = createdFeedback.Id }, createdFeedback);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating feedback");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // PUT: api/feedback/{id}
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, FeedbackDto dto)
+        public async Task<IActionResult> UpdateFeedback(int id, FeedbackDto feedbackDto)
         {
-            _logger.Information("PUT update feedback for Id: {Id}", id);
-            var updated = await _feedbackService.UpdateFeedbackAsync(id, dto);
-            if (!updated)
+            try
             {
-                _logger.Warning("Update failed: Feedback not found for Id: {Id}", id);
-                return NotFound();
+                if (id != feedbackDto.Id)
+                {
+                    return BadRequest("ID mismatch");
+                }
+
+                // FIXED: Use correct method signature
+                await _feedbackService.UpdateFeedbackAsync(feedbackDto);
+                return Ok();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating feedback {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
-        // DELETE: api/feedback/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> DeleteFeedback(int id)
         {
-            _logger.Information("DELETE feedback for Id: {Id}", id);
-            var deleted = await _feedbackService.DeleteFeedbackAsync(id);
-            if (!deleted)
+            try
             {
-                _logger.Warning("Delete failed: Feedback not found for Id: {Id}", id);
-                return NotFound();
+                await _feedbackService.DeleteFeedbackAsync(id);
+                return Ok();
             }
-            return NoContent();
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting feedback {id}");
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }

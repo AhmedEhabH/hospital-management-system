@@ -11,6 +11,8 @@ using HospitalManagement.API.Data.Seeding;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using HospitalManagement.API.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -44,6 +46,13 @@ builder.Services.AddControllers();
 // --------- SQL Server DbContext Setup (Only if not Testing) ---------
 if (!builder.Environment.IsEnvironment("Testing"))
 {
+    // Override authentication for testing
+    builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+    {
+        options.RequireHttpsMetadata = false;
+        options.SaveToken = true;
+    });
+
     builder.Services.AddDbContext<HospitalDbContext>(options =>
         options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 }
@@ -54,7 +63,6 @@ builder.Services.AddAutoMapper(typeof(AutoMapperProfiles).Assembly);
 // --------- JWT Authentication Setup ---------
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
-
 if (string.IsNullOrEmpty(secretKey))
 {
     throw new InvalidOperationException("JWT SecretKey is not configured in appsettings.json");
@@ -74,31 +82,44 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+
+        // FIXED: Configure SignalR JWT authentication
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+
+                if (!string.IsNullOrEmpty(accessToken) &&
+                    path.StartsWithSegments("/hubs/communication"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 
 // --------- Repository Registrations ---------
 builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IMessageRepository, MessageRepository>();
+builder.Services.AddScoped<ILabReportRepository, LabReportRepository>();
 builder.Services.AddScoped<IMedicalHistoryRepository, MedicalHistoryRepository>();
 builder.Services.AddScoped<IFeedbackRepository, FeedbackRepository>();
-builder.Services.AddScoped<ILabReportRepository, LabReportRepository>();
-builder.Services.AddScoped<IMessageRepository, MessageRepository>();
 
 Log.Information("All repositories registered in DI container.");
 
 // --------- Service Registrations ---------
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IMedicalHistoryService, MedicalHistoryService>();
-Log.Information("AuthService and MedicalHistoryService registered in DI container.");
-builder.Services.AddScoped<IFeedbackService, FeedbackService>();
-Log.Information("FeedbackService registered in DI container.");
-builder.Services.AddScoped<ILabReportService, LabReportService>();
-Log.Information("LabReportService registered in DI container.");
 builder.Services.AddScoped<IMessageService, MessageService>();
-Log.Information("MessageService registered in DI container.");
+builder.Services.AddScoped<ILabReportService, LabReportService>();
+builder.Services.AddScoped<IMedicalHistoryService, MedicalHistoryService>();
+builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IHospitalService, HospitalService>();
-Log.Information("HospitalService registered in DI container.");
+Log.Information("All Services registered in DI container.");
 
 
 // --------- JwtHelper Registration ---------
@@ -107,10 +128,61 @@ Log.Information("HospitalService registered in DI container.");
 builder.Services.AddSingleton<IJwtHelper, JwtHelper>();
 Log.Information("IJwtHelper registered as singleton in DI container.");
 
+// Add SignalR
+builder.Services.AddSignalR(options =>
+{
+    options.EnableDetailedErrors = true;
+    options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+});
+
 // --------- Swagger/OpenAPI Setup ---------
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// Add Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Hospital Management API",
+        Version = "v1",
+        Description = "Comprehensive Hospital Management System API with Real-time Communication"
+    });
+
+    // Add JWT authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+});
+
+// Add comprehensive logging
+builder.Services.AddLogging(logging =>
+{
+    logging.ClearProviders();
+    logging.AddConsole();
+    logging.AddDebug();
+    logging.AddEventSourceLogger();
+});
 
 var app = builder.Build();
 
@@ -125,7 +197,11 @@ if (!app.Environment.IsEnvironment("Testing"))
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Hospital Management API v1");
+        //c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
+    });
     Log.Information("Swagger enabled in development environment");
 }
 
@@ -136,9 +212,17 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
+// Authentication & Authorization
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<CommunicationHub>("/hubs/communication");
+
+// Health check endpoint
+app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));
 
 try
 {

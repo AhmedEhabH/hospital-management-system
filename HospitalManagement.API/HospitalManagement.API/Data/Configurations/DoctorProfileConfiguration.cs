@@ -1,6 +1,6 @@
-﻿using HospitalManagement.API.Models.Entities;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Microsoft.EntityFrameworkCore;
+using HospitalManagement.API.Models.Entities;
 
 namespace HospitalManagement.API.Data.Configurations
 {
@@ -9,6 +9,7 @@ namespace HospitalManagement.API.Data.Configurations
         public void Configure(EntityTypeBuilder<DoctorProfile> builder)
         {
             builder.ToTable("DoctorProfiles");
+
             builder.HasKey(dp => dp.Id);
 
             builder.Property(dp => dp.UserId)
@@ -29,13 +30,83 @@ namespace HospitalManagement.API.Data.Configurations
                 .IsRequired()
                 .HasMaxLength(100);
 
+            // ADDED: Enhanced property configurations
+            builder.Property(dp => dp.LicenseNumber)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.HasIndex(dp => dp.LicenseNumber)
+                .IsUnique();
+
+            builder.Property(dp => dp.Specialization)
+                .HasMaxLength(100);
+
+            builder.Property(dp => dp.Biography)
+                .HasMaxLength(500);
+
+            builder.Property(dp => dp.Education)
+                .HasMaxLength(200);
+
+            builder.Property(dp => dp.Certifications)
+                .HasMaxLength(200);
+
+            builder.Property(dp => dp.Department)
+                .HasMaxLength(100);
+
+            builder.Property(dp => dp.OfficeLocation)
+                .HasMaxLength(50);
+
+            builder.Property(dp => dp.DirectPhone)
+                .HasMaxLength(15);
+
+            builder.Property(dp => dp.ProfessionalEmail)
+                .HasMaxLength(100);
+
+            builder.Property(dp => dp.IsAvailableForConsultation)
+                .IsRequired()
+                .HasDefaultValue(true);
+
+            builder.Property(dp => dp.ConsultationFee)
+                .HasColumnType("decimal(10,2)");
+
+            builder.Property(dp => dp.WorkingHours)
+                .HasMaxLength(200);
+
+            builder.Property(dp => dp.MedicalSchool)
+                .HasMaxLength(100);
+
+            builder.Property(dp => dp.Residency)
+                .HasMaxLength(100);
+
+            builder.Property(dp => dp.Fellowship)
+                .HasMaxLength(100);
+
+            builder.Property(dp => dp.ResearchInterests)
+                .HasMaxLength(500);
+
+            builder.Property(dp => dp.Publications)
+                .HasMaxLength(500);
+
+            builder.Property(dp => dp.Languages)
+                .HasMaxLength(200);
+
+            builder.Property(dp => dp.AcceptsNewPatients)
+                .IsRequired()
+                .HasDefaultValue(true);
+
+            builder.Property(dp => dp.AcceptsInsurance)
+                .IsRequired()
+                .HasDefaultValue(true);
+
+            builder.Property(dp => dp.InsuranceAccepted)
+                .HasMaxLength(500);
+
             builder.Property(dp => dp.CreatedAt)
-                .HasDefaultValueSql("GETUTCDATE()");
+                .IsRequired();
 
-            builder.Property(dp => dp.UpdatedAt)
-                .IsRequired(false);
+            builder.Property(dp => dp.UpdatedAt);
 
-            // Relationship: One DoctorProfile to One User (UserId is unique)
+            // Configure relationship with User
             builder.HasOne(dp => dp.User)
                 .WithOne(u => u.DoctorProfile)
                 .HasForeignKey<DoctorProfile>(dp => dp.UserId)

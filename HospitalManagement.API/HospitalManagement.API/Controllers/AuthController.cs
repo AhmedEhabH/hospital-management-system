@@ -1,8 +1,6 @@
-﻿using HospitalManagement.API.Models.DTOs;
+﻿using Microsoft.AspNetCore.Mvc;
 using HospitalManagement.API.Services.Interfaces;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Serilog;
+using HospitalManagement.API.Models.DTOs;
 
 namespace HospitalManagement.API.Controllers
 {
@@ -11,40 +9,80 @@ namespace HospitalManagement.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<AuthController> _logger;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, ILogger<AuthController> logger)
         {
             _authService = authService;
-            _logger = Log.ForContext<AuthController>();
+            _logger = logger;
         }
 
-        // POST: api/auth/login
         [HttpPost("login")]
-        public async Task<ActionResult<AuthResultDto>> Login([FromBody] LoginDto loginDto)
+        public async Task<ActionResult<AuthResultDto>> Login(LoginDto loginDto)
         {
-            _logger.Information("POST login attempt for UserId: {UserId}", loginDto.UserId);
-            var result = await _authService.LoginAsync(loginDto);
-            if (!result.Success)
+            try
             {
-                _logger.Warning("Login failed for UserId: {UserId}", loginDto.UserId);
-                return Unauthorized(result);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new AuthResultDto
+                    {
+                        Success = false,
+                        Message = "Invalid input data"
+                    });
+                }
+
+                var result = await _authService.LoginAsync(loginDto);
+
+                if (!result.Success)
+                {
+                    return Ok(result); // Return 200 with success: false for invalid credentials
+                }
+
+                return Ok(result);
             }
-            return Ok(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in login endpoint");
+                return StatusCode(500, new AuthResultDto
+                {
+                    Success = false,
+                    Message = "An unexpected error occurred"
+                });
+            }
         }
 
-        // POST: api/auth/register
         [HttpPost("register")]
-        public async Task<ActionResult<RegistrationResultDto>> Register([FromBody] UserRegistrationDto registrationDto)
+        public async Task<ActionResult<RegistrationResultDto>> Register(UserRegistrationDto registrationDto)
         {
-            _logger.Information("POST registration attempt for Email: {Email}", registrationDto.Email);
-            var result = await _authService.RegisterAsync(registrationDto);
-            if (!result.Success)
+            try
             {
-                _logger.Warning("Registration failed for Email: {Email}", registrationDto.Email);
-                return BadRequest(result);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new RegistrationResultDto
+                    {
+                        Success = false,
+                        Message = "Invalid input data"
+                    });
+                }
+
+                var result = await _authService.RegisterAsync(registrationDto);
+
+                if (!result.Success)
+                {
+                    return Ok(result); // Return 200 with success: false for registration errors
+                }
+
+                return Ok(result);
             }
-            return Ok(result);
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in register endpoint");
+                return StatusCode(500, new RegistrationResultDto
+                {
+                    Success = false,
+                    Message = "An unexpected error occurred"
+                });
+            }
         }
     }
 }

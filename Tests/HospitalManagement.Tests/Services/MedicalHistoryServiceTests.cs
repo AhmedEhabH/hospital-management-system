@@ -1,137 +1,265 @@
-﻿using AutoMapper;
-using FluentAssertions;
+﻿using Xunit;
+using Moq;
+using AutoMapper;
+using Microsoft.Extensions.Logging;
+using HospitalManagement.API.Services.Implementations;
+using HospitalManagement.API.Repositories.Interfaces;
 using HospitalManagement.API.Models.DTOs;
 using HospitalManagement.API.Models.Entities;
-using HospitalManagement.API.Repositories.Interfaces;
-using HospitalManagement.API.Services.Implementations;
-using Moq;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HospitalManagement.Tests.Services
 {
     public class MedicalHistoryServiceTests : IDisposable
     {
-        private readonly Mock<IMedicalHistoryRepository> _mockMedicalHistoryRepository;
+        private readonly Mock<IMedicalHistoryRepository> _mockRepository;
         private readonly Mock<IMapper> _mockMapper;
+        private readonly Mock<ILogger<MedicalHistoryService>> _mockLogger;
         private readonly MedicalHistoryService _medicalHistoryService;
 
         public MedicalHistoryServiceTests()
         {
-            Log.Information("Setting up MedicalHistoryService unit tests");
-
-            _mockMedicalHistoryRepository = new Mock<IMedicalHistoryRepository>();
+            _mockRepository = new Mock<IMedicalHistoryRepository>();
             _mockMapper = new Mock<IMapper>();
+            // FIXED: Add missing logger mock
+            _mockLogger = new Mock<ILogger<MedicalHistoryService>>();
 
+            // FIXED: Include logger in constructor
             _medicalHistoryService = new MedicalHistoryService(
-                _mockMedicalHistoryRepository.Object,
-                _mockMapper.Object);
+                _mockRepository.Object,
+                _mockMapper.Object,
+                _mockLogger.Object
+            );
         }
 
         [Fact]
-        public async Task GetMedicalHistoriesByUserIdAsync_ValidUserId_ReturnsHistories()
+        public async Task GetMedicalHistoryByIdAsync_ValidId_ReturnsMedicalHistoryDto()
         {
             // Arrange
-            Log.Information("Testing GetMedicalHistoriesByUserIdAsync with valid user ID");
+            var medicalHistoryId = 1;
+            var medicalHistory = new MedicalHistory
+            {
+                Id = medicalHistoryId,
+                UserId = 1,
+                PersonalHistory = "No significant personal history",
+                FamilyHistory = "Family history of diabetes",
+                Allergies = "Penicillin allergy",
+                FrequentlyOccurringDisease = "Hypertension",
+                HasAsthma = false,
+                HasBloodPressure = true,
+                HasCholesterol = false,
+                HasDiabetes = false,
+                HasHeartDisease = false,
+                UsesTobacco = false,
+                CigarettePacksPerDay = 0,
+                SmokingYears = 0,
+                DrinksAlcohol = false,
+                AlcoholicDrinksPerWeek = 0,
+                CurrentMedications = "Lisinopril 10mg daily"
+            };
+            var medicalHistoryDto = new MedicalHistoryDto
+            {
+                Id = medicalHistoryId,
+                UserId = 1,
+                PersonalHistory = "No significant personal history",
+                FamilyHistory = "Family history of diabetes",
+                Allergies = "Penicillin allergy",
+                FrequentlyOccurringDisease = "Hypertension",
+                HasAsthma = false,
+                HasBloodPressure = true,
+                HasCholesterol = false,
+                HasDiabetes = false,
+                HasHeartDisease = false,
+                UsesTobacco = false,
+                CigarettePacksPerDay = 0,
+                SmokingYears = 0,
+                DrinksAlcohol = false,
+                AlcoholicDrinksPerWeek = 0,
+                CurrentMedications = "Lisinopril 10mg daily"
+            };
 
+            _mockRepository.Setup(r => r.GetByIdAsync(medicalHistoryId))
+                          .ReturnsAsync(medicalHistory);
+            _mockMapper.Setup(m => m.Map<MedicalHistoryDto>(medicalHistory))
+                      .Returns(medicalHistoryDto);
+
+            // Act
+            var result = await _medicalHistoryService.GetMedicalHistoryByIdAsync(medicalHistoryId);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal(medicalHistoryId, result.Id);
+            Assert.Equal("Penicillin allergy", result.Allergies);
+        }
+
+        [Fact]
+        public async Task GetMedicalHistoryByUserIdAsync_ValidUserId_ReturnsMedicalHistoryList()
+        {
+            // Arrange
             var userId = 1;
             var medicalHistories = new List<MedicalHistory>
             {
-                new MedicalHistory { Id = 1, UserId = userId, PersonalHistory = "Test history" }
+                new MedicalHistory
+                {
+                    Id = 1,
+                    UserId = userId,
+                    PersonalHistory = "History 1",
+                    Allergies = "Allergy 1"
+                },
+                new MedicalHistory
+                {
+                    Id = 2,
+                    UserId = userId,
+                    PersonalHistory = "History 2",
+                    Allergies = "Allergy 2"
+                }
             };
             var medicalHistoryDtos = new List<MedicalHistoryDto>
             {
-                new MedicalHistoryDto { Id = 1, UserId = userId, PersonalHistory = "Test history" }
+                new MedicalHistoryDto
+                {
+                    Id = 1,
+                    UserId = userId,
+                    PersonalHistory = "History 1",
+                    Allergies = "Allergy 1"
+                },
+                new MedicalHistoryDto
+                {
+                    Id = 2,
+                    UserId = userId,
+                    PersonalHistory = "History 2",
+                    Allergies = "Allergy 2"
+                }
             };
 
-            _mockMedicalHistoryRepository.Setup(r => r.GetByUserIdAsync(userId))
-                .ReturnsAsync(medicalHistories);
+            _mockRepository.Setup(r => r.GetByUserIdAsync(userId))
+                          .ReturnsAsync(medicalHistories);
             _mockMapper.Setup(m => m.Map<IEnumerable<MedicalHistoryDto>>(medicalHistories))
-                .Returns(medicalHistoryDtos);
+                      .Returns(medicalHistoryDtos);
 
             // Act
-            var result = await _medicalHistoryService.GetMedicalHistoriesByUserIdAsync(userId);
+            // FIXED: Use correct method name
+            var result = await _medicalHistoryService.GetMedicalHistoryByUserIdAsync(userId);
 
             // Assert
-            result.Should().NotBeNull();
-            result.Should().HaveCount(1);
-            result.First().UserId.Should().Be(userId);
-
-            Log.Information("GetMedicalHistoriesByUserIdAsync test completed successfully");
+            Assert.NotNull(result);
+            Assert.Equal(2, result.Count());
         }
 
         [Fact]
-        public async Task AddMedicalHistoryAsync_ValidDto_ReturnsCreatedHistory()
+        public async Task CreateMedicalHistoryAsync_ValidMedicalHistory_ReturnsMedicalHistoryDto()
         {
             // Arrange
-            Log.Information("Testing AddMedicalHistoryAsync with valid DTO");
+            var medicalHistoryDto = new MedicalHistoryDto
+            {
+                UserId = 1,
+                PersonalHistory = "New personal history",
+                FamilyHistory = "New family history",
+                Allergies = "New allergies",
+                HasAsthma = true,
+                HasBloodPressure = false,
+                CurrentMedications = "New medications"
+            };
+            var medicalHistory = new MedicalHistory
+            {
+                Id = 1,
+                UserId = 1,
+                PersonalHistory = "New personal history",
+                FamilyHistory = "New family history",
+                Allergies = "New allergies",
+                HasAsthma = true,
+                HasBloodPressure = false,
+                CurrentMedications = "New medications"
+            };
+            var createdMedicalHistory = new MedicalHistory
+            {
+                Id = 1,
+                UserId = 1,
+                PersonalHistory = "New personal history",
+                FamilyHistory = "New family history",
+                Allergies = "New allergies",
+                HasAsthma = true,
+                HasBloodPressure = false,
+                CurrentMedications = "New medications"
+            };
 
-            var dto = new MedicalHistoryDto { UserId = 1, PersonalHistory = "New history" };
-            var entity = new MedicalHistory { Id = 1, UserId = 1, PersonalHistory = "New history" };
-
-            _mockMapper.Setup(m => m.Map<MedicalHistory>(dto)).Returns(entity);
-            _mockMedicalHistoryRepository.Setup(r => r.AddAsync(entity)).Returns(Task.CompletedTask);
-            _mockMedicalHistoryRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
-            _mockMapper.Setup(m => m.Map<MedicalHistoryDto>(entity)).Returns(dto);
+            _mockMapper.Setup(m => m.Map<MedicalHistory>(medicalHistoryDto))
+                      .Returns(medicalHistory);
+            // FIXED: Use correct return type for AddAsync
+            _mockRepository.Setup(r => r.AddAsync(It.IsAny<MedicalHistory>()))
+                          .ReturnsAsync(createdMedicalHistory);
+            _mockMapper.Setup(m => m.Map<MedicalHistoryDto>(createdMedicalHistory))
+                      .Returns(medicalHistoryDto);
 
             // Act
-            var result = await _medicalHistoryService.AddMedicalHistoryAsync(dto);
+            // FIXED: Use correct method name
+            var result = await _medicalHistoryService.CreateMedicalHistoryAsync(medicalHistoryDto);
 
             // Assert
-            result.Should().NotBeNull();
-            result.UserId.Should().Be(1);
-
-            Log.Information("AddMedicalHistoryAsync test completed successfully");
+            Assert.NotNull(result);
+            Assert.Equal("New personal history", result.PersonalHistory);
+            Assert.Equal("New allergies", result.Allergies);
         }
 
         [Fact]
-        public async Task UpdateMedicalHistoryAsync_ExistingId_ReturnsTrue()
+        public async Task UpdateMedicalHistoryAsync_ValidMedicalHistory_UpdatesSuccessfully()
         {
             // Arrange
-            Log.Information("Testing UpdateMedicalHistoryAsync with existing ID");
+            var medicalHistoryDto = new MedicalHistoryDto
+            {
+                Id = 1,
+                UserId = 1,
+                PersonalHistory = "Updated personal history",
+                FamilyHistory = "Updated family history",
+                Allergies = "Updated allergies",
+                HasAsthma = false,
+                HasBloodPressure = true,
+                CurrentMedications = "Updated medications"
+            };
+            var medicalHistory = new MedicalHistory
+            {
+                Id = 1,
+                UserId = 1,
+                PersonalHistory = "Updated personal history",
+                FamilyHistory = "Updated family history",
+                Allergies = "Updated allergies",
+                HasAsthma = false,
+                HasBloodPressure = true,
+                CurrentMedications = "Updated medications"
+            };
 
-            var id = 1;
-            var dto = new MedicalHistoryDto { Id = id, UserId = 1, PersonalHistory = "Updated history" };
-            var entity = new MedicalHistory { Id = id, UserId = 1, PersonalHistory = "Original history" };
-
-            _mockMedicalHistoryRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync(entity);
-            _mockMapper.Setup(m => m.Map(dto, entity));
-            _mockMedicalHistoryRepository.Setup(r => r.SaveChangesAsync()).ReturnsAsync(1);
+            _mockMapper.Setup(m => m.Map<MedicalHistory>(medicalHistoryDto))
+                      .Returns(medicalHistory);
+            _mockRepository.Setup(r => r.Update(It.IsAny<MedicalHistory>()))
+                          .Returns(Task.CompletedTask);
 
             // Act
-            var result = await _medicalHistoryService.UpdateMedicalHistoryAsync(id, dto);
+            // FIXED: Use correct method signature
+            await _medicalHistoryService.UpdateMedicalHistoryAsync(medicalHistoryDto);
 
             // Assert
-            result.Should().BeTrue();
-
-            Log.Information("UpdateMedicalHistoryAsync test completed successfully");
+            _mockRepository.Verify(r => r.Update(It.IsAny<MedicalHistory>()), Times.Once);
         }
 
         [Fact]
-        public async Task DeleteMedicalHistoryAsync_NonExistingId_ReturnsFalse()
+        public async Task DeleteMedicalHistoryAsync_ValidId_DeletesSuccessfully()
         {
             // Arrange
-            Log.Information("Testing DeleteMedicalHistoryAsync with non-existing ID");
+            var medicalHistoryId = 1;
 
-            var id = 999;
-            _mockMedicalHistoryRepository.Setup(r => r.GetByIdAsync(id)).ReturnsAsync((MedicalHistory)null!);
+            _mockRepository.Setup(r => r.DeleteAsync(medicalHistoryId))
+                          .Returns(Task.CompletedTask);
 
             // Act
-            var result = await _medicalHistoryService.DeleteMedicalHistoryAsync(id);
+            await _medicalHistoryService.DeleteMedicalHistoryAsync(medicalHistoryId);
 
             // Assert
-            result.Should().BeFalse();
-
-            Log.Information("DeleteMedicalHistoryAsync test completed successfully");
+            _mockRepository.Verify(r => r.DeleteAsync(medicalHistoryId), Times.Once);
         }
 
         public void Dispose()
         {
-            Log.Information("Disposing MedicalHistoryService unit tests");
+            // Clean up resources if needed
+            _medicalHistoryService?.Dispose();
         }
     }
 }

@@ -1,81 +1,106 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using HospitalManagement.API.Models.Entities;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
+using HospitalManagement.API.Models.Entities;
+using HospitalManagement.API.Services.Interfaces;
 
 namespace HospitalManagement.API.Utilities
 {
     public class JwtHelper : IJwtHelper
     {
-        private readonly IConfiguration _configuration;
-        private readonly Serilog.ILogger _logger;
+        private readonly string _secretKey;
+        private readonly string _issuer;
+        private readonly string _audience;
 
-        public JwtHelper(IConfiguration configuration)
+        public JwtHelper(string secretKey, string issuer = "HospitalManagement.API", string audience = "HospitalManagement.Frontend")
         {
-            _configuration = configuration;
-            _logger = Log.ForContext<JwtHelper>();
+            _secretKey = secretKey;
+            _issuer = issuer;
+            _audience = audience;
         }
 
         public string GenerateToken(User user)
         {
-            _logger.Information("Generating JWT token for user: {UserId}", user.UserId);
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_secretKey);
 
-            try
+            var tokenDescriptor = new SecurityTokenDescriptor
             {
-                var jwtSettings = _configuration.GetSection("JwtSettings");
-                var secretKey = jwtSettings["SecretKey"];
-                var issuer = jwtSettings["Issuer"];
-                var audience = jwtSettings["Audience"];
-                var expiryMinutes = int.Parse(jwtSettings["ExpiryInMinutes"] ?? "60");
-
-                // Add validation for secret key
-                if (string.IsNullOrEmpty(secretKey))
-                {
-                    _logger.Error("JWT secret key is null or empty. Check appsettings.json configuration.");
-                    throw new InvalidOperationException("JWT secret key is not configured properly.");
-                }
-
-                if (secretKey.Length < 32)
-                {
-                    _logger.Error("JWT secret key is too short. Must be at least 32 characters.");
-                    throw new InvalidOperationException("JWT secret key must be at least 32 characters long.");
-                }
-
-                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-                var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-                var claims = new[]
+                Subject = new ClaimsIdentity(new[]
                 {
                     new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.UserId),
+                    new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
                     new Claim(ClaimTypes.Email, user.Email),
-                    new Claim(ClaimTypes.Role, user.UserType),
-                    new Claim("FirstName", user.FirstName),
-                    new Claim("LastName", user.LastName),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                    new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64)
-                };
+                    new Claim("UserType", user.UserType),
+                    new Claim("UserId", user.UserId)
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
+                Issuer = _issuer,
+                Audience = _audience
+            };
 
-                var token = new JwtSecurityToken(
-                    issuer: issuer,
-                    audience: audience,
-                    claims: claims,
-                    expires: DateTime.UtcNow.AddMinutes(expiryMinutes),
-                    signingCredentials: credentials
-                );
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            return tokenHandler.WriteToken(token);
+        }
 
-                var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-                _logger.Information("JWT token generated successfully for user: {UserId}", user.UserId);
-
-                return tokenString;
-            }
-            catch (Exception ex)
+        public bool ValidateToken(string token)
+        {
+            try
             {
-                _logger.Error(ex, "Error generating JWT token for user: {UserId}", user.UserId);
-                throw;
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_secretKey);
+
+                tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = _issuer,
+                    ValidateAudience = true,
+                    ValidAudience = _audience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public int? GetUserIdFromToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jsonToken = tokenHandler.ReadJwtToken(token);
+                var userIdClaim = jsonToken.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier);
+
+                return int.TryParse(userIdClaim?.Value, out var userId) ? userId : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public string? GetUserTypeFromToken(string token)
+        {
+            try
+            {
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var jsonToken = tokenHandler.ReadJwtToken(token);
+                var userTypeClaim = jsonToken.Claims.FirstOrDefault(x => x.Type == "UserType");
+
+                return userTypeClaim?.Value;
+            }
+            catch
+            {
+                return null;
             }
         }
     }

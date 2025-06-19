@@ -1,75 +1,107 @@
-﻿using HospitalManagement.API.Models.DTOs;
+﻿using AutoMapper;
+using HospitalManagement.API.Models.DTOs;
 using HospitalManagement.API.Models.Entities;
 using HospitalManagement.API.Repositories.Interfaces;
 using HospitalManagement.API.Services.Interfaces;
-using AutoMapper;
-using Serilog;
 
 namespace HospitalManagement.API.Services.Implementations
 {
     public class HospitalService : IHospitalService
     {
-        private readonly IGenericRepository<HospitalInfo> _hospitalInfoRepository;
+        private readonly IGenericRepository<HospitalInfo> _hospitalRepository;
         private readonly IMapper _mapper;
-        private readonly Serilog.ILogger _logger;
+        private readonly ILogger<HospitalService> _logger;
 
-        public HospitalService(IGenericRepository<HospitalInfo> hospitalInfoRepository, IMapper mapper)
+        public HospitalService(
+            IGenericRepository<HospitalInfo> hospitalRepository,
+            IMapper mapper,
+            ILogger<HospitalService> logger)
         {
-            _hospitalInfoRepository = hospitalInfoRepository;
+            _hospitalRepository = hospitalRepository;
             _mapper = mapper;
-            _logger = Log.ForContext<HospitalService>();
+            _logger = logger;
         }
 
-        public async Task<IEnumerable<HospitalInfoDto>> GetAllHospitalInfosAsync()
+        public async Task<HospitalInfoDto> CreateHospitalInfoAsync(HospitalInfoDto hospitalInfoDto)
         {
-            _logger.Information("Fetching all hospital information records.");
-            var infos = await _hospitalInfoRepository.GetAllAsync();
-            return _mapper.Map<IEnumerable<HospitalInfoDto>>(infos);
+            try
+            {
+                var hospitalInfo = _mapper.Map<HospitalInfo>(hospitalInfoDto);
+                hospitalInfo.CreatedAt = DateTime.UtcNow;
+                hospitalInfo.UpdatedAt = DateTime.UtcNow;
+
+                // FIXED: Use AddAsync method
+                var createdHospitalInfo = await _hospitalRepository.AddAsync(hospitalInfo);
+                var result = _mapper.Map<HospitalInfoDto>(createdHospitalInfo);
+
+                _logger.LogInformation($"Hospital info created with ID: {createdHospitalInfo.Id}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating hospital info");
+                throw;
+            }
         }
 
         public async Task<HospitalInfoDto?> GetHospitalInfoByIdAsync(int id)
         {
-            _logger.Information("Fetching hospital information with Id: {Id}", id);
-            var info = await _hospitalInfoRepository.GetByIdAsync(id);
-            return info == null ? null : _mapper.Map<HospitalInfoDto>(info);
-        }
-
-        public async Task<HospitalInfoDto> AddHospitalInfoAsync(HospitalInfoDto dto)
-        {
-            _logger.Information("Adding new hospital information.");
-            var entity = _mapper.Map<HospitalInfo>(dto);
-            await _hospitalInfoRepository.AddAsync(entity);
-            await _hospitalInfoRepository.SaveChangesAsync();
-            return _mapper.Map<HospitalInfoDto>(entity);
-        }
-
-        public async Task<bool> UpdateHospitalInfoAsync(int id, HospitalInfoDto dto)
-        {
-            _logger.Information("Updating hospital information with Id: {Id}", id);
-            var entity = await _hospitalInfoRepository.GetByIdAsync(id);
-            if (entity == null)
+            try
             {
-                _logger.Warning("Hospital information not found for Id: {Id}", id);
-                return false;
+                var hospitalInfo = await _hospitalRepository.GetByIdAsync(id);
+                return hospitalInfo != null ? _mapper.Map<HospitalInfoDto>(hospitalInfo) : null;
             }
-            _mapper.Map(dto, entity);
-            _hospitalInfoRepository.Update(entity);
-            await _hospitalInfoRepository.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error getting hospital info by id: {id}");
+                throw;
+            }
         }
 
-        public async Task<bool> DeleteHospitalInfoAsync(int id)
+        public async Task<IEnumerable<HospitalInfoDto>> GetAllHospitalInfoAsync()
         {
-            _logger.Information("Deleting hospital information with Id: {Id}", id);
-            var entity = await _hospitalInfoRepository.GetByIdAsync(id);
-            if (entity == null)
+            try
             {
-                _logger.Warning("Hospital information not found for Id: {Id}", id);
-                return false;
+                var hospitalInfos = await _hospitalRepository.GetAllAsync();
+                return _mapper.Map<IEnumerable<HospitalInfoDto>>(hospitalInfos);
             }
-            _hospitalInfoRepository.Remove(entity);
-            await _hospitalInfoRepository.SaveChangesAsync();
-            return true;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting all hospital info");
+                throw;
+            }
+        }
+
+        public async Task UpdateHospitalInfoAsync(HospitalInfoDto hospitalInfoDto)
+        {
+            try
+            {
+                var hospitalInfo = _mapper.Map<HospitalInfo>(hospitalInfoDto);
+                hospitalInfo.UpdatedAt = DateTime.UtcNow;
+
+                // FIXED: Use Update method
+                await _hospitalRepository.Update(hospitalInfo);
+                _logger.LogInformation($"Hospital info updated with ID: {hospitalInfo.Id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error updating hospital info with ID: {hospitalInfoDto.Id}");
+                throw;
+            }
+        }
+
+        public async Task DeleteHospitalInfoAsync(int id)
+        {
+            try
+            {
+                await _hospitalRepository.DeleteAsync(id);
+                _logger.LogInformation($"Hospital info deleted with ID: {id}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error deleting hospital info with ID: {id}");
+                throw;
+            }
         }
     }
 }
