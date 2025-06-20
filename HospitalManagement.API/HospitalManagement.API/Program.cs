@@ -83,7 +83,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ClockSkew = TimeSpan.Zero
         };
 
-        // FIXED: Configure SignalR JWT authentication
+        // Configure SignalR JWT authentication
         options.Events = new JwtBearerEvents
         {
             OnMessageReceived = context =>
@@ -100,6 +100,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
+
+// --------- JwtHelper Registration ---------
+// FIXED: Register IJwtHelper with proper configuration values
+builder.Services.AddSingleton<IJwtHelper>(provider =>
+    new JwtHelper(secretKey, jwtSettings["Issuer"]!, jwtSettings["Audience"]!));
+
+Log.Information("IJwtHelper registered as singleton in DI container.");
 
 
 // --------- Repository Registrations ---------
@@ -125,8 +132,12 @@ Log.Information("All Services registered in DI container.");
 // --------- JwtHelper Registration ---------
 //builder.Services.AddSingleton<JwtHelper>();
 //Log.Information("JwtHelper registered as singleton in DI container.");
-builder.Services.AddSingleton<IJwtHelper, JwtHelper>();
-Log.Information("IJwtHelper registered as singleton in DI container.");
+//builder.Services.AddSingleton<IJwtHelper, JwtHelper>();
+// FIXED: Register IJwtHelper with proper configuration values
+//builder.Services.AddSingleton<IJwtHelper>(provider =>
+//    new JwtHelper(secretKey, jwtSettings["Issuer"], jwtSettings["Audience"]));
+
+//Log.Information("IJwtHelper registered as singleton in DI container.");
 
 // Add SignalR
 builder.Services.AddSignalR(options =>
