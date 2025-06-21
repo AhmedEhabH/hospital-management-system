@@ -1,205 +1,89 @@
-<div class="lab-comparison-container" [class.dark-theme]="isDarkMode">
-	<!-- Header Section -->
+<div class="lab-comparison-container">
 	<div class="comparison-header">
-		<div class="header-content">
-			<h3>
-				<mat-icon>compare</mat-icon>
-				Lab Results Comparison
-			</h3>
-			<p class="header-subtitle">Compare lab results across different time periods</p>
-		</div>
-
-		<!-- Comparison Controls -->
-		<div class="comparison-controls">
-			<button mat-raised-button color="primary" (click)="exportComparison()"
-				[disabled]="selectedReports.length < 2">
-				<mat-icon>file_download</mat-icon>
-				Export Comparison
-			</button>
-
-			<button mat-button color="warn" (click)="clearComparison()" [disabled]="selectedReports.length === 0">
-				<mat-icon>clear</mat-icon>
-				Clear All
-			</button>
-		</div>
+		<h2>Lab Report Comparison</h2>
+		<p>Select up to 3 lab reports to compare their results</p>
 	</div>
 
-	<!-- Report Selection -->
-	<div class="report-selection">
-		<mat-card class="selection-card medical-card">
-			<mat-card-header>
-				<mat-icon mat-card-avatar>assignment</mat-icon>
-				<mat-card-title>Select Reports to Compare</mat-card-title>
-				<mat-card-subtitle>Choose 2 or more lab reports for comparison</mat-card-subtitle>
-			</mat-card-header>
+	<div class="loading-container" *ngIf="loading">
+		<mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+		<p>Loading lab reports...</p>
+	</div>
 
-			<mat-card-content>
-				<div class="available-reports">
-					<div *ngFor="let report of labReports" class="report-item"
-						[class.selected]="isReportSelected(report)">
-						<div class="report-info">
-							<h4>{{ report.reportType }}</h4>
-							<p>{{ formatDate(report.reportDate) }} - {{ report.doctorName }}</p>
-							<div class="report-status">
-								<mat-chip [class]="getStatusClass(report.status)">
-									{{ report.status }}
-								</mat-chip>
-								<mat-chip [class]="'priority-' + report.priority.toLowerCase()">
-									{{ report.priority }}
-								</mat-chip>
-							</div>
+	<div class="comparison-content" *ngIf="!loading">
+		<!-- Report Selection -->
+		<div class="report-selection">
+			<h3>Available Reports</h3>
+			<div class="reports-grid">
+				<div *ngFor="let report of labReports" class="report-card" [class.selected]="isSelected(report)"
+					(click)="selectReport(report)">
+
+					<div class="report-header">
+						<h4>{{ report.testPerformed }}</h4>
+						<div class="report-meta">
+							<span class="test-date">{{ formatDate(report.testedDate.toString()) }}</span>
+							<span class="tested-by">by {{ report.testedBy }}</span>
 						</div>
+					</div>
 
-						<div class="report-actions">
-							<button mat-icon-button *ngIf="!isReportSelected(report)"
-								(click)="addReportToComparison(report)" matTooltip="Add to Comparison">
-								<mat-icon>add</mat-icon>
-							</button>
+					<div class="report-status">
+						<!-- FIXED: Use computed status and priority -->
+						<mat-chip [class]="getStatusClass(report)">
+							{{ getStatus(report) }}
+						</mat-chip>
+						<mat-chip [class]="getPriorityClass(report)">
+							{{ getPriority(report) }}
+						</mat-chip>
+					</div>
 
-							<button mat-icon-button *ngIf="isReportSelected(report)"
-								(click)="removeReportFromComparison(report)" matTooltip="Remove from Comparison"
-								color="warn">
-								<mat-icon>remove</mat-icon>
-							</button>
-						</div>
+					<div class="selection-indicator" *ngIf="isSelected(report)">
+						<mat-icon>check_circle</mat-icon>
 					</div>
 				</div>
-			</mat-card-content>
-		</mat-card>
-	</div>
+			</div>
 
-	<!-- Comparison Results -->
-	<div *ngIf="selectedReports.length >= 2" class="comparison-results">
-
-		<!-- Comparison Chart -->
-		<div class="chart-section">
-			<mat-card class="chart-card medical-card">
-				<mat-card-header>
-					<mat-icon mat-card-avatar>bar_chart</mat-icon>
-					<mat-card-title>Visual Comparison</mat-card-title>
-					<mat-card-subtitle>Side-by-side comparison of lab values</mat-card-subtitle>
-				</mat-card-header>
-
-				<mat-card-content>
-					<div class="chart-container">
-						<canvas baseChart [data]="comparisonChartData" [options]="chartOptions"
-							[type]="comparisonChartType">
-						</canvas>
-					</div>
-				</mat-card-content>
-			</mat-card>
+			<div class="selection-actions" *ngIf="selectedReports.length > 0">
+				<p>{{ selectedReports.length }} report(s) selected</p>
+				<button mat-raised-button color="warn" (click)="clearSelection()">
+					Clear Selection
+				</button>
+			</div>
 		</div>
 
-		<!-- Detailed Comparison Table -->
-		<div class="table-section">
-			<mat-card class="table-card medical-card">
-				<mat-card-header>
-					<mat-icon mat-card-avatar>table_chart</mat-icon>
-					<mat-card-title>Detailed Comparison</mat-card-title>
-					<mat-card-subtitle>Comprehensive analysis of changes and trends</mat-card-subtitle>
-				</mat-card-header>
+		<!-- Comparison Results -->
+		<div class="comparison-results" *ngIf="comparisonData.length > 0">
+			<h3>Comparison Results</h3>
 
-				<mat-card-content>
-					<div class="comparison-table">
-						<div class="table-header">
-							<div class="test-name-col">Test Name</div>
-							<div *ngFor="let report of selectedReports" class="report-col">
-								{{ formatReportLabel(report) }}
-							</div>
-							<div *ngIf="selectedReports.length === 2" class="change-col">Change</div>
-						</div>
+			<div class="comparison-table">
+				<table mat-table [dataSource]="comparisonData" class="comparison-data-table">
 
-						<div *ngFor="let comparison of comparisonData" class="table-row">
-							<div class="test-name-cell">
-								<strong>{{ comparison.testName }}</strong>
-							</div>
+					<ng-container matColumnDef="metric">
+						<th mat-header-cell *matHeaderCellDef>Metric</th>
+						<td mat-cell *matCellDef="let element">
+							<strong>{{ element.metric }}</strong>
+							<span class="unit">({{ element.unit }})</span>
+						</td>
+					</ng-container>
 
-							<div *ngFor="let reportData of comparison.reports" class="report-cell">
-								<div class="value-display">
-									<span class="value" [class]="getStatusClass(reportData.status)">
-										{{ reportData.value }}
-									</span>
-									<span class="status-badge" [class]="getStatusClass(reportData.status)">
-										{{ reportData.status }}
-									</span>
-								</div>
-							</div>
+					<ng-container *ngFor="let report of selectedReports; let i = index" [matColumnDef]="'report' + i">
+						<th mat-header-cell *matHeaderCellDef>
+							{{ formatReportTitle(report) }}
+						</th>
+						<td mat-cell *matCellDef="let element">
+							{{ element.values[i]?.value || 'N/A' }}
+						</td>
+					</ng-container>
 
-							<div *ngIf="selectedReports.length === 2 && comparison.reports[0].change !== undefined"
-								class="change-cell">
-								<div class="change-display" [class]="getChangeClass(comparison.reports[0].change!)">
-									<mat-icon>{{ getChangeIcon(comparison.reports[0].change!) }}</mat-icon>
-									<div class="change-values">
-										<span class="change-absolute">
-											{{ comparison.reports[0].change! > 0 ? '+' : '' }}{{
-											comparison.reports[0].change!.toFixed(2) }}
-										</span>
-										<span class="change-percent">
-											({{ comparison.reports[0].changePercent! > 0 ? '+' : '' }}{{
-											comparison.reports[0].changePercent!.toFixed(1) }}%)
-										</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</mat-card-content>
-			</mat-card>
+					<tr mat-header-row *matHeaderRowDef="getDisplayedColumns()"></tr>
+					<tr mat-row *matRowDef="let row; columns: getDisplayedColumns();"></tr>
+				</table>
+			</div>
 		</div>
 
-		<!-- Summary Insights -->
-		<div class="insights-section">
-			<mat-card class="insights-card medical-card">
-				<mat-card-header>
-					<mat-icon mat-card-avatar>insights</mat-icon>
-					<mat-card-title>Comparison Insights</mat-card-title>
-					<mat-card-subtitle>Key findings from the comparison</mat-card-subtitle>
-				</mat-card-header>
-
-				<mat-card-content>
-					<div class="insights-grid">
-						<div class="insight-item">
-							<mat-icon class="insight-icon">assessment</mat-icon>
-							<div class="insight-content">
-								<h4>Tests Compared</h4>
-								<p>{{ comparisonData.length }} different lab tests analyzed across {{
-									selectedReports.length }} reports</p>
-							</div>
-						</div>
-
-						<div class="insight-item" *ngIf="selectedReports.length === 2">
-							<mat-icon class="insight-icon improving">trending_up</mat-icon>
-							<div class="insight-content">
-								<h4>Improving Values</h4>
-								<p>{{ getImprovingCount() }} test values showing positive trends</p>
-							</div>
-						</div>
-
-						<div class="insight-item" *ngIf="selectedReports.length === 2">
-							<mat-icon class="insight-icon warning">trending_down</mat-icon>
-							<div class="insight-content">
-								<h4>Values Needing Attention</h4>
-								<p>{{ getWorseningCount() }} test values showing concerning trends</p>
-							</div>
-						</div>
-
-						<div class="insight-item">
-							<mat-icon class="insight-icon stable">trending_flat</mat-icon>
-							<div class="insight-content">
-								<h4>Stable Values</h4>
-								<p>{{ getStableCount() }} test values remaining within normal ranges</p>
-							</div>
-						</div>
-					</div>
-				</mat-card-content>
-			</mat-card>
+		<!-- No Reports Message -->
+		<div class="no-reports" *ngIf="labReports.length === 0 && !loading">
+			<mat-icon>science</mat-icon>
+			<h3>No Lab Reports Available</h3>
+			<p>No lab reports found for comparison.</p>
 		</div>
-	</div>
-
-	<!-- Empty State -->
-	<div *ngIf="selectedReports.length < 2" class="empty-state">
-		<mat-icon class="empty-icon">compare</mat-icon>
-		<h3>Select Reports to Compare</h3>
-		<p>Choose at least 2 lab reports to see a detailed comparison of your test results.</p>
 	</div>
 </div>

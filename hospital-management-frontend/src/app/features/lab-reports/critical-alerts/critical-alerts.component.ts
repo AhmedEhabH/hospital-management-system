@@ -1,23 +1,7 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { Subject, takeUntil, interval } from 'rxjs';
-import { LabReportService, LabReport } from '../../../core/services/lab-report.service';
-import { ThemeService } from '../../../core/services/theme.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
-
-interface CriticalAlert {
-	id: string;
-	reportId: number;
-	testName: string;
-	value: number;
-	unit: string;
-	referenceRange: string;
-	severity: 'Critical' | 'High' | 'Low';
-	timestamp: Date;
-	acknowledged: boolean;
-	doctorNotified: boolean;
-	patientName: string;
-	notes?: string;
-}
+import { Component, OnInit, Input } from '@angular/core';
+import { LabReportService } from '../../../core/services/lab-report.service';
+import { LabReportDto } from '../../../core/models/lab-report.model';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
 	selector: 'app-critical-alerts',
@@ -25,29 +9,15 @@ interface CriticalAlert {
 	templateUrl: './critical-alerts.component.html',
 	styleUrls: ['./critical-alerts.component.scss']
 })
-export class CriticalAlertsComponent implements OnInit, OnDestroy {
-	@Input() patientId?: number;
+export class CriticalAlertsComponent implements OnInit {
+	@Input() patientId!: number;
 
-	private destroy$ = new Subject<void>();
-	private alertPolling$ = interval(30000); // Poll every 30 seconds
-
-	// FIXED: Add missing properties
+	criticalReports: LabReportDto[] = [];
+	filteredAlerts: LabReportDto[] = [];
+	loading = false;
 	isDarkMode = false;
-	isLoading = true;
 	showAcknowledged = false;
 
-	// Critical Alerts Data
-	criticalAlerts: CriticalAlert[] = [];
-	filteredAlerts: CriticalAlert[] = [];
-
-	// Filter Options
-	selectedSeverity = 'All';
-	selectedStatus = 'All';
-
-	severityOptions = ['All', 'Critical', 'High', 'Low'];
-	statusOptions = ['All', 'New', 'Acknowledged', 'Doctor Notified'];
-
-	// Statistics
 	alertStats = {
 		totalAlerts: 0,
 		newAlerts: 0,
@@ -55,256 +25,167 @@ export class CriticalAlertsComponent implements OnInit, OnDestroy {
 		acknowledgedAlerts: 0
 	};
 
+	selectedSeverity = '';
+	severityOptions = ['Critical', 'Warning', 'Normal'];
+	selectedStatus = '';
+	statusOptions = ['New', 'Acknowledged'];
+
 	constructor(
 		private labReportService: LabReportService,
-		private themeService: ThemeService,
-		private snackBar: MatSnackBar
+		private authService: AuthService
 	) { }
 
 	ngOnInit(): void {
-		this.subscribeToTheme();
-		this.loadCriticalAlerts();
-		this.startRealTimeUpdates();
-	}
+		if (!this.patientId) {
+			const currentUser = this.authService.getCurrentUser();
+			this.patientId = currentUser?.id ?? 0;
+		}
 
-	ngOnDestroy(): void {
-		this.destroy$.next();
-		this.destroy$.complete();
-	}
+		if (this.patientId) {
+			this.loadCriticalAlerts();
+		}
 
-	private subscribeToTheme(): void {
-		this.themeService.isDarkMode$
-			.pipe(takeUntil(this.destroy$))
-			.subscribe(isDark => {
-				this.isDarkMode = isDark;
-			});
+		this.isDarkMode = document.body.classList.contains('dark-theme');
 	}
 
 	private loadCriticalAlerts(): void {
-		this.isLoading = true;
-
-		this.labReportService.getCriticalAlerts(this.patientId)
-			.pipe(takeUntil(this.destroy$))
+		this.loading = true;
+		this.labReportService.getLabReportsByPatientId(this.patientId)
 			.subscribe({
-				next: (reports: LabReport[]) => {
-					this.processCriticalAlerts(reports);
-					this.calculateStatistics();
-					this.applyFilters();
-					this.isLoading = false;
+				next: (reports: LabReportDto[]) => {
+					this.criticalReports = reports.filter(report => this.isCritical(report));
+					this.filteredAlerts = [...this.criticalReports];
+					this.updateStats();
+					this.loading = false;
 				},
 				error: (error: any) => {
 					console.error('Error loading critical alerts:', error);
-					this.loadMockAlerts();
-					this.isLoading = false;
+					this.loading = false;
 				}
 			});
 	}
 
-	private processCriticalAlerts(reports: LabReport[]): void {
-		this.criticalAlerts = [];
-
-		reports.forEach(report => {
-			if (report.results) {
-				report.results.forEach(result => {
-					if (result.flagged || result.status === 'Critical' || result.status === 'High' || result.status === 'Low') {
-						this.criticalAlerts.push({
-							id: `${report.id}-${result.testName}`,
-							reportId: report.id,
-							testName: result.testName,
-							value: result.value,
-							unit: result.unit,
-							referenceRange: result.referenceRange,
-							severity: result.status as 'Critical' | 'High' | 'Low',
-							timestamp: report.reportDate,
-							acknowledged: false,
-							doctorNotified: report.status === 'Reviewed',
-							patientName: report.patientName,
-							notes: report.notes
-						});
-					}
-				});
-			}
-		});
-
-		// Sort by severity and timestamp
-		this.criticalAlerts.sort((a, b) => {
-			const severityOrder = { 'Critical': 3, 'High': 2, 'Low': 1 };
-			const severityDiff = severityOrder[b.severity] - severityOrder[a.severity];
-			if (severityDiff !== 0) return severityDiff;
-			return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-		});
+	private isCritical(report: LabReportDto): boolean {
+		return (
+			report.cholesterolLevel > 240 ||
+			report.sucroseLevel > 200 ||
+			report.whiteBloodCellsRatio > 11000 ||
+			report.whiteBloodCellsRatio < 4000 ||
+			report.heartBeatRatio > 100 ||
+			report.heartBeatRatio < 60
+		);
 	}
 
-	private loadMockAlerts(): void {
-		this.criticalAlerts = [
-			{
-				id: 'alert-1',
-				reportId: 3,
-				testName: 'Glucose',
-				value: 185,
-				unit: 'mg/dL',
-				referenceRange: '70-99',
-				severity: 'Critical',
-				timestamp: new Date('2024-12-05T14:30:00'),
-				acknowledged: false,
-				doctorNotified: true,
-				patientName: 'John Doe',
-				notes: 'Patient requires immediate follow-up for diabetes management'
-			},
-			{
-				id: 'alert-2',
-				reportId: 2,
-				testName: 'Total Cholesterol',
-				value: 245,
-				unit: 'mg/dL',
-				referenceRange: '<200',
-				severity: 'High',
-				timestamp: new Date('2024-12-10T10:15:00'),
-				acknowledged: true,
-				doctorNotified: true,
-				patientName: 'John Doe',
-				notes: 'Dietary counseling recommended'
-			},
-			{
-				id: 'alert-3',
-				reportId: 1,
-				testName: 'Hemoglobin',
-				value: 10.5,
-				unit: 'g/dL',
-				referenceRange: '12.0-15.5',
-				severity: 'Low',
-				timestamp: new Date('2024-12-15T09:45:00'),
-				acknowledged: false,
-				doctorNotified: false,
-				patientName: 'John Doe'
-			}
-		];
-	}
-
-	private calculateStatistics(): void {
+	private updateStats(): void {
 		this.alertStats = {
-			totalAlerts: this.criticalAlerts.length,
-			newAlerts: this.criticalAlerts.filter(alert => !alert.acknowledged).length,
-			criticalAlerts: this.criticalAlerts.filter(alert => alert.severity === 'Critical').length,
-			acknowledgedAlerts: this.criticalAlerts.filter(alert => alert.acknowledged).length
+			totalAlerts: this.criticalReports.length,
+			criticalAlerts: this.criticalReports.filter(r => this.getSeverity(r) === 'Critical').length,
+			newAlerts: this.criticalReports.length,
+			acknowledgedAlerts: 0
 		};
 	}
 
-	private startRealTimeUpdates(): void {
-		this.alertPolling$
-			.pipe(takeUntil(this.destroy$))
-			.subscribe(() => {
-				this.loadCriticalAlerts();
-			});
-	}
-
-	// FIXED: Add missing methods
-	applyFilters(): void {
-		let filtered = [...this.criticalAlerts];
-
-		// Severity filter
-		if (this.selectedSeverity !== 'All') {
-			filtered = filtered.filter(alert => alert.severity === this.selectedSeverity);
-		}
-
-		// Status filter
-		if (this.selectedStatus !== 'All') {
-			switch (this.selectedStatus) {
-				case 'New':
-					filtered = filtered.filter(alert => !alert.acknowledged);
-					break;
-				case 'Acknowledged':
-					filtered = filtered.filter(alert => alert.acknowledged);
-					break;
-				case 'Doctor Notified':
-					filtered = filtered.filter(alert => alert.doctorNotified);
-					break;
+	public applyFilters(): void {
+		this.filteredAlerts = this.criticalReports.filter(alert => {
+			if (this.selectedSeverity && this.getSeverity(alert) !== this.selectedSeverity) {
+				return false;
 			}
-		}
-
-		// Show/hide acknowledged alerts
-		if (!this.showAcknowledged) {
-			filtered = filtered.filter(alert => !alert.acknowledged);
-		}
-
-		this.filteredAlerts = filtered;
-	}
-
-	acknowledgeAll(): void {
-		this.filteredAlerts.forEach(alert => {
-			alert.acknowledged = true;
-		});
-		this.calculateStatistics();
-		this.applyFilters();
-
-		this.snackBar.open('All alerts acknowledged', 'Close', {
-			duration: 3000,
-			panelClass: ['success-snackbar']
+			return true;
 		});
 	}
 
-	acknowledgeAlert(alert: CriticalAlert): void {
-		alert.acknowledged = true;
-		this.calculateStatistics();
-		this.applyFilters();
-
-		this.snackBar.open('Alert acknowledged', 'Close', {
-			duration: 3000,
-			panelClass: ['success-snackbar']
-		});
+	public acknowledgeAll(): void {
+		console.log('Acknowledging all alerts');
 	}
 
-	notifyDoctor(alert: CriticalAlert): void {
-		alert.doctorNotified = true;
-		this.calculateStatistics();
-
-		this.snackBar.open('Doctor has been notified', 'Close', {
-			duration: 3000,
-			panelClass: ['success-snackbar']
-		});
-	}
-
-	viewReport(alert: CriticalAlert): void {
-		console.log('View report for alert:', alert);
-		// Navigate to detailed report view
-	}
-
-	// Utility Methods
-	getSeverityClass(severity: string): string {
-		switch (severity.toLowerCase()) {
-			case 'critical': return 'severity-critical';
-			case 'high': return 'severity-high';
-			case 'low': return 'severity-low';
+	public getSeverityClass(alert: LabReportDto): string {
+		const severity = this.getSeverity(alert);
+		switch (severity) {
+			case 'Critical': return 'severity-critical';
+			case 'Warning': return 'severity-warning';
 			default: return 'severity-normal';
 		}
 	}
 
-	getSeverityIcon(severity: string): string {
-		switch (severity.toLowerCase()) {
-			case 'critical': return 'error';
-			case 'high': return 'warning';
-			case 'low': return 'info';
-			default: return 'check_circle';
+	public getSeverity(alert: LabReportDto): string {
+		if (this.isCritical(alert)) return 'Critical';
+		if (this.isWarning(alert)) return 'Warning';
+		return 'Normal';
+	}
+
+	private isWarning(report: LabReportDto): boolean {
+		return (
+			(report.cholesterolLevel > 200 && report.cholesterolLevel <= 240) ||
+			(report.sucroseLevel > 140 && report.sucroseLevel <= 200) ||
+			(report.heartBeatRatio > 90 && report.heartBeatRatio <= 100)
+		);
+	}
+
+	public isUrgent(alert: LabReportDto): boolean {
+		return this.getSeverity(alert) === 'Critical';
+	}
+
+	public getSeverityIcon(severity: string): string {
+		switch (severity) {
+			case 'Critical': return 'error';
+			case 'Warning': return 'warning';
+			default: return 'info';
 		}
 	}
 
-	formatTimestamp(timestamp: Date): string {
-		const now = new Date();
-		const alertTime = new Date(timestamp);
-		const diffInHours = Math.abs(now.getTime() - alertTime.getTime()) / 36e5;
-
-		if (diffInHours < 1) {
-			const diffInMinutes = Math.floor(diffInHours * 60);
-			return `${diffInMinutes} minutes ago`;
-		} else if (diffInHours < 24) {
-			return `${Math.floor(diffInHours)} hours ago`;
-		} else {
-			return alertTime.toLocaleDateString();
-		}
+	public formatTimestamp(timestamp: string): string {
+		return new Date(timestamp).toLocaleString();
 	}
 
-	isUrgent(alert: CriticalAlert): boolean {
-		const hoursSinceAlert = Math.abs(new Date().getTime() - new Date(alert.timestamp).getTime()) / 36e5;
-		return alert.severity === 'Critical' && !alert.acknowledged && hoursSinceAlert < 2;
+	public viewReport(alert: LabReportDto): void {
+		console.log('Viewing report:', alert.id);
+	}
+
+	public acknowledgeAlert(alert: LabReportDto): void {
+		console.log('Acknowledging alert:', alert.id);
+	}
+
+	public notifyDoctor(alert: LabReportDto): void {
+		console.log('Notifying doctor about alert:', alert.id);
+	}
+
+	public getValue(alert: LabReportDto): string {
+		if (alert.cholesterolLevel > 240) return alert.cholesterolLevel.toString();
+		if (alert.sucroseLevel > 200) return alert.sucroseLevel.toString();
+		if (alert.heartBeatRatio > 100 || alert.heartBeatRatio < 60) return alert.heartBeatRatio.toString();
+		return 'Multiple values';
+	}
+
+	public getUnit(alert: LabReportDto): string {
+		if (alert.cholesterolLevel > 240 || alert.sucroseLevel > 200) return 'mg/dL';
+		if (alert.heartBeatRatio > 100 || alert.heartBeatRatio < 60) return 'bpm';
+		return '';
+	}
+
+	public getReferenceRange(alert: LabReportDto): string {
+		if (alert.cholesterolLevel > 240) return '< 200 mg/dL';
+		if (alert.sucroseLevel > 200) return '70-140 mg/dL';
+		if (alert.heartBeatRatio > 100 || alert.heartBeatRatio < 60) return '60-100 bpm';
+		return 'Within normal limits';
+	}
+
+	public isAcknowledged(alert: LabReportDto): boolean {
+		return false; // Since LabReportDto doesn't have acknowledged field
+	}
+
+	public isDoctorNotified(alert: LabReportDto): boolean {
+		return false; // Since LabReportDto doesn't have doctorNotified field
+	}
+
+	public getTestName(alert: LabReportDto): string {
+		return alert.testPerformed;
+	}
+
+	public getPatientName(alert: LabReportDto): string {
+		return `Patient ID: ${alert.patientId}`;
+	}
+
+	public getTimestamp(alert: LabReportDto): string {
+		return alert.testedDate.toString();
 	}
 }

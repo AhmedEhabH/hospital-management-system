@@ -1,82 +1,85 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
-
-
-export interface LoginRequest {
-	userId: string;
-	password: string;
-	userType: string;
-}
-
-export interface AuthResult {
-	success: boolean;
-	message: string;
-	token?: string;
-	user?: UserInfo;
-}
-
-export interface UserInfo {
-	id: number;
-	userId: string;
-	firstName: string;
-	lastName: string;
-	email: string;
-	userType: string;
-}
-
-export interface UserRegistration {
-	firstName: string;
-	lastName: string;
-	gender: string;
-	age: number;
-	userId: string;
-	password: string;
-	email: string;
-	address: string;
-	city: string;
-	state: string;
-	zip: string;
-	phoneNo: string;
-	userType: string;
-}
+import {
+	LoginDto,
+	AuthResultDto,
+	UserRegistrationDto,
+	RegistrationResultDto,
+	UserInfoDto
+} from '../models/user.model';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
 	providedIn: 'root'
 })
 export class AuthService {
-	private readonly apiUrl = `${environment.apiUrl}/auth`;
-	private currentUserSubject = new BehaviorSubject<any>(null);
-	public currentUser$ = this.currentUserSubject.asObservable();
+	private readonly apiUrl = `${environment.apiUrl}/api/Auth`;
+	private currentUserSubject = new BehaviorSubject<UserInfoDto | null>(null);
+	private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
 
-	private tokenSubject = new BehaviorSubject<string | null>(null);
-	public token$ = this.tokenSubject.asObservable();
+	public currentUser$ = this.currentUserSubject.asObservable();
+	public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
 	constructor(
 		private http: HttpClient,
 		private router: Router
 	) {
-		// Initialize user from localStorage on service creation
-		this.initializeFromStorage();
+		this.initializeAuth();
 	}
 
-	private initializeFromStorage(): void {
-		const storedUser = localStorage.getItem('currentUser');
-		const storedToken = localStorage.getItem('authToken');
+	private initializeAuth(): void {
+		const token = this.getToken();
+		const user = this.getStoredUser();
 
-		if (storedUser && storedToken) {
-			try {
-				const user = JSON.parse(storedUser);
-				this.currentUserSubject.next(user);
-				console.log('User initialized from storage:', user);
-			} catch (error) {
-				console.error('Error parsing stored user:', error);
-				this.logout();
-			}
+		if (token && user) {
+			this.currentUserSubject.next(user);
+			this.isAuthenticatedSubject.next(true);
 		}
+	}
+
+	login(loginData: LoginDto): Observable<AuthResultDto> {
+		return this.http.post<AuthResultDto>(`${this.apiUrl}/login`, loginData)
+			.pipe(
+				tap(response => {
+					if (response.success && response.token && response.user) {
+						this.setToken(response.token);
+						this.setUser(response.user);
+						this.currentUserSubject.next(response.user);
+						this.isAuthenticatedSubject.next(true);
+					}
+				}),
+				catchError(this.handleError)
+			);
+	}
+
+	register(registrationData: UserRegistrationDto): Observable<RegistrationResultDto> {
+		return this.http.post<RegistrationResultDto>(`${this.apiUrl}/register`, registrationData)
+			.pipe(
+				catchError(this.handleError)
+			);
+	}
+
+	logout(): void {
+		localStorage.removeItem('token');
+		localStorage.removeItem('user');
+		this.currentUserSubject.next(null);
+		this.isAuthenticatedSubject.next(false);
+		this.router.navigate(['/login']);
+	}
+
+	getToken(): string | null {
+		return localStorage.getItem('token');
+	}
+
+	getCurrentUser(): UserInfoDto | null {
+		return this.currentUserSubject.value;
+	}
+
+	isAuthenticated(): boolean {
+		return this.isAuthenticatedSubject.value;
 	}
 
 	hasRole(role: string): boolean {
@@ -84,71 +87,21 @@ export class AuthService {
 		return user?.userType === role;
 	}
 
-	login(credentials: any): Observable<AuthResult> {
-		return this.http.post<any>(`${this.apiUrl}/login`, credentials)
-			.pipe(
-				map(response => {
-					if (response && response.token) {
-						// Store user details and jwt token in local storage
-						localStorage.setItem('authToken', response.token);
-						localStorage.setItem('currentUser', JSON.stringify(response.user));
-						this.currentUserSubject.next(response.user);
-
-						return {
-							success: true,
-							message: 'Login successful',
-							token: response.token,
-							user: response.user
-						};
-					} else {
-						return {
-							success: false,
-							message: 'Invalid credentials'
-						};
-					}
-				}),
-				catchError(error => {
-					console.error('Login error:', error);
-					return of({
-						success: false,
-						message: error.error?.message || 'Login failed. Please try again.'
-					});
-				})
-			);
+	private setToken(token: string): void {
+		localStorage.setItem('token', token);
 	}
 
-	logout(): void {
-		// Remove user from local storage and set current user to null
-		localStorage.removeItem('authToken');
-		localStorage.removeItem('currentUser');
-		localStorage.removeItem('darkMode'); // Optional: reset theme on logout
-		this.currentUserSubject.next(null);
+	private setUser(user: UserInfoDto): void {
+		localStorage.setItem('user', JSON.stringify(user));
 	}
 
-	getCurrentUser(): any {
-		return this.currentUserSubject.value;
+	private getStoredUser(): UserInfoDto | null {
+		const userStr = localStorage.getItem('user');
+		return userStr ? JSON.parse(userStr) : null;
 	}
 
-	isAuthenticated(): boolean {
-		const token = localStorage.getItem('authToken');
-		const user = this.getCurrentUser();
-		return !!(token && user);
-	}
-
-	getToken(): string | null {
-		return localStorage.getItem('authToken');
-	}
-
-	register(userData: any): Observable<any> {
-		return this.http.post<any>(`${this.apiUrl}/register`, userData)
-			.pipe(
-				catchError(error => {
-					console.error('Registration error:', error);
-					return of({
-						success: false,
-						message: error.error?.message || 'Registration failed. Please try again.'
-					});
-				})
-			);
+	private handleError(error: any): Observable<never> {
+		console.error('Auth Service Error:', error);
+		return throwError(() => error);
 	}
 }

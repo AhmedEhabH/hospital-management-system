@@ -3,8 +3,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, takeUntil } from 'rxjs';
-import { AuthService, AuthResult } from '../../../core/services/auth.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ThemeService } from '../../../core/services/theme.service';
+import { AuthResultDto } from '../../../core/models/user.model';
 
 @Component({
 	selector: 'app-login',
@@ -82,7 +83,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 			this.authService.login(credentials)
 				.pipe(takeUntil(this.destroy$))
 				.subscribe({
-					next: (result: AuthResult) => {
+					next: (result: AuthResultDto) => {
 						this.isLoading = false;
 						if (result.success) {
 							this.showSuccess('Welcome back! Login successful.');

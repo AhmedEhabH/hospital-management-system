@@ -1,11 +1,13 @@
 import { Injectable } from '@angular/core';
-import { Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+import { map, take } from 'rxjs/operators';
 import { AuthService } from '../services/auth.service';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class AuthGuard {
+export class AuthGuard implements CanActivate {
 
 	constructor(
 		private authService: AuthService,
@@ -15,28 +17,26 @@ export class AuthGuard {
 	canActivate(
 		route: ActivatedRouteSnapshot,
 		state: RouterStateSnapshot
-	): boolean {
-		const isAuthenticated = this.authService.isAuthenticated();
+	): Observable<boolean> | Promise<boolean> | boolean {
 
-		if (!isAuthenticated) {
-			console.log('User not authenticated, redirecting to login');
-			this.router.navigate(['/auth/login'], {
-				queryParams: { returnUrl: state.url }
-			});
-			return false;
-		}
-
-		// Check role-based access if specified in route data
-		const requiredRole = route.data['role'];
-		if (requiredRole) {
-			const currentUser = this.authService.getCurrentUser();
-			if (!currentUser || currentUser.userType !== requiredRole) {
-				console.log(`Access denied. Required role: ${requiredRole}, User role: ${currentUser?.userType}`);
-				this.router.navigate(['/auth/login']);
-				return false;
-			}
-		}
-
-		return true;
+		return this.authService.isAuthenticated$.pipe(
+			take(1),
+			map(isAuthenticated => {
+				if (isAuthenticated) {
+					// Check for role-based access if specified in route data
+					const requiredRole = route.data?.['role'];
+					if (requiredRole && !this.authService.hasRole(requiredRole)) {
+						this.router.navigate(['/unauthorized']);
+						return false;
+					}
+					return true;
+				} else {
+					this.router.navigate(['/login'], {
+						queryParams: { returnUrl: state.url }
+					});
+					return false;
+				}
+			})
+		);
 	}
 }

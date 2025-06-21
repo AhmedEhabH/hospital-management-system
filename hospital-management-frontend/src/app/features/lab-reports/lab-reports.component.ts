@@ -5,265 +5,276 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { LabReportService, LabReport } from '../../core/services/lab-report.service';
+import { LabReportService } from '../../core/services/lab-report.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { ExportService } from '../../core/services/export.service';
+import { LabReportDto } from '../../core/models/lab-report.model';
+import { Router } from '@angular/router';
 
 @Component({
 	selector: 'app-lab-reports',
-	standalone:false,
+	standalone: false,
 	templateUrl: './lab-reports.component.html',
 	styleUrls: ['./lab-reports.component.scss']
 })
-export class LabReportsComponent implements OnInit, OnDestroy {
-	@ViewChild(MatPaginator) paginator!: MatPaginator;
-	@ViewChild(MatSort) sort!: MatSort;
 
-	private destroy$ = new Subject<void>();
-
+export class LabReportsComponent implements OnInit {
+	labReports: LabReportDto[] = [];
+	filteredReports: LabReportDto[] = [];
+	loading = false;
 	currentUser: any;
-	isDarkMode = false;
-	isLoading = true;
 
-	// Lab Reports Data
-	labReports: LabReport[] = [];
-	dataSource = new MatTableDataSource<LabReport>();
-	displayedColumns: string[] = ['reportDate', 'reportType', 'status', 'priority', 'doctor', 'department', 'actions'];
+	// Filter properties
+	selectedStatus = '';
+	selectedPriority = '';
+	selectedDateRange = '';
+	searchTerm = '';
 
-	// Filter Options
-	selectedStatus = 'All';
-	selectedPriority = 'All';
-	selectedDateRange: { start: Date | null; end: Date | null } = { start: null, end: null };
-
-	statusOptions = ['All', 'Pending', 'Completed', 'Reviewed', 'Critical'];
-	priorityOptions = ['All', 'Low', 'Medium', 'High', 'Critical'];
-
-	// Statistics
-	labStats = {
-		totalReports: 0,
-		pendingReports: 0,
-		criticalReports: 0,
-		completedThisMonth: 0
-	};
+	// Filter options
+	statusOptions = ['All', 'Critical', 'Warning', 'Normal'];
+	priorityOptions = ['All', 'High', 'Medium', 'Low'];
+	dateRangeOptions = ['All', 'Last 7 days', 'Last 30 days', 'Last 90 days'];
 
 	constructor(
 		private labReportService: LabReportService,
 		private authService: AuthService,
-		private themeService: ThemeService,
-		private dialog: MatDialog,
-		private snackBar: MatSnackBar,
-		private exportService: ExportService
+		private router: Router
 	) { }
 
 	ngOnInit(): void {
-		this.initializeComponent();
-		this.subscribeToTheme();
+		this.currentUser = this.authService.getCurrentUser();
 		this.loadLabReports();
 	}
 
-	ngOnDestroy(): void {
-		this.destroy$.next();
-		this.destroy$.complete();
-	}
-
-	private initializeComponent(): void {
-		this.currentUser = this.authService.getCurrentUser();
-	}
-
-	private subscribeToTheme(): void {
-		this.themeService.isDarkMode$
-			.pipe(takeUntil(this.destroy$))
-			.subscribe(isDark => {
-				this.isDarkMode = isDark;
-			});
-	}
-
 	private loadLabReports(): void {
-		this.isLoading = true;
-
-		if (this.currentUser) {
+		if (this.currentUser?.id) {
+			this.loading = true;
 			this.labReportService.getLabReportsByPatientId(this.currentUser.id)
-				.pipe(takeUntil(this.destroy$))
 				.subscribe({
-					next: (reports: LabReport[]) => {
-						this.labReports = reports;
-						this.dataSource.data = reports;
-						this.calculateStatistics();
-						this.setupTableFeatures();
-						this.isLoading = false;
+					next: (reports: LabReportDto[]) => {
+						this.labReports = reports.sort((a: LabReportDto, b: LabReportDto) =>
+							new Date(b.testedDate).getTime() - new Date(a.testedDate).getTime());
+						this.filteredReports = [...this.labReports];
+						this.loading = false;
 					},
 					error: (error: any) => {
 						console.error('Error loading lab reports:', error);
-						this.isLoading = false;
-						this.showErrorMessage('Failed to load lab reports');
+						this.loading = false;
 					}
 				});
 		}
 	}
 
-	private calculateStatistics(): void {
-		const now = new Date();
-		const thisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-		this.labStats = {
-			totalReports: this.labReports.length,
-			pendingReports: this.labReports.filter(r => r.status === 'Pending').length,
-			criticalReports: this.labReports.filter(r => r.status === 'Critical' || r.priority === 'Critical').length,
-			completedThisMonth: this.labReports.filter(r =>
-				r.status === 'Completed' && new Date(r.reportDate) >= thisMonth
-			).length
-		};
+	// FIXED: Add computed methods for missing properties
+	public getStatus(report: LabReportDto): string {
+		if (this.isCritical(report)) return 'Critical';
+		if (this.isWarning(report)) return 'Warning';
+		return 'Normal';
 	}
 
-	private setupTableFeatures(): void {
-		setTimeout(() => {
-			if (this.paginator) {
-				this.dataSource.paginator = this.paginator;
-			}
-			if (this.sort) {
-				this.dataSource.sort = this.sort;
-			}
-		});
+	public getPriority(report: LabReportDto): string {
+		if (this.isCritical(report)) return 'High';
+		if (this.isWarning(report)) return 'Medium';
+		return 'Low';
 	}
 
-	// Filter Methods
-	applyFilters(): void {
-		let filteredData = [...this.labReports];
+	public getReportDate(report: LabReportDto): string {
+		return report.testedDate.toString();
+	}
 
-		// Status filter
-		if (this.selectedStatus !== 'All') {
-			filteredData = filteredData.filter(report => report.status === this.selectedStatus);
+	public getReportType(report: LabReportDto): string {
+		return report.testPerformed;
+	}
+
+	public getDepartment(report: LabReportDto): string {
+		// Determine department based on test type
+		const testType = report.testPerformed.toLowerCase();
+		if (testType.includes('blood') || testType.includes('cholesterol') || testType.includes('glucose')) {
+			return 'Hematology';
 		}
-
-		// Priority filter
-		if (this.selectedPriority !== 'All') {
-			filteredData = filteredData.filter(report => report.priority === this.selectedPriority);
+		if (testType.includes('urine')) {
+			return 'Urology';
 		}
-
-		// Date range filter
-		if (this.selectedDateRange.start) {
-			filteredData = filteredData.filter(report =>
-				new Date(report.reportDate) >= this.selectedDateRange.start!
-			);
+		if (testType.includes('x-ray') || testType.includes('scan') || testType.includes('mri')) {
+			return 'Radiology';
 		}
-
-		if (this.selectedDateRange.end) {
-			filteredData = filteredData.filter(report =>
-				new Date(report.reportDate) <= this.selectedDateRange.end!
-			);
+		if (testType.includes('ecg') || testType.includes('heart')) {
+			return 'Cardiology';
 		}
-
-		this.dataSource.data = filteredData;
+		return 'General Lab';
 	}
 
-	clearFilters(): void {
-		this.selectedStatus = 'All';
-		this.selectedPriority = 'All';
-		this.selectedDateRange = { start: null, end: null };
-		this.dataSource.data = this.labReports;
-	}
-
-	applyQuickSearch(event: Event): void {
-		const filterValue = (event.target as HTMLInputElement).value;
-		this.dataSource.filter = filterValue.trim().toLowerCase();
-
-		if (this.dataSource.paginator) {
-			this.dataSource.paginator.firstPage();
-		}
-	}
-
-	// Action Methods
-	viewReport(report: LabReport): void {
-		console.log('View report:', report);
-		// Navigate to detailed report view
-	}
-
-	downloadReport(report: LabReport): void {
-		console.log('Download report:', report);
-		// Implement PDF download
-	}
-
-	shareReport(report: LabReport): void {
-		console.log('Share report:', report);
-		// Implement sharing functionality
-	}
-
-	exportReports(): void {
-		const filename = `lab-reports-${new Date().toISOString().split('T')[0]}`;
-		this.exportService.exportTimelineToCSV(
-			this.dataSource.data.map(report => ({
-				id: report.id.toString(),
-				date: report.reportDate,
-				title: report.reportType,
-				description: `${report.reportType} - ${report.status}`,
-				icon: 'science',
-				color: this.getStatusColor(report.status),
-				type: 'test' as const,
-				priority: report.priority.toLowerCase() as 'high' | 'medium' | 'low',
-				tags: [report.reportType, report.department, report.status],
-				data: report
-			})),
-			filename
+	private isCritical(report: LabReportDto): boolean {
+		return (
+			report.cholesterolLevel > 240 ||
+			report.sucroseLevel > 200 ||
+			report.whiteBloodCellsRatio > 11000 ||
+			report.whiteBloodCellsRatio < 4000 ||
+			report.heartBeatRatio > 100 ||
+			report.heartBeatRatio < 60
 		);
-
-		this.showSuccessMessage('Lab reports exported successfully');
 	}
 
-	// Utility Methods
-	getStatusClass(status: string): string {
-		switch (status.toLowerCase()) {
-			case 'completed': return 'status-stable';
-			case 'reviewed': return 'status-info';
-			case 'pending': return 'status-warning';
-			case 'critical': return 'status-critical';
-			default: return 'status-info';
-		}
+	private isWarning(report: LabReportDto): boolean {
+		return (
+			(report.cholesterolLevel > 200 && report.cholesterolLevel <= 240) ||
+			(report.sucroseLevel > 140 && report.sucroseLevel <= 200) ||
+			(report.heartBeatRatio > 90 && report.heartBeatRatio <= 100) ||
+			(report.heartBeatRatio >= 60 && report.heartBeatRatio < 70)
+		);
 	}
 
-	getPriorityClass(priority: string): string {
-		switch (priority.toLowerCase()) {
-			case 'low': return 'priority-low';
-			case 'medium': return 'priority-medium';
-			case 'high': return 'priority-high';
-			case 'critical': return 'priority-critical';
-			default: return 'priority-medium';
-		}
-	}
+	public applyFilters(): void {
+		this.filteredReports = this.labReports.filter(report => {
+			// FIXED: Use computed status instead of non-existent property
+			const reportStatus = this.getStatus(report);
+			const reportPriority = this.getPriority(report);
+			const reportDate = new Date(this.getReportDate(report));
 
-	private getStatusColor(status: string): string {
-		switch (status.toLowerCase()) {
-			case 'completed': return '#4caf50';
-			case 'reviewed': return '#2196f3';
-			case 'pending': return '#ff9800';
-			case 'critical': return '#f44336';
-			default: return '#757575';
-		}
-	}
+			// Status filter
+			if (this.selectedStatus && this.selectedStatus !== 'All' && reportStatus !== this.selectedStatus) {
+				return false;
+			}
 
-	formatDate(date: Date): string {
-		return new Date(date).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
+			// Priority filter
+			if (this.selectedPriority && this.selectedPriority !== 'All' && reportPriority !== this.selectedPriority) {
+				return false;
+			}
+
+			// Date range filter
+			if (this.selectedDateRange && this.selectedDateRange !== 'All') {
+				const now = new Date();
+				let daysBack = 0;
+
+				switch (this.selectedDateRange) {
+					case 'Last 7 days':
+						daysBack = 7;
+						break;
+					case 'Last 30 days':
+						daysBack = 30;
+						break;
+					case 'Last 90 days':
+						daysBack = 90;
+						break;
+				}
+
+				if (daysBack > 0) {
+					const cutoffDate = new Date(now.getTime() - (daysBack * 24 * 60 * 60 * 1000));
+					if (reportDate < cutoffDate) {
+						return false;
+					}
+				}
+			}
+
+			// Search term filter
+			if (this.searchTerm) {
+				const searchLower = this.searchTerm.toLowerCase();
+				const reportType = this.getReportType(report).toLowerCase();
+				const department = this.getDepartment(report).toLowerCase();
+
+				if (!reportType.includes(searchLower) && !department.includes(searchLower)) {
+					return false;
+				}
+			}
+
+			return true;
 		});
 	}
 
-	private showSuccessMessage(message: string): void {
-		this.snackBar.open(message, 'Close', {
-			duration: 3000,
-			panelClass: ['success-snackbar'],
-			horizontalPosition: 'end',
-			verticalPosition: 'top'
-		});
+	public clearFilters(): void {
+		this.selectedStatus = '';
+		this.selectedPriority = '';
+		this.selectedDateRange = '';
+		this.searchTerm = '';
+		this.filteredReports = [...this.labReports];
 	}
 
-	private showErrorMessage(message: string): void {
-		this.snackBar.open(message, 'Close', {
-			duration: 5000,
-			panelClass: ['error-snackbar'],
-			horizontalPosition: 'end',
-			verticalPosition: 'top'
-		});
+	public getStatusClass(report: LabReportDto): string {
+		const status = this.getStatus(report);
+		switch (status) {
+			case 'Critical': return 'status-critical';
+			case 'Warning': return 'status-warning';
+			default: return 'status-stable';
+		}
+	}
+
+	public getPriorityClass(report: LabReportDto): string {
+		const priority = this.getPriority(report);
+		switch (priority) {
+			case 'High': return 'priority-high';
+			case 'Medium': return 'priority-medium';
+			default: return 'priority-low';
+		}
+	}
+
+	public formatDate(dateString: string): string {
+		return new Date(dateString).toLocaleDateString();
+	}
+
+	public viewReport(report: LabReportDto): void {
+		this.router.navigate(['/lab-reports', report.id]);
+	}
+
+	public editReport(report: LabReportDto): void {
+		this.router.navigate(['/lab-reports', 'edit', report.id]);
+	}
+
+	public deleteReport(report: LabReportDto): void {
+		if (confirm('Are you sure you want to delete this lab report?')) {
+			this.labReportService.deleteLabReport(report.id).subscribe({
+				next: () => {
+					this.labReports = this.labReports.filter(r => r.id !== report.id);
+					this.applyFilters();
+				},
+				error: (error: any) => {
+					console.error('Error deleting lab report:', error);
+				}
+			});
+		}
+	}
+
+	public exportReport(report: LabReportDto): void {
+		// FIXED: Use computed values for export
+		const exportData = {
+			id: report.id,
+			patientId: report.patientId,
+			testType: this.getReportType(report),
+			department: this.getDepartment(report),
+			testedBy: report.testedBy,
+			testDate: this.formatDate(this.getReportDate(report)),
+			status: this.getStatus(report),
+			priority: this.getPriority(report),
+			cholesterolLevel: report.cholesterolLevel,
+			sucroseLevel: report.sucroseLevel,
+			whiteBloodCellsRatio: report.whiteBloodCellsRatio,
+			redBloodCellsRatio: report.redBloodCellsRatio,
+			heartBeatRatio: report.heartBeatRatio,
+			phLevel: report.phLevel,
+			reports: report.reports
+		};
+
+		// Convert to CSV or JSON for download
+		const dataStr = JSON.stringify(exportData, null, 2);
+		const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+		const exportFileDefaultName = `lab-report-${report.id}.json`;
+
+		const linkElement = document.createElement('a');
+		linkElement.setAttribute('href', dataUri);
+		linkElement.setAttribute('download', exportFileDefaultName);
+		linkElement.click();
+	}
+
+	public navigateToComparison(): void {
+		this.router.navigate(['/lab-reports/comparison']);
+	}
+
+	public navigateToCriticalAlerts(): void {
+		this.router.navigate(['/lab-reports/critical-alerts']);
+	}
+
+	public createNewReport(): void {
+		this.router.navigate(['/lab-reports/create']);
 	}
 }

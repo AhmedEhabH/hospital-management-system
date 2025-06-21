@@ -193,45 +193,49 @@
 						</div>
 					</mat-tab>
 
-					<!-- Lab Reports Tab -->
-					<mat-tab>
-						<ng-template mat-tab-label>
-							<mat-icon>science</mat-icon>
-							Lab Reports
-						</ng-template>
-						<div class="tab-content">
-							<div class="tab-header">
-								<h3>Recent Lab Reports</h3>
-								<button mat-button color="primary" (click)="navigateToLabReports()">
-									View All
-									<mat-icon>arrow_forward</mat-icon>
-								</button>
-							</div>
-							<div class="lab-reports-list">
-								<mat-card *ngFor="let report of recentLabReports" class="report-item medical-card">
-									<mat-card-content>
-										<div class="report-header">
-											<mat-icon class="report-icon">science</mat-icon>
-											<div class="report-info">
-												<span class="test-name">{{ report.reportType }}</span>
-												<p class="report-date">{{ report.testDate | date:'mediumDate' }}</p>
-												<p class="report-doctor">Tested by: {{ report.doctorName }}</p>
+					<!-- Lab Reports Section -->
+					<div class="lab-reports-section">
+						<div class="section-header">
+							<h3>Recent Lab Reports</h3>
+							<button mat-button color="primary" (click)="navigateToLabReports()">
+								<mat-icon>science</mat-icon>
+								View All
+							</button>
+						</div>
 
-											</div>
-											<div class="report-status">
-												<mat-chip class="status-chip">Completed</mat-chip>
-											</div>
+						<div class="reports-list" *ngIf="recentLabReports.length > 0; else noReports">
+							<div class="report-item medical-card" *ngFor="let report of recentLabReports">
+								<div class="report-content">
+									<div class="report-header">
+										<mat-icon [class]="getLabReportStatusClass(report)">{{ getLabReportIcon(report)
+											}}</mat-icon>
+										<div class="report-info">
+											<!-- FIXED: Use testPerformed instead of reportType -->
+											<span class="test-name">{{ report.testPerformed }}</span>
+											<!-- FIXED: Use testedDate instead of testDate -->
+											<p class="report-date">{{ report.testedDate | date:'mediumDate' }}</p>
+											<!-- FIXED: Use testedBy instead of doctorName -->
+											<p class="report-doctor">Tested by: {{ report.testedBy }}</p>
 										</div>
-									</mat-card-content>
-								</mat-card>
-
-								<div *ngIf="recentLabReports.length === 0" class="empty-state">
-									<mat-icon>science</mat-icon>
-									<p>No lab reports available</p>
+									</div>
+									<div class="report-status">
+										<span [class]="getLabReportStatusClass(report)">
+											{{ isLabReportCritical(report) ? 'Critical' : (isLabReportWarning(report) ?
+											'Warning' : 'Normal') }}
+										</span>
+									</div>
 								</div>
 							</div>
 						</div>
-					</mat-tab>
+
+						<ng-template #noReports>
+							<div class="no-data">
+								<mat-icon>science</mat-icon>
+								<p>No lab reports available</p>
+							</div>
+						</ng-template>
+					</div>
+
 
 					<!-- Messages Tab -->
 					<mat-tab>

@@ -29,19 +29,16 @@ const routes: Routes = [
 	{
 		path: 'medical-history',
 		canActivate: [AuthGuard],
-		// Remove role restriction - accessible to all authenticated users
 		loadChildren: () => import('./features/medical-history/medical-history.module').then(m => m.MedicalHistoryModule)
 	},
 	{
 		path: 'lab-reports',
 		canActivate: [AuthGuard],
-		// Remove role restriction - accessible to all authenticated users
 		loadChildren: () => import('./features/lab-reports/lab-reports.module').then(m => m.LabReportsModule)
 	},
 	{
 		path: 'messaging',
 		canActivate: [AuthGuard],
-		// Remove role restriction - accessible to all authenticated users
 		loadChildren: () => import('./features/messaging/messaging.module').then(m => m.MessagingModule)
 	},
 	{ path: '**', redirectTo: '/auth/login' }

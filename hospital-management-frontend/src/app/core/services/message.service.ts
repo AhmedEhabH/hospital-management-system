@@ -72,7 +72,7 @@ export interface MessageAttachment {
 	providedIn: 'root'
 })
 export class MessageService {
-	private readonly apiUrl = `${environment.apiUrl}/messages`;
+	private readonly apiUrl = `${environment.apiUrl}/api/messages`;
 	private messagesSubject = new BehaviorSubject<Message[]>([]);
 	private conversationsSubject = new BehaviorSubject<Conversation[]>([]);
 	private activeConversationSubject = new BehaviorSubject<Conversation | null>(null);

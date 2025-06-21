@@ -1,19 +1,8 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
-import { LabReport } from '../../../core/services/lab-report.service';
-import { ThemeService } from '../../../core/services/theme.service';
-import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { Component, OnInit } from '@angular/core';
+import { LabReportService } from '../../../core/services/lab-report.service';
+import { LabReportDto } from '../../../core/models/lab-report.model';
+import { AuthService } from '../../../core/services/auth.service';
 
-interface ComparisonData {
-	testName: string;
-	reports: {
-		report: LabReport;
-		value: number;
-		status: string;
-		change?: number;
-		changePercent?: number;
-	}[];
-}
 
 @Component({
 	selector: 'app-lab-comparison',
@@ -21,315 +10,155 @@ interface ComparisonData {
 	templateUrl: './lab-comparison.component.html',
 	styleUrls: ['./lab-comparison.component.scss']
 })
-export class LabComparisonComponent implements OnInit, OnDestroy {
-	@Input() labReports: LabReport[] = [];
+export class LabComparisonComponent implements OnInit {
+	labReports: LabReportDto[] = [];
+	selectedReports: LabReportDto[] = [];
+	loading = false;
+	comparisonData: any[] = [];
+	currentUser: any;
 
-	private destroy$ = new Subject<void>();
-
-	isDarkMode = false;
-	isLoading = false;
-
-	// Comparison Data
-	selectedReports: LabReport[] = [];
-	comparisonData: ComparisonData[] = [];
-
-	// Chart Configuration
-	public comparisonChartType: ChartType = 'bar';
-	public comparisonChartData: ChartData<'bar'> = {
-		labels: [],
-		datasets: []
-	};
-
-	public chartOptions: ChartConfiguration['options'] = {
-		responsive: true,
-		maintainAspectRatio: false,
-		scales: {
-			y: {
-				beginAtZero: false,
-				grid: { color: 'rgba(0,0,0,0.1)' },
-				title: {
-					display: true,
-					text: 'Test Values'
-				}
-			},
-			x: {
-				grid: { color: 'rgba(0,0,0,0.1)' },
-				title: {
-					display: true,
-					text: 'Test Names'
-				}
-			}
-		},
-		plugins: {
-			legend: {
-				position: 'top',
-			},
-			tooltip: {
-				callbacks: {
-					label: (context) => {
-						const datasetLabel = context.dataset.label || '';
-						const value = context.parsed.y;
-						return `${datasetLabel}: ${value}`;
-					}
-				}
-			}
-		}
-	};
-
-	constructor(private themeService: ThemeService) { }
+	constructor(
+		private labReportService: LabReportService,
+		private authService: AuthService
+	) { }
 
 	ngOnInit(): void {
-		this.subscribeToTheme();
-		this.initializeComparison();
+		this.currentUser = this.authService.getCurrentUser();
+		this.loadLabReports();
 	}
 
-	ngOnDestroy(): void {
-		this.destroy$.next();
-		this.destroy$.complete();
-	}
-
-	private subscribeToTheme(): void {
-		this.themeService.isDarkMode$
-			.pipe(takeUntil(this.destroy$))
-			.subscribe(isDark => {
-				this.isDarkMode = isDark;
-				this.updateChartTheme();
-			});
-	}
-
-	private initializeComparison(): void {
-		if (this.labReports.length >= 2) {
-			// Auto-select the two most recent reports
-			this.selectedReports = this.labReports
-				.sort((a, b) => new Date(b.reportDate).getTime() - new Date(a.reportDate).getTime())
-				.slice(0, 2);
-			this.generateComparison();
+	private loadLabReports(): void {
+		if (this.currentUser?.id) {
+			this.loading = true;
+			this.labReportService.getLabReportsByPatientId(this.currentUser.id)
+				.subscribe({
+					next: (reports: LabReportDto[]) => {
+						this.labReports = reports.sort((a: LabReportDto, b: LabReportDto) =>
+							new Date(b.testedDate).getTime() - new Date(a.testedDate).getTime());
+						this.loading = false;
+					},
+					error: (error: any) => {
+						console.error('Error loading lab reports:', error);
+						this.loading = false;
+					}
+				});
 		}
 	}
 
-	private generateComparison(): void {
-		if (this.selectedReports.length < 2) return;
-
-		this.comparisonData = [];
-		const testNames = new Set<string>();
-
-		// Collect all unique test names
-		this.selectedReports.forEach(report => {
-			report.results?.forEach(result => {
-				testNames.add(result.testName);
-			});
-		});
-
-		// Generate comparison data for each test
-		testNames.forEach(testName => {
-			const comparisonItem: ComparisonData = {
-				testName,
-				reports: []
-			};
-
-			this.selectedReports.forEach(report => {
-				const result = report.results?.find(r => r.testName === testName);
-				if (result) {
-					comparisonItem.reports.push({
-						report,
-						value: result.value,
-						status: result.status
-					});
-				}
-			});
-
-			// Calculate changes if we have exactly 2 reports
-			if (comparisonItem.reports.length === 2) {
-				const oldValue = comparisonItem.reports[1].value;
-				const newValue = comparisonItem.reports[0].value;
-				const change = newValue - oldValue;
-				const changePercent = ((change / oldValue) * 100);
-
-				comparisonItem.reports[0].change = change;
-				comparisonItem.reports[0].changePercent = changePercent;
-			}
-
-			if (comparisonItem.reports.length > 0) {
-				this.comparisonData.push(comparisonItem);
-			}
-		});
-
-		this.updateComparisonChart();
+	public getStatus(report: LabReportDto): string {
+		if (this.isCritical(report)) return 'Critical';
+		if (this.isWarning(report)) return 'Warning';
+		return 'Normal';
 	}
 
-	private updateComparisonChart(): void {
-		const labels = this.comparisonData.map(item => item.testName);
-		const datasets = this.selectedReports.map((report, index) => {
-			const color = this.getReportColor(index);
-			const data = this.comparisonData.map(item => {
-				const reportData = item.reports.find(r => r.report.id === report.id);
-				return reportData ? reportData.value : 0;
-			});
-
-			return {
-				label: this.formatReportLabel(report),
-				data: data,
-				backgroundColor: this.hexToRgba(color, 0.7),
-				borderColor: color,
-				borderWidth: 2
-			};
-		});
-
-		this.comparisonChartData = {
-			labels,
-			datasets
-		};
+	public getPriority(report: LabReportDto): string {
+		if (this.isCritical(report)) return 'High';
+		if (this.isWarning(report)) return 'Medium';
+		return 'Low';
 	}
 
-	private updateChartTheme(): void {
-		if (this.chartOptions && this.chartOptions.scales) {
-			const gridColor = this.isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-			this.chartOptions.scales['y']!.grid!.color = gridColor;
-			this.chartOptions.scales['x']!.grid!.color = gridColor;
-		}
+	private isCritical(report: LabReportDto): boolean {
+		return (
+			report.cholesterolLevel > 240 ||
+			report.sucroseLevel > 200 ||
+			report.whiteBloodCellsRatio > 11000 ||
+			report.whiteBloodCellsRatio < 4000 ||
+			report.heartBeatRatio > 100 ||
+			report.heartBeatRatio < 60
+		);
 	}
 
-	// Public Methods
-	onReportSelectionChange(): void {
-		this.generateComparison();
+	private isWarning(report: LabReportDto): boolean {
+		return (
+			(report.cholesterolLevel > 200 && report.cholesterolLevel <= 240) ||
+			(report.sucroseLevel > 140 && report.sucroseLevel <= 200) ||
+			(report.heartBeatRatio > 90 && report.heartBeatRatio <= 100) ||
+			(report.heartBeatRatio >= 60 && report.heartBeatRatio < 70)
+		);
 	}
 
-	addReportToComparison(report: LabReport): void {
-		if (!this.selectedReports.find(r => r.id === report.id)) {
+	public selectReport(report: LabReportDto): void {
+		if (this.selectedReports.includes(report)) {
+			this.selectedReports = this.selectedReports.filter(r => r.id !== report.id);
+		} else if (this.selectedReports.length < 3) {
 			this.selectedReports.push(report);
-			this.generateComparison();
 		}
-	}
-
-	removeReportFromComparison(report: LabReport): void {
-		this.selectedReports = this.selectedReports.filter(r => r.id !== report.id);
 		this.generateComparison();
 	}
 
-	clearComparison(): void {
-		this.selectedReports = [];
-		this.comparisonData = [];
-		this.comparisonChartData = { labels: [], datasets: [] };
-	}
-
-	exportComparison(): void {
-		console.log('Export comparison data');
-		// Implement export functionality
-	}
-
-	// Utility Methods
-	private getReportColor(index: number): string {
-		const colors = [
-			'#4299ed', '#4caf50', '#ff9800', '#f44336',
-			'#9c27b0', '#009688', '#795548', '#607d8b'
-		];
-		return colors[index % colors.length];
-	}
-
-	private hexToRgba(hex: string, alpha: number): string {
-		const r = parseInt(hex.slice(1, 3), 16);
-		const g = parseInt(hex.slice(3, 5), 16);
-		const b = parseInt(hex.slice(5, 7), 16);
-		return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-	}
-
-	formatReportLabel(report: LabReport): string {
-		return `${report.reportType} (${new Date(report.reportDate).toLocaleDateString()})`;
-	}
-
-	formatDate(date: Date): string {
-		return new Date(date).toLocaleDateString('en-US', {
-			year: 'numeric',
-			month: 'short',
-			day: 'numeric'
-		});
-	}
-
-	getChangeClass(change: number): string {
-		if (change > 0) return 'change-increase';
-		if (change < 0) return 'change-decrease';
-		return 'change-stable';
-	}
-
-	getChangeIcon(change: number): string {
-		if (change > 0) return 'trending_up';
-		if (change < 0) return 'trending_down';
-		return 'trending_flat';
-	}
-
-	getStatusClass(status: string): string {
-		switch (status.toLowerCase()) {
-			case 'critical': return 'status-critical';
-			case 'high': return 'status-high';
-			case 'low': return 'status-low';
-			case 'abnormal': return 'status-abnormal';
-			case 'normal': return 'status-normal';
-			default: return 'status-normal';
-		}
-	}
-
-	// FIXED: Add missing helper methods for template
-	isReportSelected(report: LabReport): boolean {
+	public isSelected(report: LabReportDto): boolean {
 		return this.selectedReports.some(r => r.id === report.id);
 	}
 
-	getImprovingCount(): number {
-		if (this.selectedReports.length !== 2) return 0;
-
-		let improving = 0;
-		this.comparisonData.forEach(item => {
-			if (item.reports.length === 2) {
-				const change = item.reports[0].change || 0;
-				if (this.isImprovingTrend(item.testName, change)) {
-					improving++;
-				}
-			}
-		});
-		return improving;
+	public clearSelection(): void {
+		this.selectedReports = [];
+		this.comparisonData = [];
 	}
 
-	getWorseningCount(): number {
-		if (this.selectedReports.length !== 2) return 0;
-
-		let worsening = 0;
-		this.comparisonData.forEach(item => {
-			if (item.reports.length === 2) {
-				const change = item.reports[0].change || 0;
-				if (!this.isImprovingTrend(item.testName, change) && Math.abs(change) >= 5) {
-					worsening++;
-				}
-			}
-		});
-		return worsening;
-	}
-
-	getStableCount(): number {
-		if (this.selectedReports.length !== 2) return 0;
-
-		let stable = 0;
-		this.comparisonData.forEach(item => {
-			if (item.reports.length === 2) {
-				const change = item.reports[0].change || 0;
-				if (Math.abs(change) < 5) {
-					stable++;
-				}
-			}
-		});
-		return stable;
-	}
-
-	private isImprovingTrend(testName: string, change: number): boolean {
-		// For cholesterol, glucose, etc., lower is better
-		const lowerIsBetter = ['Total Cholesterol', 'LDL Cholesterol', 'Glucose', 'Triglycerides'];
-		// For HDL, hemoglobin, etc., higher is better
-		const higherIsBetter = ['HDL Cholesterol', 'Hemoglobin'];
-
-		if (lowerIsBetter.includes(testName)) {
-			return change < 0; // Decreasing is improving
-		} else if (higherIsBetter.includes(testName)) {
-			return change > 0; // Increasing is improving
+	private generateComparison(): void {
+		if (this.selectedReports.length < 2) {
+			this.comparisonData = [];
+			return;
 		}
 
-		return Math.abs(change) < 5; // Stable is considered good for others
+		const metrics = [
+			{ name: 'Cholesterol Level', key: 'cholesterolLevel', unit: 'mg/dL' },
+			{ name: 'Sucrose Level', key: 'sucroseLevel', unit: 'mg/dL' },
+			{ name: 'White Blood Cells', key: 'whiteBloodCellsRatio', unit: 'cells/μL' },
+			{ name: 'Red Blood Cells', key: 'redBloodCellsRatio', unit: 'cells/μL' },
+			{ name: 'Heart Beat Ratio', key: 'heartBeatRatio', unit: 'bpm' },
+			{ name: 'pH Level', key: 'phLevel', unit: 'pH' }
+		];
+
+		this.comparisonData = metrics.map(metric => {
+			const values = this.selectedReports.map(report => ({
+				reportId: report.id,
+				testDate: report.testedDate,
+				testType: report.testPerformed,
+				value: (report as any)[metric.key] || 0
+			}));
+
+			return {
+				metric: metric.name,
+				unit: metric.unit,
+				values: values
+			};
+		});
+	}
+
+	public formatReportTitle(report: LabReportDto): string {
+		return `${report.testPerformed} - ${this.formatDate(report.testedDate.toString())}`;
+	}
+
+	// FIXED: Use string parameter for formatDate
+	public formatDate(dateString: string): string {
+		return new Date(dateString).toLocaleDateString();
+	}
+
+	// FIXED: Remove duplicate getStatusClass method - keep only one
+	public getStatusClass(report: LabReportDto): string {
+		const status = this.getStatus(report);
+		switch (status) {
+			case 'Critical': return 'status-critical';
+			case 'Warning': return 'status-warning';
+			default: return 'status-stable';
+		}
+	}
+
+	public getPriorityClass(report: LabReportDto): string {
+		const priority = this.getPriority(report);
+		switch (priority) {
+			case 'High': return 'priority-high';
+			case 'Medium': return 'priority-medium';
+			default: return 'priority-low';
+		}
+	}
+
+	public getDisplayedColumns(): string[] {
+		const columns = ['metric'];
+		for (let i = 0; i < this.selectedReports.length; i++) {
+			columns.push(`report${i}`);
+		}
+		return columns;
 	}
 }

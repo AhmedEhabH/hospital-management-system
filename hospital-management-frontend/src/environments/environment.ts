@@ -1,5 +1,6 @@
 export const environment = {
 	production: true,
-	apiUrl: 'https://localhost:7268/api',
-	appName: 'Hospital Management System'
+	apiUrl: 'https://localhost:7268',
+	appName: 'Hospital Management System',
+	signalRUrl: 'https://localhost:7268/hubs/communication'
 };

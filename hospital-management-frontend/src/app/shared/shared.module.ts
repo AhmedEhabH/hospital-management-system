@@ -17,6 +17,7 @@ import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { LoadingComponent } from './components/loading/loading.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { LogoutButtonComponent } from './components/logout-button/logout-button.component';
+import { UnauthorizedComponent } from './components/unauthorized/unauthorized.component';
 
 @NgModule({
 	declarations: [
@@ -25,7 +26,8 @@ import { LogoutButtonComponent } from './components/logout-button/logout-button.
 		SidebarComponent,
 		LoadingComponent,
 		FooterComponent,
-		LogoutButtonComponent
+		LogoutButtonComponent,
+  UnauthorizedComponent
 	],
 	imports: [
 		CommonModule,

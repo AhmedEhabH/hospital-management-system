@@ -10,466 +10,268 @@
 	align-items: center;
 }
 
-.patient-dashboard {
-	min-height: 100vh;
-	background: var(--background-color);
+.medical-history-section {
+	margin: 2rem 0;
 
-	.dashboard-header {
-		padding: 2rem 0;
-		color: white;
-		position: relative;
-		overflow: hidden;
+	.history-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
 
-		&::before {
-			content: '';
-			position: absolute;
-			top: 0;
-			left: 0;
-			right: 0;
-			bottom: 0;
-			background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="medical-pattern" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23medical-pattern)"/></svg>');
+	.history-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1rem;
+		background: var(--surface-color);
+		border-radius: 12px;
+		border: 1px solid var(--border-color);
+		transition: all 0.3s ease;
+
+		&:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 8px 24px var(--shadow-color);
+		}
+	}
+
+	.history-content {
+		flex: 1;
+
+		h4 {
+			margin: 0 0 0.5rem 0;
+			color: var(--text-primary);
+			font-weight: 600;
 		}
 
-		.header-content {
-			position: relative;
-			z-index: 2;
+		.history-description {
+			margin: 0 0 0.5rem 0;
+			color: var(--text-secondary);
+			font-size: 0.875rem;
 		}
 
+		.history-date {
+			margin: 0;
+			color: var(--text-secondary);
+			font-size: 0.75rem;
+			font-weight: 500;
+		}
+	}
 
+	.history-icon {
+		margin-left: 1rem;
 
+		mat-icon {
+			font-size: 2rem;
+			width: 2rem;
+			height: 2rem;
 
-		.user-welcome {
-			@include flex-between;
-			max-width: 1400px;
-			margin: 0 auto;
-			padding: 0 2rem;
-
-			.avatar-section {
-				display: flex;
-				align-items: center;
-				gap: 1.5rem;
-
-				.user-avatar {
-					width: 4rem;
-					height: 4rem;
-					background: rgba(255, 255, 255, 0.2);
-					border-radius: 50%;
-					@include flex-center;
-					backdrop-filter: blur(10px);
-
-					mat-icon {
-						font-size: 2rem;
-						width: 2rem;
-						height: 2rem;
-						color: white;
-					}
-				}
-
-				.welcome-text {
-					.welcome-title {
-						margin: 0;
-						font-size: 2rem;
-						font-weight: 600;
-						text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-					}
-
-					.welcome-subtitle {
-						margin: 0.5rem 0 0;
-						opacity: 0.9;
-						font-size: 1rem;
-					}
-				}
+			&.critical-icon {
+				color: var(--medical-red);
 			}
 
-			.quick-actions {
-				display: flex;
-				align-items: center;
-				gap: 1rem;
+			&.warning-icon {
+				color: var(--medical-orange);
+			}
 
-				.action-button {
-					background: rgba(255, 255, 255, 0.2);
-					color: white;
-					backdrop-filter: blur(10px);
-					border: 1px solid rgba(255, 255, 255, 0.3);
+			&.alert-icon {
+				color: var(--warn-color);
+			}
 
-					&:hover {
-						background: rgba(255, 255, 255, 0.3);
-					}
-
-					mat-icon {
-						margin-right: 0.5rem;
-					}
-				}
+			&.info-icon {
+				color: var(--medical-blue);
 			}
 		}
 	}
 
-	.loading-container {
-		padding: 4rem 2rem;
+	.no-data {
 		text-align: center;
+		padding: 2rem;
+		color: var(--text-secondary);
 
-		.loading-bar {
-			margin-bottom: 2rem;
-			border-radius: 4px;
+		mat-icon {
+			font-size: 3rem;
+			width: 3rem;
+			height: 3rem;
+			margin-bottom: 1rem;
+			opacity: 0.5;
 		}
 
-		.loading-content {
-			.loading-icon {
-				font-size: 4rem;
-				width: 4rem;
-				height: 4rem;
-				color: var(--primary-color);
-				margin-bottom: 1rem;
-			}
-
-			p {
-				color: var(--text-secondary);
-				font-size: 1.1rem;
-			}
+		p {
+			margin: 0;
+			font-style: italic;
 		}
 	}
+}
 
-	.dashboard-content {
-		padding: 2rem 0;
+// Responsive design
+@media (max-width: 768px) {
+	.medical-history-section {
+		.history-item {
+			flex-direction: column;
+			text-align: center;
+			gap: 1rem;
+		}
 
-		.section-title {
+		.history-icon {
+			margin-left: 0;
+		}
+	}
+}
+
+.lab-reports-section {
+	margin: 2rem 0;
+
+	.section-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 1.5rem;
+
+		h3 {
+			margin: 0;
+			color: var(--text-primary);
+			font-weight: 600;
+		}
+
+		button {
 			display: flex;
 			align-items: center;
-			gap: 0.75rem;
-			margin: 0 0 1.5rem;
-			font-size: 1.5rem;
-			font-weight: 600;
-			color: var(--text-primary);
+			gap: 0.5rem;
+		}
+	}
+
+	.reports-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.report-item {
+		padding: 1.5rem;
+
+		.report-content {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.report-header {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			flex: 1;
 
 			mat-icon {
-				color: var(--primary-color);
-				font-size: 1.75rem;
+				font-size: 2rem;
+				width: 2rem;
+				height: 2rem;
+
+				&.status-critical {
+					color: var(--medical-red);
+				}
+
+				&.status-warning {
+					color: var(--medical-orange);
+				}
+
+				&.status-stable {
+					color: var(--medical-green);
+				}
 			}
-		}
-	}
 
-	.metrics-section {
-		margin-bottom: 3rem;
+			.report-info {
+				flex: 1;
 
-		.metrics-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-			gap: 1.5rem;
-
-			.metric-card {
-				transition: all 0.3s ease;
-
-				&:hover {
-					transform: translateY(-4px);
-				}
-
-				.mat-mdc-card-header {
-					.metric-icon {
-						border-radius: 50%;
-						padding: 0.75rem;
-						color: white;
-
-						&.bp-icon {
-							background: var(--medical-red);
-						}
-
-						&.hr-icon {
-							background: var(--medical-green);
-						}
-
-						&.weight-icon {
-							background: var(--medical-blue);
-						}
-
-						&.temp-icon {
-							background: var(--medical-orange);
-						}
-					}
-				}
-
-				.metric-value {
-					font-size: 2rem;
-					font-weight: 700;
+				.test-name {
+					font-weight: 600;
 					color: var(--text-primary);
-					margin-bottom: 0.5rem;
-
-					.metric-unit {
-						font-size: 1rem;
-						font-weight: 400;
-						color: var(--text-secondary);
-						margin-left: 0.25rem;
-					}
+					font-size: 1rem;
 				}
 
-				.metric-status {
-					padding: 0.25rem 0.75rem;
-					border-radius: 12px;
-					font-size: 0.875rem;
-					font-weight: 500;
-					display: inline-block;
-				}
-
-				.metric-trend {
-					display: flex;
-					align-items: center;
-					gap: 0.25rem;
+				.report-date {
+					margin: 0.25rem 0;
 					color: var(--text-secondary);
 					font-size: 0.875rem;
-
-					.trend-icon {
-						font-size: 1rem;
-						color: var(--medical-green);
-					}
-				}
-			}
-		}
-	}
-
-	.chart-section {
-		margin-bottom: 3rem;
-
-		.chart-card {
-			.chart-container {
-				height: 300px;
-				position: relative;
-			}
-		}
-	}
-
-	.quick-access-section {
-		.medical-tabs {
-			.mat-mdc-tab-group {
-				.mat-mdc-tab-header {
-					border-bottom: 1px solid var(--border-color);
 				}
 
-				.mat-mdc-tab-label {
-					mat-icon {
-						margin-right: 0.5rem;
-					}
-				}
-			}
-
-			.tab-content {
-				padding: 2rem 0;
-
-				.tab-header {
-					@include flex-between;
-					margin-bottom: 1.5rem;
-
-					h3 {
-						margin: 0;
-						font-size: 1.25rem;
-						font-weight: 600;
-						color: var(--text-primary);
-					}
-
-					button {
-						mat-icon {
-							margin-left: 0.5rem;
-						}
-					}
-				}
-
-				.empty-state {
-					text-align: center;
-					padding: 3rem;
+				.report-doctor {
+					margin: 0;
 					color: var(--text-secondary);
-
-					mat-icon {
-						font-size: 3rem;
-						width: 3rem;
-						height: 3rem;
-						margin-bottom: 1rem;
-						opacity: 0.5;
-					}
-
-					p {
-						font-size: 1.1rem;
-					}
+					font-size: 0.75rem;
 				}
 			}
 		}
 
-		.medical-history-list,
-		.lab-reports-list {
-			display: flex;
-			flex-direction: column;
-			gap: 1rem;
-
-			.history-item,
-			.report-item {
-
-				.history-header,
-				.report-header {
-					display: flex;
-					align-items: flex-start;
-					gap: 1rem;
-
-					.history-icon,
-					.report-icon {
-						color: var(--primary-color);
-						font-size: 1.5rem;
-						margin-top: 0.25rem;
-					}
-
-					.history-info,
-					.report-info {
-						flex: 1;
-
-						h4 {
-							margin: 0 0 0.5rem;
-							font-size: 1.1rem;
-							font-weight: 600;
-							color: var(--text-primary);
-						}
-
-						.history-date,
-						.report-date {
-							margin: 0;
-							color: var(--text-secondary);
-							font-size: 0.875rem;
-						}
-
-						.report-doctor {
-							margin: 0.25rem 0 0;
-							color: var(--text-secondary);
-							font-size: 0.875rem;
-						}
-					}
-
-					.report-status {
-						.status-chip {
-							background: var(--medical-green);
-							color: white;
-						}
-					}
-				}
-
-				.history-details {
-					margin-top: 1rem;
-
-					.condition-chip {
-						background: rgba(var(--primary-color), 0.1);
-						color: var(--primary-color);
-						margin-right: 0.5rem;
-						margin-bottom: 0.5rem;
-					}
-				}
-			}
-		}
-
-		.messages-preview {
-			.message-summary {
-				display: flex;
-				align-items: center;
-				gap: 1.5rem;
-				padding: 2rem;
-				background: var(--surface-color);
+		.report-status {
+			span {
+				padding: 0.25rem 0.75rem;
 				border-radius: 12px;
-				border: 1px solid var(--border-color);
+				font-size: 0.75rem;
+				font-weight: 500;
 
-				.message-icon {
-					font-size: 3rem;
-					width: 3rem;
-					height: 3rem;
-					color: var(--primary-color);
+				&.status-critical {
+					color: var(--medical-red);
+					background: rgba(244, 67, 54, 0.1);
 				}
 
-				.message-info {
-					flex: 1;
+				&.status-warning {
+					color: var(--medical-orange);
+					background: rgba(255, 152, 0, 0.1);
+				}
 
-					h4 {
-						margin: 0 0 0.5rem;
-						font-size: 1.25rem;
-						font-weight: 600;
-						color: var(--text-primary);
-					}
-
-					p {
-						margin: 0;
-						color: var(--text-secondary);
-					}
+				&.status-stable {
+					color: var(--medical-green);
+					background: rgba(76, 175, 80, 0.1);
 				}
 			}
 		}
 	}
-}
 
-// Dark Theme Adjustments
-:host-context(.dark-theme) {
-	.patient-dashboard {
-		.dashboard-header {
-			background: linear-gradient(135deg, var(--medical-navy), var(--primary-color));
+	.no-data {
+		text-align: center;
+		padding: 2rem;
+		color: var(--text-secondary);
+
+		mat-icon {
+			font-size: 3rem;
+			width: 3rem;
+			height: 3rem;
+			margin-bottom: 1rem;
+			opacity: 0.5;
 		}
 
-		.metric-card {
-			background: var(--surface-color);
-			border: 1px solid var(--border-color);
-		}
-
-		.chart-card {
-			background: var(--surface-color);
-			border: 1px solid var(--border-color);
+		p {
+			margin: 0;
+			font-style: italic;
 		}
 	}
 }
 
-// Responsive Design
+// Responsive design
 @media (max-width: 768px) {
-	.patient-dashboard {
-		.dashboard-header {
-			padding: 1.5rem 0;
+	.lab-reports-section {
+		.section-header {
+			flex-direction: column;
+			gap: 1rem;
+			align-items: stretch;
 
-			.user-welcome {
-				flex-direction: column;
-				gap: 1.5rem;
-				text-align: center;
-
-				.avatar-section {
-					justify-content: center;
-				}
-
-				.quick-actions {
-					justify-content: center;
-				}
+			button {
+				justify-content: center;
 			}
 		}
 
-		.metrics-grid {
-			grid-template-columns: 1fr;
-			gap: 1rem;
-		}
+		.report-item {
+			.report-content {
+				flex-direction: column;
+				gap: 1rem;
+				text-align: center;
+			}
 
-		.tab-header {
-			flex-direction: column;
-			gap: 1rem;
-			text-align: center;
-		}
-
-		.message-summary {
-			flex-direction: column;
-			text-align: center;
-		}
-	}
-}
-
-@media (max-width: 480px) {
-	.patient-dashboard {
-		.dashboard-content {
-			padding: 1rem 0;
-		}
-
-		.container {
-			padding: 0 1rem;
-		}
-
-		.welcome-title {
-			font-size: 1.5rem !important;
-		}
-
-		.section-title {
-			font-size: 1.25rem;
+			.report-header {
+				flex-direction: column;
+				text-align: center;
+			}
 		}
 	}
 }

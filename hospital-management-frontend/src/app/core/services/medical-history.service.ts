@@ -1,55 +1,43 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { MedicalHistoryDto } from '../models/medical-history.model';
 import { environment } from '../../../environments/environment';
-
-export interface MedicalHistory {
-	id?: number;
-	userId: number;
-	personalHistory: string;
-	familyHistory: string;
-	allergies: string;
-	frequentlyOccurringDisease: string;
-	hasAsthma: boolean;
-	hasBloodPressure: boolean;
-	hasCholesterol: boolean;
-	hasDiabetes: boolean;
-	hasHeartDisease: boolean;
-	usesTobacco: boolean;
-	cigarettePacksPerDay: number;
-	smokingYears: number;
-	drinksAlcohol: boolean;
-	alcoholicDrinksPerWeek: number;
-	currentMedications: string;
-	createdAt?: Date;
-	updatedAt?: Date;
-}
+import { BaseService } from './base.service';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class MedicalHistoryService {
-	private readonly apiUrl = `${environment.apiUrl}/medicalhistory`;
+export class MedicalHistoryService extends BaseService {
+	private readonly apiUrl = `${environment.apiUrl}/api/MedicalHistory`;
 
-	constructor(private http: HttpClient) { }
-
-	getMedicalHistoriesByUserId(userId: number): Observable<MedicalHistory[]> {
-		return this.http.get<MedicalHistory[]>(`${this.apiUrl}/user/${userId}`);
+	constructor(private http: HttpClient) {
+		super();
 	}
 
-	getMedicalHistoryById(id: number): Observable<MedicalHistory> {
-		return this.http.get<MedicalHistory>(`${this.apiUrl}/${id}`);
+	getMedicalHistoryByUserId(userId: number): Observable<MedicalHistoryDto[]> {
+		return this.http.get<MedicalHistoryDto[]>(`${this.apiUrl}/user/${userId}`)
+			.pipe(catchError(this.handleError));
 	}
 
-	createMedicalHistory(medicalHistory: MedicalHistory): Observable<MedicalHistory> {
-		return this.http.post<MedicalHistory>(this.apiUrl, medicalHistory);
+	getMedicalHistoryById(id: number): Observable<MedicalHistoryDto> {
+		return this.http.get<MedicalHistoryDto>(`${this.apiUrl}/${id}`)
+			.pipe(catchError(this.handleError));
 	}
 
-	updateMedicalHistory(id: number, medicalHistory: MedicalHistory): Observable<any> {
-		return this.http.put(`${this.apiUrl}/${id}`, medicalHistory);
+	createMedicalHistory(medicalHistory: MedicalHistoryDto): Observable<MedicalHistoryDto> {
+		return this.http.post<MedicalHistoryDto>(this.apiUrl, medicalHistory)
+			.pipe(catchError(this.handleError));
 	}
 
-	deleteMedicalHistory(id: number): Observable<any> {
-		return this.http.delete(`${this.apiUrl}/${id}`);
+	updateMedicalHistory(id: number, medicalHistory: MedicalHistoryDto): Observable<void> {
+		return this.http.put<void>(`${this.apiUrl}/${id}`, medicalHistory)
+			.pipe(catchError(this.handleError));
+	}
+
+	deleteMedicalHistory(id: number): Observable<void> {
+		return this.http.delete<void>(`${this.apiUrl}/${id}`)
+			.pipe(catchError(this.handleError));
 	}
 }

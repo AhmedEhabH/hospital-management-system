@@ -1,293 +1,171 @@
-<div class="lab-reports-container" [class.dark-theme]="isDarkMode">
-	<!-- Header Section -->
-	<div class="lab-reports-header medical-gradient">
+<div class="lab-reports-container">
+	<div class="reports-header medical-gradient header-layout">
 		<div class="header-content">
-			<div class="header-main">
-				<h1 class="page-title">
-					<mat-icon>science</mat-icon>
-					Laboratory Reports
-				</h1>
-				<p class="page-subtitle">Comprehensive lab results and trend analysis</p>
-			</div>
-
-			<!-- Statistics Cards -->
-			<div class="stats-cards">
-				<div class="stat-card">
-					<mat-icon>assignment</mat-icon>
-					<div class="stat-info">
-						<span class="stat-number">{{ labStats.totalReports }}</span>
-						<span class="stat-label">Total Reports</span>
-					</div>
-				</div>
-				<div class="stat-card">
-					<mat-icon>pending</mat-icon>
-					<div class="stat-info">
-						<span class="stat-number">{{ labStats.pendingReports }}</span>
-						<span class="stat-label">Pending</span>
-					</div>
-				</div>
-				<div class="stat-card critical">
-					<mat-icon>priority_high</mat-icon>
-					<div class="stat-info">
-						<span class="stat-number">{{ labStats.criticalReports }}</span>
-						<span class="stat-label">Critical</span>
-					</div>
-				</div>
-				<div class="stat-card">
-					<mat-icon>check_circle</mat-icon>
-					<div class="stat-info">
-						<span class="stat-number">{{ labStats.completedThisMonth }}</span>
-						<span class="stat-label">This Month</span>
-					</div>
-				</div>
-			</div>
+			<h2>Laboratory Reports</h2>
+			<p>View and manage your laboratory test results</p>
 		</div>
+		<div class="header-actions">
+			<button mat-raised-button color="accent" (click)="createNewReport()">
+				<mat-icon>add</mat-icon>
+				New Report
+			</button>
+		</div>
+	</div>
+
+	<!-- Quick Actions -->
+	<div class="quick-actions">
+		<button mat-button (click)="navigateToComparison()">
+			<mat-icon>compare</mat-icon>
+			Compare Reports
+		</button>
+		<button mat-button (click)="navigateToCriticalAlerts()">
+			<mat-icon>warning</mat-icon>
+			Critical Alerts
+		</button>
+	</div>
+
+	<!-- Filters -->
+	<div class="filters-section">
+		<mat-card class="filter-card">
+			<mat-card-content>
+				<div class="filter-row">
+					<mat-form-field appearance="outline">
+						<mat-label>Search</mat-label>
+						<input matInput [(ngModel)]="searchTerm" (input)="applyFilters()"
+							placeholder="Search by test type or department">
+						<mat-icon matSuffix>search</mat-icon>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Status</mat-label>
+						<mat-select [(value)]="selectedStatus" (selectionChange)="applyFilters()">
+							<mat-option *ngFor="let status of statusOptions" [value]="status === 'All' ? '' : status">
+								{{ status }}
+							</mat-option>
+						</mat-select>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Priority</mat-label>
+						<mat-select [(value)]="selectedPriority" (selectionChange)="applyFilters()">
+							<mat-option *ngFor="let priority of priorityOptions"
+								[value]="priority === 'All' ? '' : priority">
+								{{ priority }}
+							</mat-option>
+						</mat-select>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Date Range</mat-label>
+						<mat-select [(value)]="selectedDateRange" (selectionChange)="applyFilters()">
+							<mat-option *ngFor="let range of dateRangeOptions" [value]="range === 'All' ? '' : range">
+								{{ range }}
+							</mat-option>
+						</mat-select>
+					</mat-form-field>
+
+					<button mat-raised-button color="warn" (click)="clearFilters()">
+						<mat-icon>clear</mat-icon>
+						Clear Filters
+					</button>
+				</div>
+			</mat-card-content>
+		</mat-card>
 	</div>
 
 	<!-- Loading State -->
-	<div *ngIf="isLoading" class="loading-container">
-		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
-		<div class="loading-content">
-			<mat-icon class="loading-icon pulse-animation">science</mat-icon>
-			<p>Loading your laboratory reports...</p>
+	<div *ngIf="loading" class="loading-container">
+		<mat-progress-spinner mode="indeterminate"></mat-progress-spinner>
+		<p>Loading lab reports...</p>
+	</div>
+
+	<!-- Reports List -->
+	<div class="reports-list" *ngIf="!loading && filteredReports.length > 0">
+		<div *ngFor="let report of filteredReports" class="report-card medical-card">
+			<div class="report-header">
+				<div class="report-info">
+					<!-- FIXED: Use computed methods -->
+					<h3>{{ getReportType(report) }}</h3>
+					<div class="report-meta">
+						<span class="department">{{ getDepartment(report) }}</span>
+						<span class="test-date">{{ formatDate(getReportDate(report)) }}</span>
+						<span class="tested-by">Tested by: {{ report.testedBy }}</span>
+					</div>
+				</div>
+
+				<div class="report-badges">
+					<mat-chip [class]="getStatusClass(report)">
+						{{ getStatus(report) }}
+					</mat-chip>
+					<mat-chip [class]="getPriorityClass(report)">
+						{{ getPriority(report) }}
+					</mat-chip>
+				</div>
+			</div>
+
+			<div class="report-content">
+				<div class="lab-values">
+					<div class="value-item">
+						<span class="label">Cholesterol:</span>
+						<span class="value"
+							[class]="report.cholesterolLevel > 240 ? 'critical' : (report.cholesterolLevel > 200 ? 'warning' : 'normal')">
+							{{ report.cholesterolLevel }} mg/dL
+						</span>
+					</div>
+					<div class="value-item">
+						<span class="label">Blood Sugar:</span>
+						<span class="value"
+							[class]="report.sucroseLevel > 200 ? 'critical' : (report.sucroseLevel > 140 ? 'warning' : 'normal')">
+							{{ report.sucroseLevel }} mg/dL
+						</span>
+					</div>
+					<div class="value-item">
+						<span class="label">Heart Rate:</span>
+						<span class="value"
+							[class]="(report.heartBeatRatio > 100 || report.heartBeatRatio < 60) ? 'critical' : 'normal'">
+							{{ report.heartBeatRatio }} bpm
+						</span>
+					</div>
+					<div class="value-item">
+						<span class="label">WBC Count:</span>
+						<span class="value"
+							[class]="(report.whiteBloodCellsRatio > 11000 || report.whiteBloodCellsRatio < 4000) ? 'critical' : 'normal'">
+							{{ report.whiteBloodCellsRatio }} cells/μL
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="report-actions">
+				<button mat-button color="primary" (click)="viewReport(report)">
+					<mat-icon>visibility</mat-icon>
+					View
+				</button>
+				<button mat-button color="accent" (click)="editReport(report)">
+					<mat-icon>edit</mat-icon>
+					Edit
+				</button>
+				<button mat-button (click)="exportReport(report)">
+					<mat-icon>download</mat-icon>
+					Export
+				</button>
+				<button mat-button color="warn" (click)="deleteReport(report)">
+					<mat-icon>delete</mat-icon>
+					Delete
+				</button>
+			</div>
 		</div>
 	</div>
 
-	<!-- Main Content -->
-	<div *ngIf="!isLoading" class="lab-reports-content">
-		<div class="container">
-
-			<!-- Filters and Search Section -->
-			<div class="filters-section">
-				<mat-card class="filter-card medical-card">
-					<mat-card-header>
-						<mat-icon mat-card-avatar>filter_list</mat-icon>
-						<mat-card-title>Filter & Search</mat-card-title>
-						<mat-card-subtitle>Refine your lab reports view</mat-card-subtitle>
-					</mat-card-header>
-
-					<mat-card-content>
-						<!-- Search Bar -->
-						<div class="search-section">
-							<mat-form-field class="search-field" appearance="outline">
-								<mat-label>Search reports</mat-label>
-								<input matInput (keyup)="applyQuickSearch($event)"
-									placeholder="Search by report type, doctor, or department...">
-								<mat-icon matSuffix>search</mat-icon>
-							</mat-form-field>
-						</div>
-
-						<!-- Filter Controls -->
-						<div class="filter-controls">
-							<div class="filter-row">
-								<mat-form-field appearance="outline">
-									<mat-label>Status</mat-label>
-									<mat-select [(value)]="selectedStatus" (selectionChange)="applyFilters()">
-										<mat-option *ngFor="let status of statusOptions" [value]="status">
-											{{ status }}
-										</mat-option>
-									</mat-select>
-								</mat-form-field>
-
-								<mat-form-field appearance="outline">
-									<mat-label>Priority</mat-label>
-									<mat-select [(value)]="selectedPriority" (selectionChange)="applyFilters()">
-										<mat-option *ngFor="let priority of priorityOptions" [value]="priority">
-											{{ priority }}
-										</mat-option>
-									</mat-select>
-								</mat-form-field>
-
-								<mat-form-field appearance="outline">
-									<mat-label>Start Date</mat-label>
-									<input matInput [matDatepicker]="startPicker" [(ngModel)]="selectedDateRange.start"
-										(dateChange)="applyFilters()">
-									<mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
-									<mat-datepicker #startPicker></mat-datepicker>
-								</mat-form-field>
-
-								<mat-form-field appearance="outline">
-									<mat-label>End Date</mat-label>
-									<input matInput [matDatepicker]="endPicker" [(ngModel)]="selectedDateRange.end"
-										(dateChange)="applyFilters()">
-									<mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
-									<mat-datepicker #endPicker></mat-datepicker>
-								</mat-form-field>
-							</div>
-						</div>
-
-						<!-- Filter Actions -->
-						<div class="filter-actions">
-							<button mat-button color="primary" (click)="clearFilters()">
-								<mat-icon>clear_all</mat-icon>
-								Clear Filters
-							</button>
-							<button mat-raised-button color="accent" (click)="exportReports()">
-								<mat-icon>file_download</mat-icon>
-								Export Reports
-							</button>
-						</div>
-					</mat-card-content>
-				</mat-card>
-			</div>
-
-			<!-- Lab Reports Table -->
-			<div class="reports-table-section">
-				<mat-card class="table-card medical-card">
-					<mat-card-header>
-						<mat-icon mat-card-avatar>table_chart</mat-icon>
-						<mat-card-title>Laboratory Reports</mat-card-title>
-						<mat-card-subtitle>{{ dataSource.data.length }} reports found</mat-card-subtitle>
-					</mat-card-header>
-
-					<mat-card-content>
-						<div class="table-container">
-							<mat-table [dataSource]="dataSource" matSort class="lab-reports-table">
-
-								<!-- Report Date Column -->
-								<ng-container matColumnDef="reportDate">
-									<mat-header-cell *matHeaderCellDef mat-sort-header>Date</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<div class="date-cell">
-											<mat-icon class="date-icon">calendar_today</mat-icon>
-											<span>{{ formatDate(report.reportDate) }}</span>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<!-- Report Type Column -->
-								<ng-container matColumnDef="reportType">
-									<mat-header-cell *matHeaderCellDef mat-sort-header>Test Type</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<div class="test-type-cell">
-											<mat-icon class="test-icon">science</mat-icon>
-											<span>{{ report.reportType }}</span>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<!-- Status Column -->
-								<ng-container matColumnDef="status">
-									<mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<mat-chip [class]="getStatusClass(report.status)">
-											<mat-icon>
-												{{ report.status === 'Completed' ? 'check_circle' :
-												report.status === 'Critical' ? 'error' :
-												report.status === 'Reviewed' ? 'verified' : 'pending' }}
-											</mat-icon>
-											{{ report.status }}
-										</mat-chip>
-									</mat-cell>
-								</ng-container>
-
-								<!-- Priority Column -->
-								<ng-container matColumnDef="priority">
-									<mat-header-cell *matHeaderCellDef>Priority</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<mat-chip [class]="getPriorityClass(report.priority)">
-											{{ report.priority }}
-										</mat-chip>
-									</mat-cell>
-								</ng-container>
-
-								<!-- Doctor Column -->
-								<ng-container matColumnDef="doctor">
-									<mat-header-cell *matHeaderCellDef>Doctor</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<div class="doctor-cell">
-											<mat-icon class="doctor-icon">person</mat-icon>
-											<span>{{ report.doctorName }}</span>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<!-- Department Column -->
-								<ng-container matColumnDef="department">
-									<mat-header-cell *matHeaderCellDef>Department</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<div class="department-cell">
-											<mat-icon class="department-icon">local_hospital</mat-icon>
-											<span>{{ report.department }}</span>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<!-- Actions Column -->
-								<ng-container matColumnDef="actions">
-									<mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<div class="actions-cell">
-											<button mat-icon-button (click)="viewReport(report)"
-												matTooltip="View Report">
-												<mat-icon>visibility</mat-icon>
-											</button>
-											<button mat-icon-button (click)="downloadReport(report)"
-												matTooltip="Download PDF">
-												<mat-icon>file_download</mat-icon>
-											</button>
-											<button mat-icon-button (click)="shareReport(report)"
-												matTooltip="Share Report">
-												<mat-icon>share</mat-icon>
-											</button>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-								<mat-row *matRowDef="let row; columns: displayedColumns;" class="report-row"></mat-row>
-							</mat-table>
-
-							<mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" showFirstLastButtons
-								class="table-paginator">
-							</mat-paginator>
-						</div>
-					</mat-card-content>
-				</mat-card>
-			</div>
-
-			<!-- Quick Navigation Tabs -->
-			<div class="quick-nav-section">
-				<mat-tab-group class="medical-tabs" backgroundColor="primary">
-
-					<!-- Lab Trends Tab -->
-					<mat-tab>
-						<ng-template mat-tab-label>
-							<mat-icon>trending_up</mat-icon>
-							Trends Analysis
-						</ng-template>
-						<div class="tab-content">
-							<app-lab-trends-analysis [patientId]="currentUser?.id"></app-lab-trends-analysis>
-						</div>
-					</mat-tab>
-
-					<!-- Critical Alerts Tab -->
-					<mat-tab>
-						<ng-template mat-tab-label>
-							<mat-icon>priority_high</mat-icon>
-							Critical Alerts
-							<mat-chip class="alert-badge" *ngIf="labStats.criticalReports > 0">
-								{{ labStats.criticalReports }}
-							</mat-chip>
-						</ng-template>
-						<div class="tab-content">
-							<app-critical-alerts [patientId]="currentUser?.id"></app-critical-alerts>
-						</div>
-					</mat-tab>
-
-					<!-- Comparison Tab -->
-					<mat-tab>
-						<ng-template mat-tab-label>
-							<mat-icon>compare</mat-icon>
-							Compare Results
-						</ng-template>
-						<div class="tab-content">
-							<app-lab-comparison [labReports]="labReports"></app-lab-comparison>
-						</div>
-					</mat-tab>
-				</mat-tab-group>
-			</div>
-
-		</div>
+	<!-- No Reports Message -->
+	<div class="no-reports" *ngIf="!loading && filteredReports.length === 0">
+		<mat-icon>science</mat-icon>
+		<h3>No Lab Reports Found</h3>
+		<p *ngIf="labReports.length === 0">No lab reports available. Create your first report to get started.</p>
+		<p *ngIf="labReports.length > 0">No reports match your current filters. Try adjusting your search criteria.</p>
+		<button mat-raised-button color="primary" (click)="createNewReport()" *ngIf="labReports.length === 0">
+			<mat-icon>add</mat-icon>
+			Create First Report
+		</button>
 	</div>
 </div>
