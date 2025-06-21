@@ -18,6 +18,15 @@ import { LoadingComponent } from './components/loading/loading.component';
 import { FooterComponent } from './components/footer/footer.component';
 import { LogoutButtonComponent } from './components/logout-button/logout-button.component';
 import { UnauthorizedComponent } from './components/unauthorized/unauthorized.component';
+import { RealTimeAlertsComponent } from './components/real-time-alerts/real-time-alerts.component';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatMenuModule } from '@angular/material/menu';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { PageNotFoundModule } from './components/page-not-found/page-not-found.module';
 
 @NgModule({
 	declarations: [
@@ -27,33 +36,54 @@ import { UnauthorizedComponent } from './components/unauthorized/unauthorized.co
 		LoadingComponent,
 		FooterComponent,
 		LogoutButtonComponent,
-  UnauthorizedComponent
+		UnauthorizedComponent,
+		RealTimeAlertsComponent,
+		
 	],
 	imports: [
 		CommonModule,
+		FormsModule,
+		ReactiveFormsModule,
 		RouterModule,
+
+		// Angular Material Modules
+		MatToolbarModule,
 		MatButtonModule,
 		MatIconModule,
-		MatSlideToggleModule,
+		MatMenuModule,
+		MatFormFieldModule,
+		MatInputModule,
+		MatBadgeModule,
 		MatTooltipModule,
-		MatProgressBarModule,
 		MatSnackBarModule,
+		MatDividerModule,
+		MatProgressBarModule,
+		PageNotFoundModule,
 	],
 	exports: [
 		// Export components
 		ThemeToggleComponent,
 		LogoutButtonComponent,
+
 		HeaderComponent,
 		SidebarComponent,
-		LoadingComponent,
 		FooterComponent,
-		// Export Material modules for use in other modules
+		LoadingComponent,
+		RealTimeAlertsComponent,
+
+		// Angular Material Modules
+		MatToolbarModule,
 		MatButtonModule,
 		MatIconModule,
-		MatSlideToggleModule,
+		MatMenuModule,
+		MatFormFieldModule,
+		MatInputModule,
+		MatBadgeModule,
 		MatTooltipModule,
+		MatSnackBarModule,
+		MatDividerModule,
 		MatProgressBarModule,
-		MatSnackBarModule
+		PageNotFoundModule,
 	]
 })
 export class SharedModule { }

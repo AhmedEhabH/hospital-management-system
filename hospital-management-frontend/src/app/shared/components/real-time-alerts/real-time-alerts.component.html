@@ -1,0 +1,86 @@
+<!-- Alert Bell Icon with Badge -->
+<div class="alerts-container">
+	<button mat-icon-button class="alerts-button" [class.has-alerts]="unreadAlertsCount > 0"
+		(click)="toggleAlertsPanel()" matTooltip="Medical Alerts" [matBadge]="unreadAlertsCount"
+		[matBadgeHidden]="unreadAlertsCount === 0" matBadgeColor="warn" matBadgeSize="small">
+		<mat-icon [class.pulse-animation]="criticalAlertsCount > 0">
+			{{ criticalAlertsCount > 0 ? 'notification_important' : 'notifications' }}
+		</mat-icon>
+	</button>
+
+	<!-- Connection Status Indicator -->
+	<div class="connection-status" [class]="'status-' + connectionState.toLowerCase()">
+		<mat-icon [matTooltip]="'Connection: ' + connectionState">
+			{{ isConnected ? 'wifi' : 'wifi_off' }}
+		</mat-icon>
+	</div>
+
+	<!-- Alerts Panel -->
+	<div class="alerts-panel" *ngIf="showAlertsPanel">
+		<div class="panel-header">
+			<h3>Medical Alerts</h3>
+			<div class="header-actions">
+				<button mat-icon-button (click)="clearAllAlerts()" [disabled]="medicalAlerts.length === 0"
+					matTooltip="Clear All">
+					<mat-icon>clear_all</mat-icon>
+				</button>
+				<button mat-icon-button (click)="toggleAlertsPanel()" matTooltip="Close">
+					<mat-icon>close</mat-icon>
+				</button>
+			</div>
+		</div>
+
+		<div class="panel-content">
+			<!-- Connection Status -->
+			<div class="connection-info" *ngIf="!isConnected">
+				<mat-icon>wifi_off</mat-icon>
+				<span>Reconnecting to real-time alerts...</span>
+			</div>
+
+			<!-- Alerts List -->
+			<div class="alerts-list" *ngIf="medicalAlerts.length > 0; else noAlerts">
+				<div *ngFor="let alert of medicalAlerts" class="alert-item" [class]="getAlertClass(alert.alertType)"
+					[class.acknowledged]="alert.acknowledged">
+
+					<div class="alert-icon">
+						<mat-icon [class]="getAlertClass(alert.alertType)">
+							{{ getAlertIcon(alert.alertType) }}
+						</mat-icon>
+					</div>
+
+					<div class="alert-content" (click)="viewAlertDetails(alert)">
+						<div class="alert-header">
+							<span class="alert-title">{{ alert.title }}</span>
+							<span class="alert-time">{{ formatTimestamp(alert.timestamp) }}</span>
+						</div>
+						<div class="alert-message">{{ alert.message }}</div>
+						<div class="alert-patient" *ngIf="alert.patientName">
+							Patient: {{ alert.patientName }}
+						</div>
+					</div>
+
+					<div class="alert-actions">
+						<button mat-icon-button (click)="acknowledgeAlert(alert)" [disabled]="alert.acknowledged"
+							matTooltip="Acknowledge">
+							<mat-icon>check</mat-icon>
+						</button>
+						<button mat-icon-button (click)="clearAlert(alert)" matTooltip="Dismiss">
+							<mat-icon>close</mat-icon>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<ng-template #noAlerts>
+				<div class="no-alerts">
+					<mat-icon>check_circle</mat-icon>
+					<p>No active alerts</p>
+					<span>All medical alerts are up to date</span>
+				</div>
+			</ng-template>
+		</div>
+	</div>
+
+	<!-- Overlay -->
+	<div class="panel-overlay" *ngIf="showAlertsPanel" (click)="toggleAlertsPanel()"></div>
+</div>

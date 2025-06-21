@@ -2,102 +2,141 @@
 	<!-- Header -->
 	<div class="messaging-header medical-gradient header-layout">
 		<div class="header-content">
-			<h1>
-				<mat-icon>mail</mat-icon>
-				Medical Messaging
-			</h1>
+			<h2>Medical Messaging Platform</h2>
 			<p>Secure communication platform for healthcare professionals</p>
 		</div>
-
 		<div class="header-actions">
-			<div class="connection-status" [class]="getConnectionStatusClass()">
-				<mat-icon>{{ isConnected ? 'wifi' : 'wifi_off' }}</mat-icon>
-				<span>{{ getConnectionStatusText() }}</span>
-			</div>
-			<app-theme-toggle></app-theme-toggle>
-			<app-logout-button></app-logout-button>
+			<button mat-icon-button (click)="toggleNotifications()" [matBadge]="unreadCount"
+				[matBadgeHidden]="unreadCount === 0" matBadgeColor="warn" matTooltip="Notifications">
+				<mat-icon>notifications</mat-icon>
+			</button>
 		</div>
+	</div>
+
+	<!-- Connection Status -->
+	<div class="connection-status" [class]="getConnectionStatusClass()">
+		<mat-icon>{{ isConnected ? 'wifi' : 'wifi_off' }}</mat-icon>
+		<span>{{ getConnectionStatusText() }}</span>
 	</div>
 
 	<!-- Loading State -->
 	<div *ngIf="isLoading" class="loading-container">
-		<mat-progress-bar mode="indeterminate"></mat-progress-bar>
-		<div class="loading-content">
-			<mat-icon class="loading-icon pulse-animation">mail</mat-icon>
-			<p>Loading your conversations...</p>
-		</div>
+		<mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+		<p>Loading your conversations...</p>
 	</div>
 
-	<!-- Main Messaging Interface -->
-	<div *ngIf="!isLoading" class="messaging-main">
-		<div class="container">
+	<!-- Conversations List -->
+	<div class="conversations-section" *ngIf="!isLoading">
+		<div class="conversations-header">
+			<h3>Conversations</h3>
+		</div>
 
-			<!-- Conversations and Chat Layout -->
-			<div class="messaging-layout">
+		<div class="conversations-list">
+			<div *ngFor="let conversation of conversations" class="conversation-item"
+				[class.active]="activeConversation?.id === conversation.id" (click)="selectConversation(conversation)">
 
-				<!-- Conversations List -->
-				<div class="conversations-panel">
-					<mat-card class="conversations-card medical-card">
-						<mat-card-header>
-							<mat-icon mat-card-avatar>chat</mat-icon>
-							<mat-card-title>Conversations</mat-card-title>
-							<mat-card-subtitle>{{ conversations.length }} active chats</mat-card-subtitle>
-						</mat-card-header>
-
-						<mat-card-content>
-							<div class="conversations-list">
-								<div *ngFor="let conversation of conversations" class="conversation-item"
-									[class.active]="activeConversation?.id === conversation.id"
-									(click)="selectConversation(conversation)">
-
-									<div class="conversation-avatar">
-										<mat-icon>person</mat-icon>
-									</div>
-
-									<div class="conversation-content">
-										<div class="conversation-header">
-											<h4 class="conversation-title">{{ conversation.title || 'Medical
-												Consultation' }}</h4>
-											<span class="conversation-time">{{
-												formatMessageTime(conversation.lastMessageAt) }}</span>
-										</div>
-
-										<div class="conversation-preview">
-											<!-- FIXED: Change message.message to message.messageContent -->
-											<p class="last-message">
-												<span
-													*ngIf="conversation.lastMessage && conversation.lastMessage.senderName"
-													class="sender-name">
-													{{ conversation.lastMessage.senderName }}:
-												</span>
-												{{ conversation.lastMessage?.messageContent || 'No messages yet' }}
-											</p>
-
-											<mat-chip *ngIf="conversation.unreadCount > 0" class="unread-badge">
-												{{ conversation.unreadCount }}
-											</mat-chip>
-										</div>
-									</div>
-								</div>
-							</div>
-						</mat-card-content>
-					</mat-card>
+				<div class="conversation-avatar">
+					<mat-icon>{{ conversation.conversationType === 'group' ? 'group' : 'person' }}</mat-icon>
+					<div class="online-indicator" *ngIf="conversation.isOnline"></div>
 				</div>
 
-				<!-- Chat Window -->
-				<div class="chat-panel">
-					<app-chat-window *ngIf="activeConversation" [conversation]="activeConversation">
-					</app-chat-window>
+				<div class="conversation-info">
+					<div class="conversation-header-info">
+						<h4 class="conversation-title">{{ conversation.title }}</h4>
+						<span class="conversation-time">{{ formatMessageTime(conversation.lastMessageTime) }}</span>
+					</div>
 
-					<!-- No Conversation Selected -->
-					<div *ngIf="!activeConversation" class="no-conversation">
-						<mat-icon class="no-conversation-icon">chat</mat-icon>
-						<h3>Select a Conversation</h3>
-						<p>Choose a conversation from the list to start messaging</p>
+					<div class="conversation-details">
+						<div class="participants-info">
+							<span class="participants-text">
+								{{ conversation.conversationType === 'group' ? conversation.participants.length + '
+								participants' : 'Direct message' }}
+							</span>
+						</div>
+
+						<div class="last-message">
+							<!-- FIXED: Remove unnecessary optional chain operator on line 76 -->
+							<span class="message-preview">{{ conversation.lastMessage || 'No messages yet' }}</span>
+						</div>
 					</div>
 				</div>
 
+				<div class="unread-badge" *ngIf="conversation.unreadCount > 0">
+					<span class="unread-count">{{ conversation.unreadCount > 99 ? '99+' : conversation.unreadCount
+						}}</span>
+				</div>
 			</div>
 		</div>
 	</div>
+
+	<!-- Chat Window -->
+	<div class="chat-section" *ngIf="selectedConversationId && activeConversation">
+		<app-chat-window [conversationId]="selectedConversationId"
+			[otherParticipant]="activeConversation.participants[0]">
+		</app-chat-window>
+	</div>
+
+	<!-- Empty State -->
+	<div *ngIf="!isLoading && !selectedConversationId" class="empty-state">
+		<mat-icon>chat</mat-icon>
+		<h3>Choose a conversation from the list to start messaging</h3>
+		<p>Select a conversation to begin secure medical communication</p>
+	</div>
+
+	<!-- Notifications Panel -->
+	<div class="notifications-panel" *ngIf="showNotifications">
+		<div class="panel-header">
+			<h3>Notifications</h3>
+			<div class="panel-actions">
+				<button mat-button (click)="markAllAsRead()" [disabled]="unreadCount === 0">
+					Mark All Read
+				</button>
+				<button mat-button (click)="clearAllNotifications()" [disabled]="notifications.length === 0">
+					Clear All
+				</button>
+			</div>
+		</div>
+
+		<div class="notifications-list">
+			<div *ngFor="let notification of notifications" class="notification-item"
+				[class]="getNotificationClass(notification.priority)" [class.unread]="!notification.read">
+
+				<div class="notification-icon">
+					<mat-icon>{{ getNotificationIcon(notification.type) }}</mat-icon>
+				</div>
+
+				<div class="notification-content" (click)="handleNotificationAction(notification)">
+					<div class="notification-header">
+						<span class="notification-title">{{ notification.title }}</span>
+						<span class="notification-time">{{ formatNotificationTime(notification.timestamp) }}</span>
+					</div>
+					<div class="notification-message">{{ notification.message }}</div>
+					<div class="notification-meta">
+						<span class="notification-type">{{ notification.type | titlecase }}</span>
+						<span class="notification-priority">{{ notification.priority | titlecase }}</span>
+					</div>
+				</div>
+
+				<div class="notification-actions">
+					<button mat-icon-button (click)="markNotificationAsRead(notification.id)"
+						[disabled]="notification.read" matTooltip="Mark as read">
+						<mat-icon>check</mat-icon>
+					</button>
+					<button mat-icon-button (click)="clearNotification(notification.id)" matTooltip="Remove">
+						<mat-icon>close</mat-icon>
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Empty Notifications State -->
+		<div *ngIf="notifications.length === 0" class="empty-notifications">
+			<mat-icon>notifications_none</mat-icon>
+			<h3>No Notifications</h3>
+			<p>You're all caught up!</p>
+		</div>
+	</div>
+
+	<!-- Overlay -->
+	<div class="panel-overlay" *ngIf="showNotifications" (click)="toggleNotifications()"></div>
 </div>

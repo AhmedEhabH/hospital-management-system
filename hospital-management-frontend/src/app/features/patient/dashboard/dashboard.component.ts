@@ -3,9 +3,8 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { MedicalHistoryService } from '../../../core/services/medical-history.service';
 import { LabReportService } from '../../../core/services/lab-report.service';
-import { MedicalHistoryDto } from '../../../core/models/medical-history.model';
-import { LabReportDto } from '../../../core/models/lab-report.model';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { LabReportDto, MedicalHistoryDto } from '../../../core/models/dtos';
 
 @Component({
 	selector: 'app-dashboard',

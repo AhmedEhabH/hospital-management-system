@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MessagingComponent } from './messaging.component';
+import { RealTimeAlertsComponent } from './real-time-alerts.component';
 
-describe('MessagingComponent', () => {
-  let component: MessagingComponent;
-  let fixture: ComponentFixture<MessagingComponent>;
+describe('RealTimeAlertsComponent', () => {
+  let component: RealTimeAlertsComponent;
+  let fixture: ComponentFixture<RealTimeAlertsComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [MessagingComponent]
+      declarations: [RealTimeAlertsComponent]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(MessagingComponent);
+    fixture = TestBed.createComponent(RealTimeAlertsComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

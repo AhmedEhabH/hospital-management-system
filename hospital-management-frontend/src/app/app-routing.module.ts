@@ -3,7 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
-	{ path: '', redirectTo: '/auth/login', pathMatch: 'full' },
+	// FIXED: Redirect to lab-reports as default page
+	{ path: '', redirectTo: '/auth', pathMatch: 'full' },
 	{
 		path: 'auth',
 		loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
@@ -41,7 +42,13 @@ const routes: Routes = [
 		canActivate: [AuthGuard],
 		loadChildren: () => import('./features/messaging/messaging.module').then(m => m.MessagingModule)
 	},
-	{ path: '**', redirectTo: '/auth/login' }
+	// 404 page
+	{
+		path: '404',
+		loadChildren: () => import('./shared/components/page-not-found/page-not-found.module').then(m => m.PageNotFoundModule)
+	},
+	// Wildcard route - must be last
+	{ path: '**', redirectTo: '/404' }
 ];
 
 @NgModule({

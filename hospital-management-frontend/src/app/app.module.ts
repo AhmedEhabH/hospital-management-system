@@ -86,7 +86,8 @@ import { LabReportsModule } from './features/lab-reports/lab-reports.module';
 		MatExpansionModule,
 		MatChipsModule,
 		MatBadgeModule,
-		MatSlideToggleModule
+		MatSlideToggleModule,
+		MatProgressBarModule,
 
 	],
 	providers: [
