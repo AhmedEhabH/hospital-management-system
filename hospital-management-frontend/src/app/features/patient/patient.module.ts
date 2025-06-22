@@ -26,11 +26,12 @@ import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2
 import { SharedModule } from '../../shared/shared.module';
 
 import { PatientRoutingModule } from './patient-routing.module';
-import { DashboardComponent } from './dashboard/dashboard.component';
+import { PatientDashboardComponent } from './dashboard/dashboard.component';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @NgModule({
 	declarations: [
-		DashboardComponent
+		PatientDashboardComponent
 	],
 	imports: [
 		CommonModule,
@@ -57,6 +58,7 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 		MatMenuModule,
 		MatToolbarModule,
 		MatSidenavModule,
+		MatProgressSpinnerModule,
 
 		// Charts - Updated for ng2-charts v6+
 		BaseChartDirective

@@ -15,3 +15,5 @@ export * from './hospital-info';
 
 // SignalR DTOs
 export * from './signalr';
+
+export * from './dashboard';
