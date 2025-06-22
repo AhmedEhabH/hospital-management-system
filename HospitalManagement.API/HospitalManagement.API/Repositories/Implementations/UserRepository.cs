@@ -63,5 +63,11 @@ namespace HospitalManagement.API.Repositories.Implementations
                 throw;
             }
         }
+
+        public async Task<int> CountByUserTypeAsync(string userType)
+        {
+            return await _context.Users.CountAsync(u => u.UserType == userType);
+        }
+
     }
 }

@@ -102,5 +102,26 @@ namespace HospitalManagement.API.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        /// <summary>
+        /// Get critical lab reports across all patients
+        /// </summary>
+        /// <returns>List of critical lab reports</returns>
+        [HttpGet("critical")]
+        public async Task<ActionResult<IEnumerable<LabReportDto>>> GetCriticalLabReports()
+        {
+            try
+            {
+                _logger.LogInformation("Fetching critical lab reports");
+                var criticalReports = await _labReportService.GetCriticalLabReportsAsync();
+                return Ok(criticalReports);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while fetching critical lab reports");
+                return StatusCode(500, "Internal server error occurred while fetching critical lab reports");
+            }
+        }
+
     }
 }

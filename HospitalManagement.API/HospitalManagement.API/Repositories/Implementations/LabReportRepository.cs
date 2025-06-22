@@ -25,5 +25,36 @@ namespace HospitalManagement.API.Repositories.Implementations
                 throw;
             }
         }
+
+        public async Task<int> GetTotalCountAsync()
+        {
+            return await _context.LabReports.CountAsync();
+        }
+
+        public async Task<int> GetCriticalCountAsync()
+        {
+            return await _context.LabReports.CountAsync(lr =>
+                lr.CholesterolLevel > 240 ||
+                lr.PhLevel < 7.0m ||
+                lr.PhLevel > 7.8m ||
+                lr.WhiteBloodCellsRatio > 11000 ||
+                lr.RedBloodCellsRatio < 4.0m);
+        }
+
+        public async Task<IEnumerable<LabReport>> GetCriticalAsync()
+        {
+            return await _context.LabReports
+                .Where(lr =>
+                    lr.CholesterolLevel > 240 ||
+                    lr.PhLevel < 7.0m ||
+                    lr.PhLevel > 7.8m ||
+                    lr.WhiteBloodCellsRatio > 11000 ||
+                    lr.RedBloodCellsRatio < 4.0m)
+                .OrderByDescending(lr => lr.CreatedAt)
+                .ToListAsync();
+        }
+
+
+
     }
 }

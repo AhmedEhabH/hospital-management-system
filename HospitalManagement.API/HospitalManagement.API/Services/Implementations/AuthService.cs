@@ -147,5 +147,25 @@ namespace HospitalManagement.API.Services.Implementations
                 _disposed = true;
             }
         }
+
+        public async Task<UserInfoDto?> GetUserByIdAsync(int id)
+        {
+            try
+            {
+                var user = await _userRepository.GetByIdAsync(id);
+                if (user == null)
+                {
+                    return null;
+                }
+
+                return _mapper.Map<UserInfoDto>(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching user by ID: {UserId}", id);
+                throw;
+            }
+        }
+
     }
 }

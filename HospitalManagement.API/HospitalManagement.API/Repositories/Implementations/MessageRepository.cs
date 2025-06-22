@@ -7,55 +7,45 @@ namespace HospitalManagement.API.Repositories.Implementations
 {
     public class MessageRepository : GenericRepository<Message>, IMessageRepository
     {
-        // FIXED: Add logger parameter to constructor
-        public MessageRepository(HospitalDbContext context, ILogger<MessageRepository> logger)
-            : base(context, logger)
+        public MessageRepository(HospitalDbContext context, ILogger<MessageRepository> logger) : base(context, logger)
         {
         }
 
-        public async Task<IEnumerable<Message>> GetInboxMessagesAsync(int userId)
+        public async Task<IEnumerable<Message>> GetInboxAsync(int userId)
         {
-            return await _dbSet
+            return await _context.Messages
                 .Where(m => m.ReceiverId == userId)
                 .OrderByDescending(m => m.SentDate)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Message>> GetSentMessagesAsync(int userId)
+        public async Task<IEnumerable<Message>> GetSentAsync(int userId)
         {
-            return await _dbSet
+            return await _context.Messages
                 .Where(m => m.SenderId == userId)
                 .OrderByDescending(m => m.SentDate)
                 .ToListAsync();
         }
 
-        public async Task<IEnumerable<Message>> GetConversationMessagesAsync(int userId1, int userId2)
+        public async Task<bool> MarkAsReadAsync(int messageId)
         {
-            return await _dbSet
-                .Where(m => (m.SenderId == userId1 && m.ReceiverId == userId2) ||
-                           (m.SenderId == userId2 && m.ReceiverId == userId1))
-                .OrderBy(m => m.SentDate)
-                .ToListAsync();
-        }
+            var message = await _context.Messages.FindAsync(messageId);
+            if (message == null)
+                return false;
 
-        public async Task<int> GetUnreadMessageCountAsync(int userId)
-        {
-            return await _dbSet
-                .CountAsync(m => m.ReceiverId == userId && !m.IsRead);
-        }
-
-        public async Task MarkAllAsReadAsync(int userId, int senderId)
-        {
-            var messages = await _dbSet
-                .Where(m => m.ReceiverId == userId && m.SenderId == senderId && !m.IsRead)
-                .ToListAsync();
-
-            foreach (var message in messages)
-            {
-                message.IsRead = true;
-            }
-
+            message.IsRead = true;
             await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<int> GetUnreadCountAsync()
+        {
+            return await _context.Messages.CountAsync(m => !m.IsRead);
+        }
+
+        public async Task<int> GetUnreadCountByUserAsync(int userId)
+        {
+            return await _context.Messages.CountAsync(m => m.ReceiverId == userId && !m.IsRead);
         }
     }
 }

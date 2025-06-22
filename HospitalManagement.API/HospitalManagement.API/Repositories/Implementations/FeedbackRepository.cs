@@ -7,23 +7,23 @@ namespace HospitalManagement.API.Repositories.Implementations
 {
     public class FeedbackRepository : GenericRepository<Feedback>, IFeedbackRepository
     {
-        // FIXED: Add logger parameter to constructor
-        public FeedbackRepository(HospitalDbContext context, ILogger<FeedbackRepository> logger)
-            : base(context, logger)
+        public FeedbackRepository(HospitalDbContext context, ILogger<FeedbackRepository> logger) : base(context, logger)
         {
         }
 
         public async Task<IEnumerable<Feedback>> GetByUserIdAsync(int userId)
         {
-            try
-            {
-                return await _dbSet.Where(f => f.UserId == userId).ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, $"Error getting feedback for user: {userId}");
-                throw;
-            }
+            return await _context.Feedbacks
+                .Where(f => f.UserId == userId)
+                .OrderByDescending(f => f.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<int> GetRecentCountAsync(int days)
+        {
+            var cutoffDate = DateTime.UtcNow.AddDays(-days);
+            return await _context.Feedbacks
+                .CountAsync(f => f.CreatedAt >= cutoffDate);
         }
     }
 }

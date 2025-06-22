@@ -6,5 +6,8 @@ namespace HospitalManagement.API.Services.Interfaces
     {
         Task<AuthResultDto> LoginAsync(LoginDto loginDto);
         Task<RegistrationResultDto> RegisterAsync(UserRegistrationDto registrationDto);
+
+        Task<UserInfoDto?> GetUserByIdAsync(int id);
+
     }
 }

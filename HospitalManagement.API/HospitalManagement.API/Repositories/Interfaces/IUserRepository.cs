@@ -10,5 +10,8 @@ namespace HospitalManagement.API.Repositories.Interfaces
         // FIXED: Add missing methods
         Task<bool> UserExistsAsync(string email);
         Task<bool> UserIdExistsAsync(string userId);
+
+        Task<int> CountByUserTypeAsync(string userType);
+
     }
 }

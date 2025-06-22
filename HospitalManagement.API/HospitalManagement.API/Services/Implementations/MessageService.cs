@@ -69,7 +69,7 @@ namespace HospitalManagement.API.Services.Implementations
         {
             try
             {
-                var messages = await _messageRepository.GetInboxMessagesAsync(userId);
+                var messages = await _messageRepository.GetInboxAsync(userId);
                 return _mapper.Map<IEnumerable<MessageDto>>(messages);
             }
             catch (Exception ex)
@@ -83,7 +83,7 @@ namespace HospitalManagement.API.Services.Implementations
         {
             try
             {
-                var messages = await _messageRepository.GetSentMessagesAsync(userId);
+                var messages = await _messageRepository.GetSentAsync(userId);
                 return _mapper.Map<IEnumerable<MessageDto>>(messages);
             }
             catch (Exception ex)

@@ -4,10 +4,10 @@ namespace HospitalManagement.API.Repositories.Interfaces
 {
     public interface IMessageRepository : IGenericRepository<Message>
     {
-        Task<IEnumerable<Message>> GetInboxMessagesAsync(int userId);
-        Task<IEnumerable<Message>> GetSentMessagesAsync(int userId);
-        Task<IEnumerable<Message>> GetConversationMessagesAsync(int userId1, int userId2);
-        Task<int> GetUnreadMessageCountAsync(int userId);
-        Task MarkAllAsReadAsync(int userId, int senderId);
+        Task<IEnumerable<Message>> GetInboxAsync(int userId);
+        Task<IEnumerable<Message>> GetSentAsync(int userId);
+        Task<bool> MarkAsReadAsync(int messageId);
+        Task<int> GetUnreadCountAsync();
+        Task<int> GetUnreadCountByUserAsync(int userId);
     }
 }

@@ -126,6 +126,7 @@ builder.Services.AddScoped<ILabReportService, LabReportService>();
 builder.Services.AddScoped<IMedicalHistoryService, MedicalHistoryService>();
 builder.Services.AddScoped<IFeedbackService, FeedbackService>();
 builder.Services.AddScoped<IHospitalService, HospitalService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 Log.Information("All Services registered in DI container.");
 
 

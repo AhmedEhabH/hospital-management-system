@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using HospitalManagement.API.Models.DTOs;
 using HospitalManagement.API.Services.Interfaces;
-using HospitalManagement.API.Models.DTOs;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace HospitalManagement.API.Controllers
 {
@@ -84,5 +85,34 @@ namespace HospitalManagement.API.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Get user information by ID
+        /// </summary>
+        /// <param name="id">User ID</param>
+        /// <returns>User information</returns>
+        [HttpGet("user/{id}")]
+        [Authorize]
+        public async Task<ActionResult<UserInfoDto>> GetUserById(int id)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching user information for ID: {UserId}", id);
+                var user = await _authService.GetUserByIdAsync(id);
+
+                if (user == null)
+                {
+                    return NotFound($"User with ID {id} not found");
+                }
+
+                return Ok(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while fetching user with ID: {UserId}", id);
+                return StatusCode(500, "Internal server error occurred while fetching user information");
+            }
+        }
+
     }
 }

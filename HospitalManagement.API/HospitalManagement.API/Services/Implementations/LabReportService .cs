@@ -121,5 +121,20 @@ namespace HospitalManagement.API.Services.Implementations
                 _disposed = true;
             }
         }
+
+        public async Task<IEnumerable<LabReportDto>> GetCriticalLabReportsAsync()
+        {
+            try
+            {
+                var criticalReports = await _labReportRepository.GetCriticalAsync();
+                return _mapper.Map<IEnumerable<LabReportDto>>(criticalReports);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error fetching critical lab reports");
+                throw;
+            }
+        }
+
     }
 }

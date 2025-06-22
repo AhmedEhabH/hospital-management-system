@@ -10,5 +10,8 @@ namespace HospitalManagement.API.Services.Interfaces
         Task<IEnumerable<LabReportDto>> GetLabReportsByPatientIdAsync(int patientId);
         Task UpdateLabReportAsync(LabReportDto labReportDto);
         Task DeleteLabReportAsync(int id);
+
+        Task<IEnumerable<LabReportDto>> GetCriticalLabReportsAsync();
+
     }
 }
