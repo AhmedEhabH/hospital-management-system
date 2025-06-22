@@ -10,6 +10,10 @@ const routes: Routes = [
 		loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
 	},
 	{
+		path: 'unauthorized',
+		loadChildren: () => import('./shared/components/unauthorized/unauthorized.module').then(m => m.UnauthorizedModule)
+	},
+	{
 		path: 'patient-dashboard',
 		canActivate: [AuthGuard],
 		data: { role: 'Patient' },

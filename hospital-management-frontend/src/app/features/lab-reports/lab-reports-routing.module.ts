@@ -15,10 +15,10 @@ import { LabComparisonComponent } from './lab-comparison/lab-comparison.componen
 // ];
 
 const routes = [
-	{
-		path: '',
-		component: LabReportsComponent
-	},
+	// {
+	// 	path: '',
+	// 	component: LabReportsComponent
+	// },
 	{
 		path: 'comparison',
 		component: LabComparisonComponent
