@@ -26,6 +26,11 @@ namespace HospitalManagement.API.Data
         {
             get; set;
         }
+
+        // New DbSets
+        public DbSet<UserActivity> UserActivities { get; set; }
+        public DbSet<Appointment> Appointments { get; set; }
+        public DbSet<HealthMetric> HealthMetrics { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Apply configurations
@@ -37,6 +42,10 @@ namespace HospitalManagement.API.Data
 
             // FIXED: Apply DoctorProfile configuration
             modelBuilder.ApplyConfiguration(new DoctorProfileConfiguration());
+
+            modelBuilder.ApplyConfiguration(new UserActivityConfiguration());
+            modelBuilder.ApplyConfiguration(new AppointmentConfiguration());
+            modelBuilder.ApplyConfiguration(new HealthMetricConfiguration());
 
             Log.Information("All entity configurations applied using ApplyConfigurationsFromAssembly.");
             base.OnModelCreating(modelBuilder);

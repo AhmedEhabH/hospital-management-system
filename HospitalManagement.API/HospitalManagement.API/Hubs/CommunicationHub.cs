@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using HospitalManagement.API.Models.DTOs;
+﻿using HospitalManagement.API.Models.DTOs;
 using HospitalManagement.API.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using System.Security.Claims;
 
 namespace HospitalManagement.API.Hubs
 {

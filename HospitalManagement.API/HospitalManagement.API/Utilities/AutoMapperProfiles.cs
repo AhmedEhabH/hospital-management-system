@@ -37,6 +37,35 @@ namespace HospitalManagement.API.Utilities
                 .ForMember(dest => dest.PhoneNo, opt => opt.MapFrom(src => src.User.PhoneNo))
                 .ReverseMap()
                 .ForMember(dest => dest.User, opt => opt.Ignore());
+
+            // Add these mappings to your existing AutoMapperProfiles class
+            CreateMap<UserActivity, UserActivityDto>().ReverseMap();
+            CreateMap<Appointment, AppointmentDto>().ReverseMap();
+            CreateMap<HealthMetric, HealthMetricsDto>()
+                .ForMember(dest => dest.BloodPressure, opt => opt.MapFrom(src => new BloodPressureDto
+                {
+                    Systolic = src.BloodPressureSystolic,
+                    Diastolic = src.BloodPressureDiastolic,
+                    Status = "Normal" // Will be calculated in service
+                }))
+                .ForMember(dest => dest.HeartRate, opt => opt.MapFrom(src => new HeartRateDto
+                {
+                    Value = src.HeartRate,
+                    Status = "Normal" // Will be calculated in service
+                }))
+                .ForMember(dest => dest.Weight, opt => opt.MapFrom(src => new WeightDto
+                {
+                    Value = src.Weight,
+                    Unit = "kg",
+                    Trend = "stable" // Will be calculated in service
+                }))
+                .ForMember(dest => dest.Temperature, opt => opt.MapFrom(src => new TemperatureDto
+                {
+                    Value = src.Temperature,
+                    Unit = "°C",
+                    Status = "Normal" // Will be calculated in service
+                }));
+
         }
     }
 }

@@ -34,3 +34,12 @@ export interface AdminDashboardData {
 	userActivity: any[];
 	systemAlerts: any[];
 }
+
+export interface HealthTrend {
+	date: string;
+	bloodPressureSystolic: number;
+	bloodPressureDiastolic: number;
+	heartRate: number;
+	weight: number;
+	temperature: number;
+}

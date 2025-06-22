@@ -8,6 +8,7 @@ import { HttpClient } from '@angular/common/http';
 	providedIn: 'root'
 })
 
+
 export class DashboardService {
 	private apiUrl = environment.apiUrl;
 
@@ -25,60 +26,52 @@ export class DashboardService {
 
 	constructor(private http: HttpClient) { }
 
-	// **PATIENT DASHBOARD DATA**
+	// **UPDATED: Use new backend dashboard endpoints**
 	getPatientDashboardData(userId: number): Observable<PatientDashboardData> {
-		return combineLatest([
-			this.getUserInfo(userId),
-			this.getMedicalHistoryByUser(userId),
-			this.getLabReportsByPatient(userId),
-			this.getInboxMessages(userId),
-			this.getUpcomingAppointments(userId),
-			this.getHealthMetrics(userId)
-		]).pipe(
-			map(([userInfo, medicalHistory, labReports, messages, appointments, healthMetrics]) => {
-				const data: PatientDashboardData = {
-					userInfo,
-					medicalHistory,
-					labReports,
-					messages,
-					upcomingAppointments: appointments,
-					healthMetrics
-				};
-				this.patientDataSubject.next(data);
-				return data;
-			}),
-			catchError(this.handleError<PatientDashboardData>('getPatientDashboardData'))
-		);
+		console.log('Fetching patient dashboard data for user ID:', userId);
+
+		return this.http.get<PatientDashboardData>(`${this.apiUrl}/api/Dashboard/patient/${userId}`)
+			.pipe(
+				map(data => {
+					this.patientDataSubject.next(data);
+					console.log('Patient dashboard data received:', data);
+					return data;
+				}),
+				catchError(this.handleError<PatientDashboardData>('getPatientDashboardData'))
+			);
 	}
 
-	// **DOCTOR DASHBOARD DATA**
 	getDoctorDashboardData(doctorId: number): Observable<DoctorDashboardData> {
-		return combineLatest([
-			this.getUserInfo(doctorId),
-			this.getDoctorPatients(doctorId),
-			this.getTodayAppointments(doctorId),
-			this.getCriticalLabReports(),
-			this.getInboxMessages(doctorId),
-			this.getDepartmentStats(doctorId)
-		]).pipe(
-			map(([userInfo, patients, appointments, criticalReports, messages, stats]) => {
-				const data: DoctorDashboardData = {
-					userInfo,
-					patients,
-					todayAppointments: appointments,
-					criticalLabReports: criticalReports,
-					pendingMessages: messages,
-					departmentStats: stats
-				};
-				this.doctorDataSubject.next(data);
-				return data;
-			}),
-			catchError(this.handleError<DoctorDashboardData>('getDoctorDashboardData'))
-		);
+		console.log('Fetching doctor dashboard data for doctor ID:', doctorId);
+
+		return this.http.get<DoctorDashboardData>(`${this.apiUrl}/api/Dashboard/doctor/${doctorId}`)
+			.pipe(
+				map(data => {
+					this.doctorDataSubject.next(data);
+					console.log('Doctor dashboard data received:', data);
+					return data;
+				}),
+				catchError(this.handleError<DoctorDashboardData>('getDoctorDashboardData'))
+			);
 	}
 
-	// **ADMIN DASHBOARD DATA**
+	getSystemStats(): Observable<DashboardStats> {
+		console.log('Fetching system dashboard statistics');
+
+		return this.http.get<DashboardStats>(`${this.apiUrl}/api/Dashboard/stats`)
+			.pipe(
+				map(stats => {
+					this.dashboardStatsSubject.next(stats);
+					console.log('System stats received:', stats);
+					return stats;
+				}),
+				catchError(this.handleError<DashboardStats>('getSystemStats'))
+			);
+	}
+
 	getAdminDashboardData(): Observable<AdminDashboardData> {
+		console.log('Fetching admin dashboard data');
+
 		return combineLatest([
 			this.getHospitalInfo(),
 			this.getSystemStats(),
@@ -95,17 +88,29 @@ export class DashboardService {
 					systemAlerts: alerts
 				};
 				this.adminDataSubject.next(data);
+				console.log('Admin dashboard data aggregated:', data);
 				return data;
 			}),
 			catchError(this.handleError<AdminDashboardData>('getAdminDashboardData'))
 		);
 	}
 
-	// **CORE API CALLS**
-	private getUserInfo(userId: number): Observable<UserInfoDto> {
-		return this.http.get<UserInfoDto>(`${this.apiUrl}/api/Auth/user/${userId}`);
+	// **UPDATED: Use new backend endpoints**
+	getCriticalLabReports(): Observable<LabReportDto[]> {
+		return this.http.get<LabReportDto[]>(`${this.apiUrl}/api/LabReports/critical`)
+			.pipe(
+				catchError(this.handleError<LabReportDto[]>('getCriticalLabReports', []))
+			);
 	}
 
+	getUserById(userId: number): Observable<UserInfoDto> {
+		return this.http.get<UserInfoDto>(`${this.apiUrl}/api/Auth/user/${userId}`)
+			.pipe(
+				catchError(this.handleError<UserInfoDto>('getUserById'))
+			);
+	}
+
+	// **EXISTING API ENDPOINTS**
 	private getMedicalHistoryByUser(userId: number): Observable<MedicalHistoryDto[]> {
 		return this.http.get<MedicalHistoryDto[]>(`${this.apiUrl}/api/MedicalHistory/user/${userId}`);
 	}
@@ -126,103 +131,8 @@ export class DashboardService {
 		return this.http.get<FeedbackDto[]>(`${this.apiUrl}/api/Feedback`);
 	}
 
-	// **DASHBOARD STATISTICS**
-	getSystemStats(): Observable<DashboardStats> {
-		return this.http.get<DashboardStats>(`${this.apiUrl}/api/Dashboard/stats`);
-	}
-
-	private getCriticalLabReports(): Observable<LabReportDto[]> {
-		return this.http.get<LabReportDto[]>(`${this.apiUrl}/api/LabReports/critical`);
-	}
-
-	// **MOCK DATA METHODS (Replace with real API calls)**
-	private getUpcomingAppointments(userId: number): Observable<any[]> {
-		// TODO: Replace with real API call when appointments module is implemented
-		return new Observable(observer => {
-			observer.next([
-				{
-					id: 1,
-					doctorName: 'Dr. Smith',
-					date: new Date(Date.now() + 86400000), // Tomorrow
-					time: '10:00 AM',
-					department: 'Cardiology',
-					type: 'Follow-up'
-				},
-				{
-					id: 2,
-					doctorName: 'Dr. Johnson',
-					date: new Date(Date.now() + 172800000), // Day after tomorrow
-					time: '2:30 PM',
-					department: 'General Medicine',
-					type: 'Consultation'
-				}
-			]);
-			observer.complete();
-		});
-	}
-
-	private getHealthMetrics(userId: number): Observable<any> {
-		// TODO: Replace with real API call when health metrics module is implemented
-		return new Observable(observer => {
-			observer.next({
-				bloodPressure: { systolic: 120, diastolic: 80, status: 'Normal' },
-				heartRate: { value: 72, status: 'Normal' },
-				weight: { value: 70, unit: 'kg', trend: 'stable' },
-				temperature: { value: 36.5, unit: '°C', status: 'Normal' }
-			});
-			observer.complete();
-		});
-	}
-
-	private getDoctorPatients(doctorId: number): Observable<UserInfoDto[]> {
-		// TODO: Replace with real API call when doctor-patient relationship is implemented
-		return new Observable(observer => {
-			observer.next([
-				{ id: 1, firstName: 'John', lastName: 'Doe', email: 'john@example.com', userType: 'Patient', userId: 'P001' },
-				{ id: 2, firstName: 'Jane', lastName: 'Smith', email: 'jane@example.com', userType: 'Patient', userId: 'P002' }
-			]);
-			observer.complete();
-		});
-	}
-
-	private getTodayAppointments(doctorId: number): Observable<any[]> {
-		// TODO: Replace with real API call
-		return new Observable(observer => {
-			observer.next([
-				{
-					id: 1,
-					patientName: 'John Doe',
-					time: '09:00 AM',
-					type: 'Consultation',
-					status: 'Scheduled'
-				},
-				{
-					id: 2,
-					patientName: 'Jane Smith',
-					time: '11:30 AM',
-					type: 'Follow-up',
-					status: 'In Progress'
-				}
-			]);
-			observer.complete();
-		});
-	}
-
-	private getDepartmentStats(doctorId: number): Observable<any> {
-		// TODO: Replace with real API call
-		return new Observable(observer => {
-			observer.next({
-				totalPatients: 45,
-				todayAppointments: 8,
-				pendingReports: 3,
-				criticalCases: 1
-			});
-			observer.complete();
-		});
-	}
-
+	// **MOCK DATA METHODS (Replace with real API calls when available)**
 	private getUserActivity(): Observable<any[]> {
-		// TODO: Replace with real API call
 		return new Observable(observer => {
 			observer.next([
 				{ user: 'Dr. Smith', action: 'Reviewed lab report', timestamp: new Date() },
@@ -233,7 +143,6 @@ export class DashboardService {
 	}
 
 	private getSystemAlerts(): Observable<any[]> {
-		// TODO: Replace with real API call
 		return new Observable(observer => {
 			observer.next([
 				{ type: 'warning', message: 'Server maintenance scheduled', timestamp: new Date() },
@@ -256,12 +165,25 @@ export class DashboardService {
 		this.getAdminDashboardData().subscribe();
 	}
 
+	refreshSystemStats(): void {
+		this.getSystemStats().subscribe();
+	}
+
+	getPatientHealthTrends(patientId: number, days: number = 30): Observable<any[]> {
+		return this.http.get<any[]>(`${this.apiUrl}/api/Dashboard/patient/${patientId}/health-trends?days=${days}`)
+			.pipe(
+				catchError(this.handleError<any[]>('getPatientHealthTrends', []))
+			);
+	}
+
+
+
 	// **ERROR HANDLING**
 	private handleError<T>(operation = 'operation', result?: T) {
 		return (error: any): Observable<T> => {
 			console.error(`${operation} failed:`, error);
 
-			// Let the app keep running by returning an empty result
+			// Return empty result to keep app running
 			return new Observable<T>(observer => {
 				observer.next(result as T);
 				observer.complete();

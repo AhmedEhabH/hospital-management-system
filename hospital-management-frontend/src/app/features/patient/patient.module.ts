@@ -22,12 +22,16 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 // Chart.js - Updated for ng2-charts v6+
 import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
+
 // Shared Module - Import instead of individual components
 import { SharedModule } from '../../shared/shared.module';
 
 import { PatientRoutingModule } from './patient-routing.module';
 import { PatientDashboardComponent } from './dashboard/dashboard.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @NgModule({
 	declarations: [
@@ -59,9 +63,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 		MatToolbarModule,
 		MatSidenavModule,
 		MatProgressSpinnerModule,
+		MatInputModule,
+		MatFormFieldModule,
+		MatTooltipModule,
 
 		// Charts - Updated for ng2-charts v6+
-		BaseChartDirective
+		BaseChartDirective,
+
 	],
 	providers: [
 		provideCharts(withDefaultRegisterables())
