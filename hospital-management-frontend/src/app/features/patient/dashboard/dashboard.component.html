@@ -1,503 +1,245 @@
-<div class="patient-dashboard" [class.dark-theme]="isDarkMode">
-	<!-- Loading State -->
-	<div *ngIf="isLoading" class="loading-container">
-		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
-		<div class="loading-content">
-			<mat-icon class="loading-icon">health_and_safety</mat-icon>
-			<h3>Loading your health dashboard...</h3>
-			<p>Fetching your latest medical data from our secure database</p>
+<div class="dashboard-container" [class.dark-theme]="isDarkMode">
+	<!-- Header Section -->
+	<div class="dashboard-header">
+		<div class="header-content">
+			<div class="welcome-section">
+				<div class="avatar-section">
+					<div class="user-avatar">
+						<mat-icon>person</mat-icon>
+					</div>
+					<div class="welocme-text">
+						<h1 class="welcome-title">Welcome back, {{ dashboardData?.userInfo?.firstName ||
+							currentUser?.firstName || 'Patient'
+							}}!
+						</h1>
+						<p class="welcome-subtitle">Here's your health overview for today</p>
+					</div>
+				</div>
+			</div>
+			<div class="header-actions">
+				<!-- Theme Toggle -->
+				<app-theme-toggle></app-theme-toggle>
+				<button mat-raised-button color="primary" (click)="scheduleAppointment()">
+					<mat-icon>event</mat-icon>
+					Schedule Appointment
+				</button>
+				<button mat-icon-button (click)="refreshData()" [disabled]="loading">
+					<mat-icon>refresh</mat-icon>
+				</button>
+			</div>
 		</div>
 	</div>
 
-	<!-- Dashboard Content -->
-	<div *ngIf="!isLoading && !error && dashboardData" class="dashboard-content">
-		<!-- Header Section -->
-		<div class="dashboard-header medical-gradient header-layout">
-			<div class="header-content">
-				<div class="patient-welcome">
-					<div class="avatar-section">
-						<div class="patient-avatar">
-							<mat-icon>person</mat-icon>
-						</div>
-						<div class="welcome-text">
-							<h1 class="welcome-title">Welcome back, {{ dashboardData.userInfo.firstName }}!</h1>
-							<p class="welcome-subtitle">Your personal health dashboard with real-time medical data</p>
-						</div>
-					</div>
-					<div class="quick-actions">
-						<button mat-raised-button class="action-button" (click)="scheduleAppointment()">
-							<mat-icon>event</mat-icon>
-							Schedule Appointment
-						</button>
-						<button mat-raised-button class="action-button" (click)="composeMessage()">
-							<mat-icon>mail</mat-icon>
-							Message Doctor
-						</button>
-						<button mat-icon-button (click)="refreshData()" matTooltip="Refresh Data">
-							<mat-icon>refresh</mat-icon>
-						</button>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Stats Section -->
-		<div class="stats-section">
-			<div class="container">
-				<div class="stats-grid">
-					<div class="medical-card stat-card">
-						<div class="stat-header">
-							<mat-icon class="stat-icon lab-reports-icon">science</mat-icon>
-							<span class="stat-label">Lab Reports</span>
-						</div>
-						<div class="stat-value">{{ dashboardStats.totalLabReports }}</div>
-						<div class="stat-change positive">
-							<mat-icon>trending_up</mat-icon>
-							<span>{{ recentLabReports.length }} recent</span>
-						</div>
-					</div>
-
-					<div class="medical-card stat-card" [class.critical]="dashboardStats.criticalAlerts > 0">
-						<div class="stat-header">
-							<mat-icon class="stat-icon critical-icon">warning</mat-icon>
-							<span class="stat-label">Critical Alerts</span>
-						</div>
-						<div class="stat-value">{{ dashboardStats.criticalAlerts }}</div>
-						<div class="stat-change" [class]="dashboardStats.criticalAlerts > 0 ? 'critical' : 'positive'">
-							<mat-icon>{{ dashboardStats.criticalAlerts > 0 ? 'priority_high' : 'check_circle'
-								}}</mat-icon>
-							<span>{{ dashboardStats.criticalAlerts > 0 ? 'Needs attention' : 'All normal' }}</span>
-						</div>
-					</div>
-
-					<div class="medical-card stat-card">
-						<div class="stat-header">
-							<mat-icon class="stat-icon messages-icon">mail</mat-icon>
-							<span class="stat-label">New Messages</span>
-						</div>
-						<div class="stat-value">{{ dashboardStats.unreadMessages }}</div>
-						<div class="stat-change neutral">
-							<mat-icon>inbox</mat-icon>
-							<span>{{ dashboardData.messages.length }} total</span>
-						</div>
-					</div>
-
-					<div class="medical-card stat-card">
-						<div class="stat-header">
-							<mat-icon class="stat-icon health-icon">favorite</mat-icon>
-							<span class="stat-label">Health Score</span>
-						</div>
-						<div class="stat-value">{{ dashboardStats.healthScore }}%</div>
-						<div class="stat-change positive">
-							<mat-icon>trending_up</mat-icon>
-							<span>Excellent</span>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Charts Section -->
-		<div class="charts-section">
-			<div class="container">
-				<h2 class="section-title">
-					<mat-icon>trending_up</mat-icon>
-					Health Trends & Analytics
-				</h2>
-				<div class="charts-grid">
-					<div class="medical-card chart-card">
-						<mat-card>
-							<mat-card-header>
-								<mat-card-title>Health Metrics Trends</mat-card-title>
-								<mat-card-subtitle>Your vital signs over time</mat-card-subtitle>
-							</mat-card-header>
-							<mat-card-content>
-								<div class="chart-container">
-									<canvas baseChart [data]="healthTrendsChartData" [options]="chartOptions"
-										[type]="healthTrendsChartType">
-									</canvas>
-								</div>
-							</mat-card-content>
-						</mat-card>
-					</div>
-
-					<div class="medical-card chart-card">
-						<mat-card>
-							<mat-card-header>
-								<mat-card-title>Current Health Status</mat-card-title>
-								<mat-card-subtitle>Latest readings from medical devices</mat-card-subtitle>
-							</mat-card-header>
-							<mat-card-content>
-								<div class="health-metrics-grid" *ngIf="dashboardData.healthMetrics">
-									<div class="metric-item">
-										<mat-icon class="metric-icon">favorite</mat-icon>
-										<div class="metric-info">
-											<span class="metric-value">{{ dashboardData.healthMetrics.heartRate.value }}
-												BPM</span>
-											<span class="metric-label">Heart Rate</span>
-											<span
-												[class]="'status-' + (dashboardData.healthMetrics.heartRate.status === 'Normal' ? 'stable' : 'warning')">
-												{{ dashboardData.healthMetrics.heartRate.status }}
-											</span>
-										</div>
-									</div>
-
-									<div class="metric-item">
-										<mat-icon class="metric-icon">monitor_heart</mat-icon>
-										<div class="metric-info">
-											<span class="metric-value">
-												{{ dashboardData.healthMetrics.bloodPressure.systolic }}/{{
-												dashboardData.healthMetrics.bloodPressure.diastolic }}
-											</span>
-											<span class="metric-label">Blood Pressure</span>
-											<span
-												[class]="'status-' + (dashboardData.healthMetrics.bloodPressure.status === 'Normal' ? 'stable' : 'warning')">
-												{{ dashboardData.healthMetrics.bloodPressure.status }}
-											</span>
-										</div>
-									</div>
-
-									<div class="metric-item">
-										<mat-icon class="metric-icon">thermostat</mat-icon>
-										<div class="metric-info">
-											<span class="metric-value">{{ dashboardData.healthMetrics.temperature.value
-												}}{{ dashboardData.healthMetrics.temperature.unit }}</span>
-											<span class="metric-label">Temperature</span>
-											<span
-												[class]="'status-' + (dashboardData.healthMetrics.temperature.status === 'Normal' ? 'stable' : 'warning')">
-												{{ dashboardData.healthMetrics.temperature.status }}
-											</span>
-										</div>
-									</div>
-
-									<div class="metric-item">
-										<mat-icon class="metric-icon">fitness_center</mat-icon>
-										<div class="metric-info">
-											<span class="metric-value">{{ dashboardData.healthMetrics.weight.value }} {{
-												dashboardData.healthMetrics.weight.unit }}</span>
-											<span class="metric-label">Weight</span>
-											<span class="status-stable">{{ dashboardData.healthMetrics.weight.trend |
-												titlecase }}</span>
-										</div>
-									</div>
-								</div>
-							</mat-card-content>
-						</mat-card>
-					</div>
-				</div>
-			</div>
-		</div>
-
-		<!-- Main Content Section -->
-		<div class="main-content-section">
-			<div class="container">
-				<mat-tab-group class="medical-tabs">
-					<!-- Lab Reports Tab -->
-					<mat-tab>
-						<ng-template mat-tab-label>
-							<mat-icon>science</mat-icon>
-							Lab Reports
-						</ng-template>
-						<div class="tab-content">
-							<div class="tab-header">
-								<h3>Recent Lab Reports</h3>
-								<div class="header-actions">
-									<mat-form-field class="search-field" appearance="outline">
-										<mat-label>Search reports</mat-label>
-										<input matInput (keyup)="applyFilter($event)"
-											placeholder="Search by test name...">
-										<mat-icon matSuffix>search</mat-icon>
-									</mat-form-field>
-									<button mat-raised-button color="primary" (click)="viewLabReport(0)">
-										<mat-icon>visibility</mat-icon>
-										View All
-									</button>
-								</div>
-							</div>
-
-							<div *ngIf="recentLabReports.length === 0" class="empty-state">
-								<mat-icon>science</mat-icon>
-								<p>No lab reports available</p>
-							</div>
-
-							<mat-table [dataSource]="labReportsDataSource" class="medical-table"
-								*ngIf="recentLabReports.length > 0">
-								<ng-container matColumnDef="testPerformed">
-									<mat-header-cell *matHeaderCellDef>Test</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<div class="test-cell">
-											<mat-icon class="test-icon">science</mat-icon>
-											{{ report.testPerformed }}
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<ng-container matColumnDef="testedBy">
-									<mat-header-cell *matHeaderCellDef>Tested By</mat-header-cell>
-									<mat-cell *matCellDef="let report">{{ report.testedBy }}</mat-cell>
-								</ng-container>
-
-								<ng-container matColumnDef="testedDate">
-									<mat-header-cell *matHeaderCellDef>Date</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<div class="date-cell">
-											<mat-icon class="date-icon">event</mat-icon>
-											{{ report.testedDate | date:'short' }}
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<ng-container matColumnDef="status">
-									<mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<mat-chip [class]="getLabStatusClass(report)">{{ getLabStatusText(report)
-											}}</mat-chip>
-									</mat-cell>
-								</ng-container>
-
-								<ng-container matColumnDef="actions">
-									<mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-									<mat-cell *matCellDef="let report">
-										<div class="action-buttons">
-											<button mat-icon-button (click)="viewLabReport(report.id)"
-												matTooltip="View Report">
-												<mat-icon>visibility</mat-icon>
-											</button>
-											<button mat-icon-button matTooltip="Download">
-												<mat-icon>download</mat-icon>
-											</button>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<mat-header-row *matHeaderRowDef="labReportsDisplayedColumns"></mat-header-row>
-								<mat-row *matRowDef="let row; columns: labReportsDisplayedColumns;"
-									class="clickable-row"></mat-row>
-							</mat-table>
-
-							<mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
-						</div>
-					</mat-tab>
-
-					<!-- Appointments Tab -->
-					<mat-tab>
-						<ng-template mat-tab-label>
-							<mat-icon>event</mat-icon>
-							Appointments
-						</ng-template>
-						<div class="tab-content">
-							<div class="tab-header">
-								<h3>Upcoming Appointments</h3>
-								<div class="header-actions">
-									<button mat-raised-button color="primary" (click)="scheduleAppointment()">
-										<mat-icon>add</mat-icon>
-										Schedule New
-									</button>
-								</div>
-							</div>
-
-							<div *ngIf="dashboardData.upcomingAppointments.length === 0" class="empty-state">
-								<mat-icon>event</mat-icon>
-								<p>No upcoming appointments</p>
-								<button mat-raised-button color="primary" (click)="scheduleAppointment()">
-									<mat-icon>add</mat-icon>
-									Schedule Appointment
-								</button>
-							</div>
-
-							<mat-table [dataSource]="appointmentsDataSource" class="medical-table"
-								*ngIf="dashboardData.upcomingAppointments.length > 0">
-								<ng-container matColumnDef="date">
-									<mat-header-cell *matHeaderCellDef>Date & Time</mat-header-cell>
-									<mat-cell *matCellDef="let appointment">
-										<div class="time-cell">
-											<mat-icon class="time-icon">schedule</mat-icon>
-											<div>
-												<div>{{ appointment.date | date:'short' }}</div>
-												<div class="time-detail">{{ appointment.time }}</div>
-											</div>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<ng-container matColumnDef="doctor">
-									<mat-header-cell *matHeaderCellDef>Doctor</mat-header-cell>
-									<mat-cell *matCellDef="let appointment">
-										<div class="doctor-cell">
-											<div class="doctor-avatar-small">
-												<mat-icon>local_hospital</mat-icon>
-											</div>
-											<div class="doctor-details">
-												<div class="doctor-name">{{ appointment.doctorName }}</div>
-												<div class="doctor-department">{{ appointment.department }}</div>
-											</div>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<ng-container matColumnDef="type">
-									<mat-header-cell *matHeaderCellDef>Type</mat-header-cell>
-									<mat-cell *matCellDef="let appointment">
-										<mat-chip class="type-chip">{{ appointment.type }}</mat-chip>
-									</mat-cell>
-								</ng-container>
-
-								<ng-container matColumnDef="status">
-									<mat-header-cell *matHeaderCellDef>Status</mat-header-cell>
-									<mat-cell *matCellDef="let appointment">
-										<mat-chip [class]="getAppointmentStatusClass(appointment.status)">{{
-											appointment.status }}</mat-chip>
-									</mat-cell>
-								</ng-container>
-
-								<ng-container matColumnDef="actions">
-									<mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
-									<mat-cell *matCellDef="let appointment">
-										<div class="action-buttons">
-											<button mat-icon-button (click)="viewAppointment(appointment)"
-												matTooltip="View Details">
-												<mat-icon>visibility</mat-icon>
-											</button>
-											<button mat-icon-button matTooltip="Reschedule">
-												<mat-icon>edit</mat-icon>
-											</button>
-										</div>
-									</mat-cell>
-								</ng-container>
-
-								<mat-header-row *matHeaderRowDef="appointmentsDisplayedColumns"></mat-header-row>
-								<mat-row *matRowDef="let row; columns: appointmentsDisplayedColumns;"
-									class="clickable-row"></mat-row>
-							</mat-table>
-						</div>
-					</mat-tab>
-
-					<!-- Medical History Tab -->
-					<mat-tab>
-						<ng-template mat-tab-label>
-							<mat-icon>history</mat-icon>
-							Medical History
-						</ng-template>
-						<div class="tab-content">
-							<div class="tab-header">
-								<h3>Medical History Summary</h3>
-								<div class="header-actions">
-									<button mat-raised-button color="primary" (click)="viewMedicalHistory()">
-										<mat-icon>visibility</mat-icon>
-										View Complete History
-									</button>
-								</div>
-							</div>
-
-							<div *ngIf="dashboardData.medicalHistory.length === 0" class="empty-state">
-								<mat-icon>history</mat-icon>
-								<p>No medical history recorded</p>
-							</div>
-
-							<div class="history-cards" *ngIf="dashboardData.medicalHistory.length > 0">
-								<div *ngFor="let history of dashboardData.medicalHistory.slice(0, 3)"
-									class="medical-card history-card">
-									<mat-card>
-										<mat-card-content>
-											<div class="history-item">
-												<div class="history-section">
-													<h4><mat-icon>medical_information</mat-icon> Allergies</h4>
-													<p>{{ history.allergies || 'None recorded' }}</p>
-												</div>
-
-												<div class="history-section">
-													<h4><mat-icon>medication</mat-icon> Current Medications</h4>
-													<p>{{ history.currentMedications || 'None recorded' }}</p>
-												</div>
-
-												<div class="history-section">
-													<h4><mat-icon>health_and_safety</mat-icon> Conditions</h4>
-													<div class="conditions">
-														<span *ngIf="history.hasAsthma"
-															class="condition-tag">Asthma</span>
-														<span *ngIf="history.hasBloodPressure"
-															class="condition-tag">Blood Pressure</span>
-														<span *ngIf="history.hasDiabetes"
-															class="condition-tag">Diabetes</span>
-														<span *ngIf="history.hasHeartDisease"
-															class="condition-tag">Heart Disease</span>
-														<span *ngIf="history.hasCholesterol" class="condition-tag">High
-															Cholesterol</span>
-														<span
-															*ngIf="!history.hasAsthma && !history.hasBloodPressure && !history.hasDiabetes && !history.hasHeartDisease && !history.hasCholesterol"
-															class="condition-tag normal">No chronic conditions</span>
-													</div>
-												</div>
-											</div>
-										</mat-card-content>
-									</mat-card>
-								</div>
-							</div>
-						</div>
-					</mat-tab>
-
-					<!-- Messages Tab -->
-					<mat-tab>
-						<ng-template mat-tab-label>
-							<mat-icon>mail</mat-icon>
-							Messages
-							<span *ngIf="unreadMessages.length > 0" class="message-badge">{{ unreadMessages.length
-								}}</span>
-						</ng-template>
-						<div class="tab-content">
-							<div class="tab-header">
-								<h3>Recent Messages</h3>
-								<div class="header-actions">
-									<button mat-raised-button color="primary" (click)="composeMessage()">
-										<mat-icon>add</mat-icon>
-										Compose Message
-									</button>
-								</div>
-							</div>
-
-							<div *ngIf="dashboardData.messages.length === 0" class="empty-state">
-								<mat-icon>mail</mat-icon>
-								<p>No messages</p>
-							</div>
-
-							<div class="messages-list" *ngIf="dashboardData.messages.length > 0">
-								<div *ngFor="let message of dashboardData.messages.slice(0, 10)"
-									class="medical-card message-card">
-									<mat-card [class.unread]="!message.isRead">
-										<mat-card-content>
-											<div class="message-item">
-												<div class="message-header">
-													<h4>{{ message.subject }}</h4>
-													<span class="message-time">{{ message.sentDate | date:'short'
-														}}</span>
-												</div>
-												<p class="message-preview">{{ message.messageContent | slice:0:150 }}...
-												</p>
-												<div class="message-actions">
-													<button mat-button color="primary">Read Message</button>
-													<mat-icon *ngIf="!message.isRead"
-														class="unread-indicator">fiber_manual_record</mat-icon>
-												</div>
-											</div>
-										</mat-card-content>
-									</mat-card>
-								</div>
-							</div>
-						</div>
-					</mat-tab>
-				</mat-tab-group>
-			</div>
-		</div>
+	<!-- Loading State -->
+	<div *ngIf="loading" class="loading-container">
+		<mat-spinner diameter="40"></mat-spinner>
+		<p>Loading your health dashboard...</p>
 	</div>
 
 	<!-- Error State -->
-	<div *ngIf="error && !isLoading" class="error-container">
-		<mat-icon>error_outline</mat-icon>
-		<h3>Unable to Load Dashboard</h3>
+	<div *ngIf="error && !loading" class="error-container">
+		<mat-icon color="warn">error_outline</mat-icon>
 		<p>{{ error }}</p>
 		<button mat-raised-button color="primary" (click)="refreshData()">
 			<mat-icon>refresh</mat-icon>
 			Try Again
 		</button>
+	</div>
+
+	<!-- Main Dashboard Content -->
+	<div *ngIf="!loading && !error" class="dashboard-content">
+
+		<!-- Health Metrics Cards -->
+		<div class="metrics-grid">
+			<div class="metric-card">
+				<div class="metric-header">
+					<mat-icon class="metric-icon bp-icon">monitor_heart</mat-icon>
+					<div class="metric-info">
+						<h3>Blood Pressure</h3>
+						<div class="metric-value">
+							{{ healthMetrics.bloodPressure.systolic }}/{{ healthMetrics.bloodPressure.diastolic }}
+							<span class="unit">mmHg</span>
+						</div>
+						<span class="metric-status"
+							[ngClass]="getHealthStatusClass(healthMetrics.bloodPressure.status)">
+							{{ healthMetrics.bloodPressure.status }}
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="metric-card">
+				<div class="metric-header">
+					<mat-icon class="metric-icon hr-icon">favorite</mat-icon>
+					<div class="metric-info">
+						<h3>Heart Rate</h3>
+						<div class="metric-value">
+							{{ healthMetrics.heartRate.value }}
+							<span class="unit">bpm</span>
+						</div>
+						<span class="metric-status" [ngClass]="getHealthStatusClass(healthMetrics.heartRate.status)">
+							{{ healthMetrics.heartRate.status }}
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="metric-card">
+				<div class="metric-header">
+					<mat-icon class="metric-icon weight-icon">scale</mat-icon>
+					<div class="metric-info">
+						<h3>Weight</h3>
+						<div class="metric-value">
+							{{ healthMetrics.weight.value }}
+							<span class="unit">{{ healthMetrics.weight.unit }}</span>
+						</div>
+						<span class="metric-status status-info">
+							{{ healthMetrics.weight.trend }}
+						</span>
+					</div>
+				</div>
+			</div>
+
+			<div class="metric-card">
+				<div class="metric-header">
+					<mat-icon class="metric-icon temp-icon">thermostat</mat-icon>
+					<div class="metric-info">
+						<h3>Temperature</h3>
+						<div class="metric-value">
+							{{ healthMetrics.temperature.value }}
+							<span class="unit">{{ healthMetrics.temperature.unit }}</span>
+						</div>
+						<span class="metric-status" [ngClass]="getHealthStatusClass(healthMetrics.temperature.status)">
+							{{ healthMetrics.temperature.status }}
+						</span>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Statistics Cards -->
+		<div class="stats-grid">
+			<div class="stat-card" (click)="navigateToLabReports()">
+				<div class="stat-content">
+					<div class="stat-number">{{ dashboardStats.totalLabReports }}</div>
+					<div class="stat-label">Lab Reports</div>
+				</div>
+				<mat-icon class="stat-icon">science</mat-icon>
+			</div>
+
+			<div class="stat-card critical" *ngIf="dashboardStats.criticalAlerts > 0">
+				<div class="stat-content">
+					<div class="stat-number">{{ dashboardStats.criticalAlerts }}</div>
+					<div class="stat-label">Critical Alerts</div>
+				</div>
+				<mat-icon class="stat-icon">warning</mat-icon>
+			</div>
+
+			<div class="stat-card" (click)="navigateToMessages()">
+				<div class="stat-content">
+					<div class="stat-number">{{ dashboardStats.unreadMessages }}</div>
+					<div class="stat-label">Unread Messages</div>
+				</div>
+				<mat-icon class="stat-icon">mail</mat-icon>
+			</div>
+
+			<div class="stat-card">
+				<div class="stat-content">
+					<div class="stat-number">{{ dashboardStats.healthScore }}%</div>
+					<div class="stat-label">Health Score</div>
+				</div>
+				<mat-icon class="stat-icon">health_and_safety</mat-icon>
+			</div>
+		</div>
+
+		<!-- Health Trends Chart -->
+		<div class="chart-section">
+			<div class="section-header">
+				<h2>Health Trends</h2>
+				<p class="section-subtitle">Your health metrics from recent lab reports</p>
+			</div>
+			<div class="chart-container">
+				<canvas baseChart [data]="chartData" [options]="chartOptions" [type]="chartType">
+				</canvas>
+			</div>
+		</div>
+
+		<!-- Two Column Layout -->
+		<div class="content-grid">
+
+			<!-- Medical History Section -->
+			<div class="medical-history-section">
+				<div class="section-header">
+					<h3>Recent Medical History</h3>
+					<button mat-button (click)="navigateToMedicalHistory()">
+						View All
+						<mat-icon>arrow_forward</mat-icon>
+					</button>
+				</div>
+
+				<div class="history-list" *ngIf="medicalHistory.length > 0; else noHistoryData">
+					<div class="history-item" *ngFor="let history of medicalHistory.slice(0, 3)">
+						<div class="history-content">
+							<h4>{{ getHistoryTitle(history) }}</h4>
+							<p class="history-description">{{ getHistoryDescription(history) }}</p>
+							<p class="history-date">{{ history.createdAt | date:'mediumDate' }}</p>
+						</div>
+						<div class="history-icon">
+							<mat-icon [ngClass]="getHistoryIconClass(history)">
+								{{ getHistoryIcon(history) }}
+							</mat-icon>
+						</div>
+					</div>
+				</div>
+
+				<ng-template #noHistoryData>
+					<div class="no-data">
+						<mat-icon>medical_services</mat-icon>
+						<p>No medical history records found</p>
+					</div>
+				</ng-template>
+			</div>
+
+			<!-- Lab Reports Section -->
+			<div class="lab-reports-section">
+				<div class="section-header">
+					<h3>Recent Lab Reports</h3>
+					<button mat-button (click)="navigateToLabReports()">
+						View All
+						<mat-icon>arrow_forward</mat-icon>
+					</button>
+				</div>
+
+				<div class="reports-list" *ngIf="recentLabReports.length > 0; else noReportsData">
+					<div class="report-item" *ngFor="let report of recentLabReports">
+						<div class="report-content">
+							<div class="report-header">
+								<mat-icon [ngClass]="getLabReportStatusClass(report)">
+									{{ getLabReportIcon(report) }}
+								</mat-icon>
+								<div class="report-info">
+									<div class="test-name">{{ report.testPerformed }}</div>
+									<p class="report-date">{{ report.testedDate | date:'mediumDate' }}</p>
+									<p class="report-doctor">Tested by: {{ report.testedBy }}</p>
+								</div>
+							</div>
+							<div class="report-status">
+								<span [ngClass]="getLabReportStatusClass(report)">
+									{{ isLabReportCritical(report) ? 'Critical' :
+									isLabReportWarning(report) ? 'Warning' : 'Normal' }}
+								</span>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<ng-template #noReportsData>
+					<div class="no-data">
+						<mat-icon>science</mat-icon>
+						<p>No lab reports available</p>
+					</div>
+				</ng-template>
+			</div>
+		</div>
 	</div>
 </div>

@@ -1,3 +1,35 @@
+// Variables
+:root {
+	--primary-color: #4299ed;
+	--secondary-color: #6c757d;
+	--success-color: #4caf50;
+	--warning-color: #ff9800;
+	--danger-color: #f44336;
+	--info-color: #2196f3;
+
+	--medical-blue: #4299ed;
+	--medical-green: #4caf50;
+	--medical-orange: #ff9800;
+	--medical-red: #f44336;
+
+	--surface-color: #ffffff;
+	--background-color: #f8f9fa;
+	--border-color: #e0e0e0;
+	--text-primary: #212121;
+	--text-secondary: #757575;
+	--shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme {
+	--surface-color: #2d2d2d;
+	--background-color: #1a1a1a;
+	--border-color: #404040;
+	--text-primary: #ffffff;
+	--text-secondary: #b0b0b0;
+	--shadow-color: rgba(0, 0, 0, 0.3);
+}
+
+// Mixins
 @mixin flex-between {
 	display: flex;
 	justify-content: space-between;
@@ -10,17 +42,43 @@
 	align-items: center;
 }
 
-.patient-dashboard {
+@mixin card-style {
+	background: var(--surface-color);
+	border-radius: 16px;
+	border: 1px solid var(--border-color);
+	box-shadow: 0 4px 12px var(--shadow-color);
+	transition: all 0.3s ease;
+
+	&:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 8px 24px var(--shadow-color);
+	}
+}
+
+// Main Dashboard Container
+.dashboard-container {
 	min-height: 100vh;
 	background: var(--background-color);
+	padding: 2rem;
 
-	.dashboard-header {
+	@media (max-width: 768px) {
+		padding: 1rem;
+	}
+}
+
+// Header Section
+.dashboard-header {
+	margin-bottom: 2rem;
+
+	.header-content {
+		@include flex-between;
+		flex-wrap: wrap;
+		gap: 1rem;
 		padding: 2rem 0;
-		color: white;
+		// color: white;
+
 		position: relative;
 		overflow: hidden;
-		background: linear-gradient(135deg, #4299ed, #2196f3);
-		margin-bottom: 2rem; // Add space after header
 
 		&::before {
 			content: '';
@@ -29,7 +87,7 @@
 			left: 0;
 			right: 0;
 			bottom: 0;
-			background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="rgba(255,255,255,0.1)"><path d="M0,0v46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1047.71,5.4,1100.73,16.73V0Z"/></svg>');
+			background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="medical-pattern" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="2" fill="rgba(255,255,255,0.1)"/></pattern></defs><rect width="100" height="100" fill="url(%23medical-pattern)"/></svg>');
 		}
 
 		.header-content {
@@ -37,7 +95,7 @@
 			z-index: 2;
 		}
 
-		.patient-welcome {
+		.welcome-section {
 			@include flex-between;
 			max-width: 1400px;
 			margin: 0 auto;
@@ -48,7 +106,7 @@
 				align-items: center;
 				gap: 1.5rem;
 
-				.patient-avatar {
+				.user-avatar {
 					width: 4rem;
 					height: 4rem;
 					background: rgba(255, 255, 255, 0.2);
@@ -60,12 +118,11 @@
 						font-size: 2rem;
 						width: 2rem;
 						height: 2rem;
-						color: white;
+						// color: white;
 					}
 				}
 
 				.welcome-text {
-					margin-right: 1.5rem;
 					.welcome-title {
 						margin: 0;
 						font-size: 2rem;
@@ -81,564 +138,566 @@
 				}
 			}
 
-			.quick-actions {
-				display: flex;
-				align-items: center;
-				gap: 1rem;
-
-				.action-button {
-					background: rgba(255, 255, 255, 0.2);
-					color: white;
-					backdrop-filter: blur(10px);
-					border: 1px solid rgba(255, 255, 255, 0.3);
-
-					&:hover {
-						background: rgba(255, 255, 255, 0.3);
-					}
-
-					mat-icon {
-						margin-right: 0.5rem;
-					}
-				}
-			}
-		}
-	}
-
-	.loading-container {
-		padding: 4rem 2rem;
-		text-align: center;
-
-		.loading-bar {
-			margin-bottom: 2rem;
-			border-radius: 4px;
-		}
-
-		.loading-content {
-			.loading-icon {
-				font-size: 4rem;
-				width: 4rem;
-				height: 4rem;
-				color: var(--primary-color);
-				margin-bottom: 1rem;
+			h1 {
+				margin: 0 0 0.5rem 0;
+				color: var(--text-primary);
+				font-size: 2rem;
+				font-weight: 600;
 			}
 
-			p {
+			.subtitle {
+				margin: 0;
 				color: var(--text-secondary);
 				font-size: 1.1rem;
 			}
 		}
-	}
 
-	.error-container {
-		padding: 4rem 2rem;
-		text-align: center;
-		color: var(--medical-red);
-
-		mat-icon {
-			font-size: 4rem;
-			width: 4rem;
-			height: 4rem;
-			margin-bottom: 1rem;
-		}
-
-		h3 {
-			margin: 0 0 1rem;
-			color: var(--text-primary);
-		}
-
-		p {
-			margin: 0 0 2rem;
-			color: var(--text-secondary);
-		}
-	}
-
-	.dashboard-content {
-		padding: 0; // Remove top padding since header has margin-bottom
-		position: relative;
-		z-index: 1;
-
-		.container {
-			max-width: 1400px;
-			margin: 0 auto;
-			padding: 0 2rem;
-		}
-
-		.section-title {
+		.header-actions {
 			display: flex;
+			gap: 1rem;
 			align-items: center;
-			gap: 0.75rem;
-			margin: 0 0 1.5rem;
-			font-size: 1.5rem;
-			font-weight: 600;
-			color: var(--text-primary);
 
-			mat-icon {
-				color: var(--primary-color);
-				font-size: 1.75rem;
-			}
-		}
-	}
-
-	.stats-section {
-		margin-bottom: 3rem;
-		margin-top: 2rem; // Add space between header and stats section
-
-		.stats-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-			gap: 1.5rem;
-
-			.stat-card {
-				transition: all 0.3s ease;
-				padding: 2rem;
+			.action-button {
+				background: rgba(255, 255, 255, 0.2);
+				// color: white;
+				backdrop-filter: blur(10px);
+				border: 1px solid rgba(255, 255, 255, 0.3);
 
 				&:hover {
-					transform: translateY(-4px);
+					background: rgba(255, 255, 255, 0.3);
 				}
 
-				&.critical {
-					border-left: 4px solid var(--medical-red);
-				}
-
-				.stat-header {
-					display: flex;
-					align-items: center;
-					gap: 0.75rem;
-					margin-bottom: 1rem;
-
-					.stat-icon {
-						font-size: 1.5rem;
-						width: 1.5rem;
-						height: 1.5rem;
-						
-
-						&.lab-reports-icon {
-							color: var(--medical-blue);
-						}
-
-						&.critical-icon {
-							color: var(--medical-red);
-						}
-
-						&.messages-icon {
-							color: var(--medical-orange);
-						}
-
-						&.health-icon {
-							color: var(--medical-green);
-						}
-					}
-
-					.stat-label {
-						font-size: 0.875rem;
-						color: var(--text-secondary);
-						font-weight: 500;
-					}
-				}
-
-				.stat-value {
-					font-size: 2.5rem;
-					font-weight: 700;
-					color: var(--text-primary);
-					margin-bottom: 0.5rem;
-				}
-
-				.stat-change {
-					display: flex;
-					align-items: center;
-					gap: 0.25rem;
-					font-size: 0.875rem;
-
-					&.positive {
-						color: var(--medical-green);
-					}
-
-					&.negative {
-						color: var(--medical-red);
-					}
-
-					&.neutral {
-						color: var(--text-secondary);
-					}
-
-					&.critical {
-						color: var(--medical-red);
-						font-weight: 600;
-					}
-
-					mat-icon {
-						font-size: 1rem;
-					}
+				mat-icon {
+					margin-right: 0.5rem;
 				}
 			}
 		}
 	}
 
-	.charts-section {
-		margin-bottom: 3rem;
+	@media (max-width: 768px) {
+		.header-content {
+			flex-direction: column;
+			text-align: center;
 
-		.charts-grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-			gap: 2rem;
-
-			.chart-card {
-				.chart-container {
-					height: 300px;
-					position: relative;
-				}
+			.header-actions {
+				width: 100%;
+				justify-content: center;
 			}
 		}
 	}
+}
 
-	.health-metrics-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-		gap: 1.5rem;
+// Loading and Error States
+.loading-container,
+.error-container {
+	@include flex-center;
+	flex-direction: column;
+	padding: 4rem 2rem;
+	text-align: center;
 
-		.metric-item {
-			display: flex;
-			align-items: center;
-			gap: 1rem;
-			padding: 1rem;
-			background: rgba(var(--primary-color), 0.05);
-			border-radius: 12px;
-			border-left: 4px solid var(--primary-color);
+	mat-icon {
+		font-size: 3rem;
+		width: 3rem;
+		height: 3rem;
+		margin-bottom: 1rem;
+	}
 
-			.metric-icon {
-				font-size: 2rem;
-				width: 2rem;
-				height: 2rem;
-				color: var(--primary-color);
+	p {
+		margin: 1rem 0;
+		color: var(--text-secondary);
+		font-size: 1.1rem;
+	}
+}
+
+.dashboard-content {
+	padding: 2rem 0;
+
+	.section-title {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin: 0 0 1.5rem;
+		font-size: 1.5rem;
+		font-weight: 600;
+		color: var(--text-primary);
+
+		mat-icon {
+			color: var(--primary-color);
+			font-size: 1.75rem;
+		}
+	}
+}
+
+// Health Metrics Grid
+.metrics-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.metric-card {
+	@include card-style;
+	padding: 1.5rem;
+
+	.metric-header {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+
+		.metric-icon {
+			font-size: 2.5rem;
+			width: 2.5rem;
+			height: 2.5rem;
+
+			border-radius: 50%;
+			padding: 0.75rem;
+			// color: white;
+
+			&.bp-icon {
+				color: var(--medical-red);
 			}
 
-			.metric-info {
-				flex: 1;
+			&.hr-icon {
+				color: var(--medical-green);
+			}
 
-				.metric-value {
-					display: block;
-					font-size: 1.5rem;
-					font-weight: 700;
-					color: var(--text-primary);
-					margin-bottom: 0.25rem;
-				}
+			&.weight-icon {
+				color: var(--medical-blue);
+			}
 
-				.metric-label {
-					display: block;
-					font-size: 0.875rem;
+			&.temp-icon {
+				color: var(--medical-orange);
+			}
+		}
+
+		.metric-info {
+			flex: 1;
+
+			h3 {
+				margin: 0 0 0.5rem 0;
+				color: var(--text-primary);
+				font-size: 1rem;
+				font-weight: 500;
+			}
+
+			.metric-value {
+				font-size: 1.8rem;
+				font-weight: 700;
+				color: var(--text-primary);
+				margin-bottom: 0.5rem;
+
+				.unit {
+					font-size: 0.9rem;
+					font-weight: 400;
 					color: var(--text-secondary);
-					margin-bottom: 0.25rem;
-				}
-			}
-		}
-	}
-
-	.main-content-section {
-		.medical-tabs {
-			.mat-mdc-tab-group {
-				.mat-mdc-tab-header {
-					border-bottom: 1px solid var(--border-color);
-				}
-
-				.mat-mdc-tab-label {
-					mat-icon {
-						margin-right: 0.5rem;
-					}
+					margin-left: 0.25rem;
 				}
 			}
 
-			.message-badge {
-				background: var(--medical-red);
-				color: white;
-				border-radius: 50%;
-				padding: 0.25rem 0.5rem;
+			.metric-status {
+				padding: 0.25rem 0.75rem;
+				border-radius: 12px;
 				font-size: 0.75rem;
-				margin-left: 0.5rem;
-				min-width: 1.5rem;
-				text-align: center;
-			}
+				font-weight: 500;
 
-			.tab-content {
-				padding: 2rem 0;
-
-				.tab-header {
-					@include flex-between;
-					margin-bottom: 1.5rem;
-					flex-wrap: wrap;
-					gap: 1rem;
-
-					h3 {
-						margin: 0;
-						font-size: 1.25rem;
-						font-weight: 600;
-						color: var(--text-primary);
-					}
-
-					.header-actions {
-						display: flex;
-						align-items: center;
-						gap: 1rem;
-
-						.search-field {
-							min-width: 250px;
-						}
-
-						button {
-							mat-icon {
-								margin-left: 0.5rem;
-							}
-						}
-					}
+				&.status-stable {
+					color: var(--medical-green);
+					background: rgba(76, 175, 80, 0.1);
 				}
 
-				.empty-state {
-					text-align: center;
-					padding: 3rem;
-					color: var(--text-secondary);
+				&.status-warning {
+					color: var(--medical-orange);
+					background: rgba(255, 152, 0, 0.1);
+				}
 
-					mat-icon {
-						font-size: 3rem;
-						width: 3rem;
-						height: 3rem;
-						margin-bottom: 1rem;
-						opacity: 0.5;
-					}
+				&.status-critical {
+					color: var(--medical-red);
+					background: rgba(244, 67, 54, 0.1);
+				}
 
-					p {
-						font-size: 1.1rem;
-						margin-bottom: 1rem;
-					}
+				&.status-info {
+					color: var(--medical-blue);
+					background: rgba(33, 150, 243, 0.1);
 				}
 			}
 		}
 	}
+}
 
-	.medical-table {
-		width: 100%;
-		background: var(--surface-color);
-		border-radius: 12px;
-		overflow: hidden;
-		box-shadow: var(--shadow-color);
+// Statistics Grid
+.stats-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 1rem;
+	margin-bottom: 2rem;
+}
 
-		.mat-mdc-header-cell {
-			background: var(--primary-color);
-			color: white;
+.stat-card {
+	@include card-style;
+	padding: 1.5rem;
+	cursor: pointer;
+	@include flex-between;
+
+	&.critical {
+		border-left: 4px solid var(--medical-red);
+	}
+
+	.stat-content {
+		.stat-number {
+			font-size: 2rem;
+			font-weight: 700;
+			color: var(--text-primary);
+			margin-bottom: 0.25rem;
+		}
+
+		.stat-label {
+			color: var(--text-secondary);
+			font-size: 0.875rem;
+			font-weight: 500;
+		}
+	}
+
+	.stat-icon {
+		font-size: 2rem;
+		width: 2rem;
+		height: 2rem;
+		color: var(--primary-color);
+		opacity: 0.7;
+	}
+}
+
+// Chart Section
+.chart-section {
+	@include card-style;
+	padding: 2rem;
+	margin-bottom: 2rem;
+
+	.section-header {
+		margin-bottom: 1.5rem;
+
+		h2 {
+			margin: 0 0 0.5rem 0;
+			color: var(--text-primary);
+			font-size: 1.5rem;
 			font-weight: 600;
 		}
 
-		.mat-mdc-cell {
-			border-bottom: 1px solid var(--border-color);
+		.section-subtitle {
+			margin: 0;
+			color: var(--text-secondary);
+			font-size: 0.875rem;
+		}
+	}
+
+	.chart-container {
+		height: 300px;
+		position: relative;
+	}
+}
+
+// Content Grid
+.content-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2rem;
+
+	@media (max-width: 1024px) {
+		grid-template-columns: 1fr;
+	}
+}
+
+// Medical History Section
+.medical-history-section {
+	@include card-style;
+	padding: 1.5rem;
+
+	.section-header {
+		@include flex-between;
+		margin-bottom: 1.5rem;
+
+		h3 {
+			margin: 0;
+			color: var(--text-primary);
+			font-weight: 600;
 		}
 
-		.clickable-row {
-			cursor: pointer;
-			transition: background-color 0.2s ease;
-
-			&:hover {
-				background: rgba(var(--primary-color), 0.05);
-			}
-		}
-
-		.test-cell,
-		.date-cell,
-		.time-cell {
+		button {
 			display: flex;
 			align-items: center;
-			gap: 0.5rem;
-
-			.test-icon,
-			.date-icon,
-			.time-icon {
-				color: var(--primary-color);
-				font-size: 1.25rem;
-			}
-		}
-
-		.time-cell {
-			.time-detail {
-				font-size: 0.875rem;
-				color: var(--text-secondary);
-			}
-		}
-
-		.doctor-cell {
-			display: flex;
-			align-items: center;
-			gap: 0.75rem;
-
-			.doctor-avatar-small {
-				width: 2.5rem;
-				height: 2.5rem;
-				background: var(--primary-color);
-				border-radius: 50%;
-				@include flex-center;
-				color: white;
-
-				mat-icon {
-					font-size: 1.25rem;
-				}
-			}
-
-			.doctor-details {
-				.doctor-name {
-					font-weight: 600;
-					color: var(--text-primary);
-				}
-
-				.doctor-department {
-					font-size: 0.875rem;
-					color: var(--text-secondary);
-				}
-			}
-		}
-
-		.type-chip {
-			background: rgba(var(--primary-color), 0.1);
-			color: var(--primary-color);
-		}
-
-		.action-buttons {
-			display: flex;
 			gap: 0.5rem;
 		}
 	}
 
-	.history-cards {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-		gap: 1.5rem;
-
-		.history-card {
-			.history-item {
-				.history-section {
-					margin-bottom: 1.5rem;
-
-					&:last-child {
-						margin-bottom: 0;
-					}
-
-					h4 {
-						display: flex;
-						align-items: center;
-						gap: 0.5rem;
-						margin: 0 0 0.5rem;
-						font-size: 1rem;
-						font-weight: 600;
-						color: var(--text-primary);
-
-						mat-icon {
-							color: var(--primary-color);
-							font-size: 1.25rem;
-						}
-					}
-
-					p {
-						margin: 0;
-						color: var(--text-secondary);
-						line-height: 1.5;
-					}
-
-					.conditions {
-						display: flex;
-						flex-wrap: wrap;
-						gap: 0.5rem;
-
-						.condition-tag {
-							display: inline-block;
-							background: rgba(var(--primary-color), 0.1);
-							color: var(--primary-color);
-							padding: 0.25rem 0.5rem;
-							border-radius: 12px;
-							font-size: 0.75rem;
-							font-weight: 500;
-
-							&.normal {
-								background: rgba(var(--medical-green), 0.1);
-								color: var(--medical-green);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	.messages-list {
+	.history-list {
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
+	}
 
-		.message-card {
-			&.unread {
-				border-left: 4px solid var(--medical-blue);
+	.history-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 1rem;
+		background: var(--background-color);
+		border-radius: 12px;
+		border: 1px solid var(--border-color);
+		transition: all 0.3s ease;
+
+		&:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px var(--shadow-color);
+		}
+
+		.history-content {
+			flex: 1;
+
+			h4 {
+				margin: 0 0 0.5rem 0;
+				color: var(--text-primary);
+				font-weight: 600;
+				font-size: 0.9rem;
 			}
 
-			.message-item {
-				.message-header {
-					@include flex-between;
-					margin-bottom: 0.5rem;
+			.history-description {
+				margin: 0 0 0.5rem 0;
+				color: var(--text-secondary);
+				font-size: 0.8rem;
+				line-height: 1.4;
+			}
 
-					h4 {
-						margin: 0;
-						font-weight: 600;
-						color: var(--text-primary);
-					}
+			.history-date {
+				margin: 0;
+				color: var(--text-secondary);
+				font-size: 0.75rem;
+				font-weight: 500;
+			}
+		}
 
-					.message-time {
-						font-size: 0.875rem;
-						color: var(--text-secondary);
-					}
+		.history-icon {
+			margin-left: 1rem;
+
+			mat-icon {
+				font-size: 1.5rem;
+				width: 1.5rem;
+				height: 1.5rem;
+
+				&.critical-icon {
+					color: var(--medical-red);
 				}
 
-				.message-preview {
-					margin: 0 0 1rem;
-					color: var(--text-secondary);
-					line-height: 1.5;
+				&.warning-icon {
+					color: var(--medical-orange);
 				}
 
-				.message-actions {
-					@include flex-between;
+				&.alert-icon {
+					color: var(--warning-color);
+				}
 
-					.unread-indicator {
-						color: var(--medical-blue);
-						font-size: 0.75rem;
-					}
+				&.info-icon {
+					color: var(--medical-blue);
 				}
 			}
 		}
 	}
+}
 
-	// Medical status colors
-	.status-critical {
-		color: var(--medical-red);
-		background: rgba(244, 67, 54, 0.1);
-		padding: 0.25rem 0.5rem;
-		border-radius: 12px;
-		font-weight: 500;
+// Lab Reports Section
+.lab-reports-section {
+	@include card-style;
+	padding: 1.5rem;
+
+	.section-header {
+		@include flex-between;
+		margin-bottom: 1.5rem;
+
+		h3 {
+			margin: 0;
+			color: var(--text-primary);
+			font-weight: 600;
+		}
+
+		button {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+		}
 	}
 
-	.status-warning {
-		color: var(--medical-orange);
-		background: rgba(255, 152, 0, 0.1);
-		padding: 0.25rem 0.5rem;
-		border-radius: 12px;
-		font-weight: 500;
+	.reports-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
 	}
 
-	.status-stable {
-		color: var(--medical-green);
-		background: rgba(76, 175, 80, 0.1);
-		padding: 0.25rem 0.5rem;
+	.report-item {
+		padding: 1rem;
+		background: var(--background-color);
 		border-radius: 12px;
-		font-weight: 500;
+		border: 1px solid var(--border-color);
+		transition: all 0.3s ease;
+
+		&:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px var(--shadow-color);
+		}
+
+		.report-content {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+
+		.report-header {
+			display: flex;
+			align-items: center;
+			gap: 1rem;
+			flex: 1;
+
+			mat-icon {
+				font-size: 1.5rem;
+				width: 1.5rem;
+				height: 1.5rem;
+
+				&.status-critical {
+					color: var(--medical-red);
+				}
+
+				&.status-warning {
+					color: var(--medical-orange);
+				}
+
+				&.status-stable {
+					color: var(--medical-green);
+				}
+			}
+
+			.report-info {
+				flex: 1;
+
+				.test-name {
+					font-weight: 600;
+					color: var(--text-primary);
+					font-size: 0.9rem;
+					margin-bottom: 0.25rem;
+				}
+
+				.report-date {
+					margin: 0.25rem 0;
+					color: var(--text-secondary);
+					font-size: 0.75rem;
+				}
+
+				.report-doctor {
+					margin: 0;
+					color: var(--text-secondary);
+					font-size: 0.7rem;
+				}
+			}
+		}
+
+		.report-status {
+			span {
+				padding: 0.25rem 0.75rem;
+				border-radius: 12px;
+				font-size: 0.7rem;
+				font-weight: 500;
+
+				&.status-critical {
+					color: var(--medical-red);
+					background: rgba(244, 67, 54, 0.1);
+				}
+
+				&.status-warning {
+					color: var(--medical-orange);
+					background: rgba(255, 152, 0, 0.1);
+				}
+
+				&.status-stable {
+					color: var(--medical-green);
+					background: rgba(76, 175, 80, 0.1);
+				}
+			}
+		}
+	}
+}
+
+// No Data State
+.no-data {
+	text-align: center;
+	padding: 2rem;
+	color: var(--text-secondary);
+
+	mat-icon {
+		font-size: 3rem;
+		width: 3rem;
+		height: 3rem;
+		margin-bottom: 1rem;
+		opacity: 0.5;
 	}
 
-	.status-info {
-		color: var(--medical-blue);
-		background: rgba(66, 153, 237, 0.1);
-		padding: 0.25rem 0.5rem;
-		border-radius: 12px;
-		font-weight: 500;
+	p {
+		margin: 0;
+		font-style: italic;
+		font-size: 0.875rem;
+	}
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+	.dashboard-container {
+		padding: 1rem;
+	}
+
+	.metrics-grid {
+		grid-template-columns: 1fr;
+		gap: 1rem;
+	}
+
+	.stats-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.content-grid {
+		grid-template-columns: 1fr;
+		gap: 1rem;
+	}
+
+	.medical-history-section,
+	.lab-reports-section {
+
+		.history-item,
+		.report-item {
+			flex-direction: column;
+			text-align: center;
+			gap: 1rem;
+
+			.history-icon,
+			.report-status {
+				margin-left: 0;
+			}
+		}
+	}
+
+	.chart-section {
+		padding: 1rem;
+
+		.chart-container {
+			height: 250px;
+		}
+	}
+}
+
+@media (max-width: 480px) {
+	.stats-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.metric-card .metric-header {
+		flex-direction: column;
+		text-align: center;
+		gap: 0.5rem;
 	}
 }
 
@@ -649,14 +708,14 @@
 			background: linear-gradient(135deg, var(--medical-navy), var(--primary-color));
 		}
 
-		.medical-table {
-			.mat-mdc-header-cell {
-				background: var(--primary-color);
-			}
+		.metric-card {
+			background: var(--surface-color);
+			border: 1px solid var(--border-color);
 		}
 
-		.message-card.unread {
-			border-left-color: var(--medical-blue);
+		.chart-card {
+			background: var(--surface-color);
+			border: 1px solid var(--border-color);
 		}
 	}
 }
@@ -666,9 +725,8 @@
 	.patient-dashboard {
 		.dashboard-header {
 			padding: 1.5rem 0;
-			margin-bottom: 1.5rem; // Reduce spacing on mobile
 
-			.patient-welcome {
+			.user-welcome {
 				flex-direction: column;
 				gap: 1.5rem;
 				text-align: center;
@@ -679,56 +737,36 @@
 
 				.quick-actions {
 					justify-content: center;
-					flex-wrap: wrap;
 				}
 			}
 		}
 
-		.stats-section {
-			margin-top: 1rem; // Reduce top margin on mobile
-		}
-
-		.stats-grid {
+		.metrics-grid {
 			grid-template-columns: 1fr;
 			gap: 1rem;
-		}
-
-		.charts-grid {
-			grid-template-columns: 1fr;
-			gap: 1rem;
-		}
-
-		.history-cards {
-			grid-template-columns: 1fr;
 		}
 
 		.tab-header {
 			flex-direction: column;
-			align-items: stretch;
-
-			.header-actions {
-				flex-direction: column;
-
-				.search-field {
-					min-width: auto;
-					width: 100%;
-				}
-			}
+			gap: 1rem;
+			text-align: center;
 		}
 
-		.medical-table {
-
-			.mat-mdc-cell,
-			.mat-mdc-header-cell {
-				padding: 0.5rem;
-				font-size: 0.875rem;
-			}
+		.message-summary {
+			flex-direction: column;
+			text-align: center;
 		}
+	}
+}
 
+@media (max-width: 480px) {
+	.patient-dashboard {
 		.dashboard-content {
-			.container {
-				padding: 0 1rem;
-			}
+			padding: 1rem 0;
+		}
+
+		.container {
+			padding: 0 1rem;
 		}
 
 		.welcome-title {
@@ -737,40 +775,6 @@
 
 		.section-title {
 			font-size: 1.25rem;
-		}
-
-		.stat-value {
-			font-size: 2rem !important;
-		}
-	}
-}
-
-@media (max-width: 480px) {
-	.patient-dashboard {
-		.dashboard-header {
-			margin-bottom: 1rem; // Further reduce spacing on small mobile
-		}
-
-		.stats-section {
-			margin-top: 0.5rem;
-		}
-
-		.dashboard-content {
-			.container {
-				padding: 0 1rem;
-			}
-		}
-
-		.welcome-title {
-			font-size: 1.25rem !important;
-		}
-
-		.section-title {
-			font-size: 1rem;
-		}
-
-		.stat-value {
-			font-size: 1.5rem !important;
 		}
 	}
 }

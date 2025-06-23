@@ -1,16 +1,18 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { MedicalHistoryService } from '../../../core/services/medical-history.service';
 import { LabReportService } from '../../../core/services/lab-report.service';
-import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
-import { LabReportDto, MedicalHistoryDto, MessageDto, PatientDashboardData, HealthTrend } from '../../../core/models';
 import { DashboardService } from '../../../core/services/dashboard.service';
-import { Subject, takeUntil } from 'rxjs';
 import { ThemeService } from '../../../core/services/theme.service';
+import { MedicalHistoryDto } from '../../../core/models/medical-history.model';
+import { LabReportDto } from '../../../core/models/lab-report.model';
+import { PatientDashboardData } from '../../../core/models';
+import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
+import { Subject, takeUntil, forkJoin } from 'rxjs';
 
 @Component({
 	selector: 'app-dashboard',
@@ -18,20 +20,25 @@ import { MatTableDataSource } from '@angular/material/table';
 	templateUrl: './dashboard.component.html',
 	styleUrls: ['./dashboard.component.scss']
 })
-
 export class PatientDashboardComponent implements OnInit, OnDestroy {
 	@ViewChild(MatPaginator) paginator!: MatPaginator;
 	@ViewChild(MatSort) sort!: MatSort;
 
 	private destroy$ = new Subject<void>();
 
-	// **DATA FROM BACKEND**
+	// Core data properties
+	currentUser: any;
 	dashboardData: PatientDashboardData | null = null;
-	isLoading = true;
+	medicalHistories: MedicalHistoryDto[] = [];
+	recentLabReports: LabReportDto[] = [];
+
+	// UI state
+	loading = false;
 	isDarkMode = false;
 	error: string | null = null;
+	unreadMessages = 0;
 
-	// **DASHBOARD STATISTICS**
+	// Dashboard metrics derived from actual data
 	dashboardStats = {
 		totalLabReports: 0,
 		criticalAlerts: 0,
@@ -41,66 +48,82 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 		healthScore: 85
 	};
 
-	// **TABLE DATA SOURCES**
-	labReportsDataSource = new MatTableDataSource<LabReportDto>();
-	appointmentsDataSource = new MatTableDataSource<any>();
-	labReportsDisplayedColumns: string[] = ['testPerformed', 'testedBy', 'testedDate', 'status', 'actions'];
-	appointmentsDisplayedColumns: string[] = ['date', 'time', 'doctor', 'department', 'type', 'status'];
+	// Health metrics from dashboard data
+	healthMetrics = {
+		bloodPressure: {
+			systolic: 0,
+			diastolic: 0,
+			status: 'Loading...'
+		},
+		heartRate: {
+			value: 0,
+			status: 'Loading...'
+		},
+		weight: {
+			value: 0,
+			unit: 'kg',
+			trend: 'Loading...'
+		},
+		temperature: {
+			value: 0,
+			unit: '°C',
+			status: 'Loading...'
+		}
+	};
 
-	// **HEALTH TRENDS CHART**
-	public healthTrendsChartType: ChartType = 'line';
-	public healthTrendsChartData: ChartData<'line'> = {
-		labels: [],
+	// Table data sources
+	labReportsDataSource = new MatTableDataSource<LabReportDto>();
+	labReportsDisplayedColumns: string[] = ['testPerformed', 'testedBy', 'testedDate', 'status', 'actions'];
+
+	// Chart configuration
+	chartType: ChartType = 'line';
+	chartData: ChartData<'line'> = {
+		labels: ['Last 30 Days', 'Last 20 Days', 'Last 10 Days', 'Today'],
 		datasets: [
 			{
 				label: 'Blood Pressure (Systolic)',
 				data: [],
-				borderColor: '#f44336',
-				backgroundColor: 'rgba(244, 67, 54, 0.1)',
-				tension: 0.4,
-				fill: false
+				borderColor: '#4299ed',
+				backgroundColor: 'rgba(66, 153, 237, 0.1)',
+				tension: 0.4
 			},
 			{
 				label: 'Heart Rate',
 				data: [],
 				borderColor: '#4caf50',
 				backgroundColor: 'rgba(76, 175, 80, 0.1)',
-				tension: 0.4,
-				fill: false
-			},
-			{
-				label: 'Weight',
-				data: [],
-				borderColor: '#2196f3',
-				backgroundColor: 'rgba(33, 150, 243, 0.1)',
-				tension: 0.4,
-				fill: false
+				tension: 0.4
 			}
 		]
 	};
 
-	public chartOptions: ChartConfiguration['options'] = {
+	chartOptions: ChartConfiguration['options'] = {
 		responsive: true,
 		maintainAspectRatio: false,
 		plugins: {
 			legend: {
-				position: 'bottom'
+				display: true,
+				position: 'top'
 			}
 		},
 		scales: {
 			y: {
-				beginAtZero: true
+				beginAtZero: false
 			}
 		}
 	};
 
 	constructor(
-		private dashboardService: DashboardService,
 		private authService: AuthService,
-		private themeService: ThemeService
+		private medicalHistoryService: MedicalHistoryService,
+		private labReportService: LabReportService,
+		private dashboardService: DashboardService,
+		private themeService: ThemeService,
+		private router: Router
 	) { }
 
 	ngOnInit(): void {
+		this.currentUser = this.authService.getCurrentUser();
 		this.subscribeToTheme();
 		this.loadDashboardData();
 	}
@@ -121,7 +144,6 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 
 	private updateChartTheme(): void {
 		if (this.chartOptions && this.chartOptions.plugins) {
-			// Update chart colors based on theme
 			const textColor = this.isDarkMode ? '#ffffff' : '#212121';
 			this.chartOptions.plugins.legend = {
 				...this.chartOptions.plugins.legend,
@@ -133,210 +155,243 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 	}
 
 	private loadDashboardData(): void {
-		const currentUser = this.authService.getCurrentUser();
-
-		if (!currentUser) {
+		if (!this.currentUser?.id) {
 			this.error = 'User not authenticated';
-			this.isLoading = false;
 			return;
 		}
 
-		this.isLoading = true;
+		this.loading = true;
 		this.error = null;
 
-		// **FETCH ALL DATA FROM BACKEND**
-		this.dashboardService.getPatientDashboardData(currentUser.id)
+		// Load dashboard data using the PatientDashboardData interface
+		this.dashboardService.getPatientDashboardData(this.currentUser.id)
 			.pipe(takeUntil(this.destroy$))
 			.subscribe({
-				next: (data) => {
+				next: (data: PatientDashboardData) => {
 					this.dashboardData = data;
+					this.medicalHistories = data.medicalHistory || [];
+					this.recentLabReports = (data.labReports || [])
+						.sort((a, b) => new Date(b.testedDate).getTime() - new Date(a.testedDate).getTime())
+						.slice(0, 3);
+
+					this.updateHealthMetrics();
 					this.updateDashboardStats();
 					this.setupDataSources();
-					this.loadHealthTrends();
-					this.isLoading = false;
-					console.log('Patient dashboard data loaded:', data);
+					this.updateChartData();
+					this.loading = false;
 				},
 				error: (error) => {
+					console.error('Error loading dashboard data:', error);
 					this.error = 'Failed to load dashboard data. Please try again.';
-					this.isLoading = false;
-					console.error('Error loading patient dashboard:', error);
+					this.loading = false;
 				}
 			});
 	}
 
-	private loadHealthTrends(): void {
-		const currentUser = this.authService.getCurrentUser();
-		if (!currentUser) return;
-
-		// Load health trends from backend
-		this.dashboardService.getPatientHealthTrends(currentUser.id, 30)
-			.pipe(takeUntil(this.destroy$))
-			.subscribe({
-				next: (trends) => {
-					this.updateHealthTrendsChart(trends);
+	private updateHealthMetrics(): void {
+		if (this.dashboardData?.healthMetrics) {
+			const metrics = this.dashboardData.healthMetrics;
+			this.healthMetrics = {
+				bloodPressure: {
+					systolic: metrics.bloodPressure?.systolic || 120,
+					diastolic: metrics.bloodPressure?.diastolic || 80,
+					status: metrics.bloodPressure?.status || 'Normal'
 				},
-				error: (error) => {
-					console.error('Error loading health trends:', error);
-					// Use mock data as fallback
-					this.updateHealthTrendsChartWithMockData();
+				heartRate: {
+					value: metrics.heartRate?.value || 72,
+					status: metrics.heartRate?.status || 'Normal'
+				},
+				weight: {
+					value: metrics.weight?.value || 70,
+					unit: metrics.weight?.unit || 'kg',
+					trend: metrics.weight?.trend || 'Stable'
+				},
+				temperature: {
+					value: metrics.temperature?.value || 36.5,
+					unit: metrics.temperature?.unit || '°C',
+					status: metrics.temperature?.status || 'Normal'
 				}
-			});
-	}
-
-	private updateHealthTrendsChart(trends: any[]): void {
-		if (trends && trends.length > 0) {
-			this.healthTrendsChartData.labels = trends.map((_, index) =>
-				new Date(Date.now() - (trends.length - index - 1) * 24 * 60 * 60 * 1000).toLocaleDateString()
-			);
-
-			this.healthTrendsChartData.datasets[0].data = trends.map(t => t.bloodPressure.systolic);
-			this.healthTrendsChartData.datasets[1].data = trends.map(t => t.heartRate.value);
-			this.healthTrendsChartData.datasets[2].data = trends.map(t => t.weight.value);
-		} else {
-			this.updateHealthTrendsChartWithMockData();
+			};
 		}
-	}
-
-	private updateHealthTrendsChartWithMockData(): void {
-		// Mock health trends data as fallback
-		const mockTrends: HealthTrend[] = [
-			{ date: '2024-12-01', bloodPressureSystolic: 120, bloodPressureDiastolic: 80, heartRate: 72, weight: 70, temperature: 36.5 },
-			{ date: '2024-12-08', bloodPressureSystolic: 118, bloodPressureDiastolic: 78, heartRate: 75, weight: 69.5, temperature: 36.6 },
-			{ date: '2024-12-15', bloodPressureSystolic: 122, bloodPressureDiastolic: 82, heartRate: 70, weight: 70.2, temperature: 36.4 },
-			{ date: '2024-12-22', bloodPressureSystolic: 119, bloodPressureDiastolic: 79, heartRate: 73, weight: 69.8, temperature: 36.5 }
-		];
-
-		this.healthTrendsChartData.labels = mockTrends.map(t => t.date);
-		this.healthTrendsChartData.datasets[0].data = mockTrends.map(t => t.bloodPressureSystolic);
-		this.healthTrendsChartData.datasets[1].data = mockTrends.map(t => t.heartRate);
-		this.healthTrendsChartData.datasets[2].data = mockTrends.map(t => t.weight);
 	}
 
 	private updateDashboardStats(): void {
 		if (this.dashboardData) {
 			this.dashboardStats = {
-				totalLabReports: this.dashboardData.labReports.length,
+				totalLabReports: this.dashboardData.labReports?.length || 0,
 				criticalAlerts: this.getCriticalAlerts().length,
-				unreadMessages: this.getUnreadMessages().length,
-				upcomingAppointments: this.dashboardData.upcomingAppointments.length,
-				completedAppointments: this.getCompletedAppointments().length,
+				unreadMessages: this.dashboardData.messages?.filter(m => !m.isRead).length || 0,
+				upcomingAppointments: this.dashboardData.upcomingAppointments?.length || 0,
+				completedAppointments: this.dashboardData.upcomingAppointments?.filter(a => a.status === 'Completed').length || 0,
 				healthScore: this.calculateHealthScore()
 			};
+			this.unreadMessages = this.dashboardStats.unreadMessages;
 		}
 	}
 
 	private setupDataSources(): void {
-		if (this.dashboardData) {
-			this.labReportsDataSource.data = this.dashboardData.labReports;
-			this.appointmentsDataSource.data = this.dashboardData.upcomingAppointments;
+		this.labReportsDataSource.data = this.recentLabReports;
 
-			// Setup pagination after view init
-			setTimeout(() => {
-				if (this.paginator) {
-					this.labReportsDataSource.paginator = this.paginator;
-				}
-				if (this.sort) {
-					this.labReportsDataSource.sort = this.sort;
-				}
-			});
+		setTimeout(() => {
+			if (this.paginator) {
+				this.labReportsDataSource.paginator = this.paginator;
+			}
+			if (this.sort) {
+				this.labReportsDataSource.sort = this.sort;
+			}
+		});
+	}
+
+	private updateChartData(): void {
+		// Create chart data from recent lab reports
+		if (this.recentLabReports.length > 0) {
+			const labels = this.recentLabReports.map(report =>
+				new Date(report.testedDate).toLocaleDateString()
+			).reverse();
+
+			const systolicData = this.recentLabReports.map(report =>
+				report.heartBeatRatio || 120
+			).reverse();
+
+			const heartRateData = this.recentLabReports.map(report =>
+				report.heartBeatRatio || 72
+			).reverse();
+
+			this.chartData.labels = labels;
+			this.chartData.datasets[0].data = systolicData;
+			this.chartData.datasets[1].data = heartRateData;
 		}
 	}
 
-	// **COMPUTED PROPERTIES**
-	get recentLabReports(): LabReportDto[] {
-		return this.dashboardData?.labReports?.slice(0, 5) || [];
-	}
-
-	get unreadMessages(): MessageDto[] {
-		return this.getUnreadMessages();
-	}
-
-	get criticalAlerts(): LabReportDto[] {
-		return this.getCriticalAlerts();
-	}
-
-	private getUnreadMessages(): MessageDto[] {
-		return this.dashboardData?.messages?.filter(m => !m.isRead) || [];
-	}
-
 	private getCriticalAlerts(): LabReportDto[] {
-		return this.dashboardData?.labReports?.filter(report =>
-			report.cholesterolLevel > 240 ||
-			report.phLevel < 7.0 ||
-			report.phLevel > 7.8
-		) || [];
-	}
-
-	private getCompletedAppointments(): any[] {
-		return this.dashboardData?.upcomingAppointments?.filter(a => a.status === 'Completed') || [];
+		return this.recentLabReports.filter(report => this.isLabReportCritical(report));
 	}
 
 	private calculateHealthScore(): number {
-		if (!this.dashboardData?.healthMetrics) return 85;
+		if (!this.healthMetrics) return 85;
 
 		let score = 100;
-		const metrics = this.dashboardData.healthMetrics;
-
-		// Deduct points for abnormal values
-		if (metrics.bloodPressure.status !== 'Normal') score -= 15;
-		if (metrics.heartRate.status !== 'Normal') score -= 10;
-		if (metrics.temperature.status !== 'Normal') score -= 20;
+		if (this.healthMetrics.bloodPressure.status !== 'Normal') score -= 15;
+		if (this.healthMetrics.heartRate.status !== 'Normal') score -= 10;
+		if (this.healthMetrics.temperature.status !== 'Normal') score -= 20;
 
 		return Math.max(score, 0);
 	}
 
-	// **USER ACTIONS**
+	// Navigation methods
+	public scheduleAppointment(): void {
+		this.router.navigate(['/appointments/schedule']);
+	}
+
+	public navigateToMessages(): void {
+		this.router.navigate(['/messages']);
+	}
+
+	public navigateToMedicalHistory(): void {
+		this.router.navigate(['/medical-history']);
+	}
+
+	public navigateToLabReports(): void {
+		this.router.navigate(['/lab-reports']);
+	}
+
 	public refreshData(): void {
 		this.loadDashboardData();
 	}
 
-	public viewLabReport(reportId: number): void {
-		console.log('Viewing lab report:', reportId);
-		// Navigate to lab report details
-	}
-
-	public viewMedicalHistory(): void {
-		console.log('Viewing medical history');
-		// Navigate to medical history
-	}
-
-	public composeMessage(): void {
-		console.log('Composing message');
-		// Navigate to message composer
-	}
-
-	public scheduleAppointment(): void {
-		console.log('Scheduling appointment');
-		// Navigate to appointment scheduler
-	}
-
-	public viewAppointment(appointment: any): void {
-		console.log('Viewing appointment:', appointment);
-		// Navigate to appointment details
-	}
-
-	public getLabStatusClass(report: LabReportDto): string {
-		if (report.cholesterolLevel > 240 || report.phLevel < 7.0 || report.phLevel > 7.8) {
+	// Lab report utility methods
+	public getLabReportStatusClass(report: LabReportDto): string {
+		if (this.isLabReportCritical(report)) {
 			return 'status-critical';
+		} else if (this.isLabReportWarning(report)) {
+			return 'status-warning';
 		}
 		return 'status-stable';
 	}
 
-	public getLabStatusText(report: LabReportDto): string {
-		if (report.cholesterolLevel > 240 || report.phLevel < 7.0 || report.phLevel > 7.8) {
-			return 'Critical';
-		}
-		return 'Normal';
+	public getLabReportIcon(report: LabReportDto): string {
+		const testType = report.testPerformed.toLowerCase();
+		if (testType.includes('blood')) return 'bloodtype';
+		if (testType.includes('urine')) return 'local_hospital';
+		if (testType.includes('x-ray') || testType.includes('scan')) return 'medical_services';
+		if (testType.includes('ecg') || testType.includes('heart')) return 'favorite';
+		return 'science';
 	}
 
-	public getAppointmentStatusClass(status: string): string {
-		switch (status?.toLowerCase()) {
-			case 'scheduled': return 'status-info';
-			case 'in progress': return 'status-warning';
-			case 'completed': return 'status-stable';
-			case 'cancelled': return 'status-critical';
-			default: return 'status-info';
+	public isLabReportCritical(report: LabReportDto): boolean {
+		return (
+			report.cholesterolLevel > 240 ||
+			report.sucroseLevel > 200 ||
+			report.whiteBloodCellsRatio > 11000 ||
+			report.whiteBloodCellsRatio < 4000 ||
+			report.heartBeatRatio > 100 ||
+			report.heartBeatRatio < 60
+		);
+	}
+
+	public isLabReportWarning(report: LabReportDto): boolean {
+		return (
+			(report.cholesterolLevel > 200 && report.cholesterolLevel <= 240) ||
+			(report.sucroseLevel > 140 && report.sucroseLevel <= 200) ||
+			(report.heartBeatRatio > 90 && report.heartBeatRatio <= 100) ||
+			(report.heartBeatRatio >= 60 && report.heartBeatRatio < 70)
+		);
+	}
+
+	public getHealthStatusClass(status: string): string {
+		switch (status.toLowerCase()) {
+			case 'normal':
+				return 'status-stable';
+			case 'high':
+			case 'elevated':
+				return 'status-warning';
+			case 'critical':
+			case 'low':
+				return 'status-critical';
+			default:
+				return 'status-info';
 		}
+	}
+
+	// Medical history helper methods
+	public getHistoryTitle(history: MedicalHistoryDto): string {
+		if (history.frequentlyOccurringDisease) {
+			return `Condition: ${history.frequentlyOccurringDisease}`;
+		}
+		if (history.allergies) {
+			return `Allergies: ${history.allergies}`;
+		}
+		return 'Medical History Update';
+	}
+
+	public getHistoryDescription(history: MedicalHistoryDto): string {
+		const conditions = [];
+		if (history.hasAsthma) conditions.push('Asthma');
+		if (history.hasBloodPressure) conditions.push('High Blood Pressure');
+		if (history.hasCholesterol) conditions.push('High Cholesterol');
+		if (history.hasDiabetes) conditions.push('Diabetes');
+		if (history.hasHeartDisease) conditions.push('Heart Disease');
+
+		if (conditions.length > 0) {
+			return `Active conditions: ${conditions.join(', ')}`;
+		}
+		return history.personalHistory || 'General medical history entry';
+	}
+
+	public getHistoryIcon(history: MedicalHistoryDto): string {
+		if (history.hasHeartDisease) return 'favorite';
+		if (history.hasAsthma) return 'air';
+		if (history.hasBloodPressure) return 'monitor_heart';
+		if (history.hasDiabetes) return 'bloodtype';
+		if (history.allergies) return 'warning';
+		return 'medical_services';
+	}
+
+	public getHistoryIconClass(history: MedicalHistoryDto): string {
+		if (history.hasHeartDisease || history.hasDiabetes) return 'critical-icon';
+		if (history.hasBloodPressure || history.hasAsthma) return 'warning-icon';
+		if (history.allergies) return 'alert-icon';
+		return 'info-icon';
 	}
 
 	public applyFilter(event: Event): void {
@@ -346,5 +401,14 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 		if (this.labReportsDataSource.paginator) {
 			this.labReportsDataSource.paginator.firstPage();
 		}
+	}
+
+	// Getters for template compatibility
+	get isLoading(): boolean {
+		return this.loading;
+	}
+
+	get medicalHistory(): MedicalHistoryDto[] {
+		return this.medicalHistories;
 	}
 }
