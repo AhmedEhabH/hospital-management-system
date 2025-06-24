@@ -69,5 +69,69 @@ namespace HospitalManagement.API.Repositories.Implementations
             return await _context.Users.CountAsync(u => u.UserType == userType);
         }
 
+        //public async Task<int> CountActiveUsersAsync()
+        //{
+        //    // Example: users who logged in in the last 30 minutes
+        //    var since = DateTime.UtcNow.AddMinutes(-30);
+        //    return await _context.Users.CountAsync(u => u.LastLogin >= since);
+        //}
+
+        //public async Task<int> CountLoginsTodayAsync()
+        //{
+        //    var today = DateTime.UtcNow.Date;
+        //    return await _context.Users.CountAsync(u => u.LastLogin >= today);
+        //}
+
+        //public async Task<int> CountRegistrationsThisMonthAsync()
+        //{
+        //    var firstOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+        //    return await _context.Users.CountAsync(u => u.CreatedAt >= firstOfMonth);
+        //}
+
+        public async Task<int> CountActiveUsersAsync()
+        {
+            try
+            {
+                var since = DateTime.UtcNow.AddMinutes(-30);
+                return await _context.Users
+                    .CountAsync(u => u.LastLogin.HasValue && u.LastLogin >= since);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error counting active users");
+                return 0;
+            }
+        }
+
+        public async Task<int> CountLoginsTodayAsync()
+        {
+            try
+            {
+                var today = DateTime.UtcNow.Date;
+                return await _context.Users
+                    .CountAsync(u => u.LastLogin.HasValue && u.LastLogin >= today);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error counting today's logins");
+                return 0;
+            }
+        }
+
+        public async Task<int> CountRegistrationsThisMonthAsync()
+        {
+            try
+            {
+                var firstOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+                return await _context.Users.CountAsync(u => u.CreatedAt >= firstOfMonth);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error counting monthly registrations");
+                return 0;
+            }
+        }
+
+
     }
 }

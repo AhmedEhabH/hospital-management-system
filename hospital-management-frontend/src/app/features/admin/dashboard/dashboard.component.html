@@ -154,12 +154,12 @@
 
 				<div class="alerts-grid">
 					<mat-card *ngFor="let alert of systemAlerts" class="alert-card medical-card"
-						[class]="getAlertClass(alert.type)" [class.resolved]="alert.resolved">
+						[class]="getAlertClass(alert.type)" [class.resolved]="alert.isRead">
 						<mat-card-content>
 							<div class="alert-header">
 								<div class="alert-info">
 									<mat-icon class="alert-icon">
-										{{ alert.type === 'Critical' ? 'error' : alert.type === 'Warning' ? 'warning' :
+										{{ alert.type === 'error' ? 'error' : alert.type === 'warning' ? 'warning' :
 										'info' }}
 									</mat-icon>
 									<div class="alert-details">
@@ -167,7 +167,7 @@
 										<div class="alert-time">{{ alert.timestamp | date:'medium' }}</div>
 									</div>
 								</div>
-								<button mat-icon-button *ngIf="!alert.resolved" (click)="resolveAlert(alert)"
+								<button mat-icon-button *ngIf="!alert.isRead" (click)="resolveAlert(alert)"
 									matTooltip="Mark as resolved">
 									<mat-icon>check</mat-icon>
 								</button>

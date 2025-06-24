@@ -21,11 +21,11 @@
 						<mat-icon>event</mat-icon>
 						Today's Schedule
 					</button>
-					<button mat-icon-button [matBadge]="dashboardStats.unreadMessages" matBadgeColor="warn"
+					<button mat-icon-button [matBadge]="DashboardStatsDto.unreadMessages" matBadgeColor="warn"
 						(click)="navigateToMessages()">
 						<mat-icon>mail</mat-icon>
 					</button>
-					<button mat-icon-button [matBadge]="dashboardStats.pendingReports" matBadgeColor="warn"
+					<button mat-icon-button [matBadge]="DashboardStatsDto.pendingReports" matBadgeColor="warn"
 						(click)="navigateToLabReports()">
 						<mat-icon>science</mat-icon>
 					</button>
@@ -62,7 +62,7 @@
 								<mat-icon class="stat-icon patients-icon">people</mat-icon>
 								<span class="stat-label">Total Patients</span>
 							</div>
-							<div class="stat-value">{{ dashboardStats.totalPatients }}</div>
+							<div class="stat-value">{{ DashboardStatsDto.totalPatients }}</div>
 							<div class="stat-change positive">
 								<mat-icon>trending_up</mat-icon>
 								+5% from last week
@@ -77,10 +77,10 @@
 								<mat-icon class="stat-icon appointments-icon">event</mat-icon>
 								<span class="stat-label">Today's Appointments</span>
 							</div>
-							<div class="stat-value">{{ dashboardStats.todayAppointments }}</div>
+							<div class="stat-value">{{ DashboardStatsDto.todayAppointments }}</div>
 							<div class="stat-change neutral">
 								<mat-icon>schedule</mat-icon>
-								{{ dashboardStats.completedToday }} completed
+								{{ DashboardStatsDto.completedToday }} completed
 							</div>
 						</mat-card-content>
 					</mat-card>
@@ -92,7 +92,7 @@
 								<mat-icon class="stat-icon critical-icon">warning</mat-icon>
 								<span class="stat-label">Critical Patients</span>
 							</div>
-							<div class="stat-value">{{ dashboardStats.criticalPatients }}</div>
+							<div class="stat-value">{{ DashboardStatsDto.criticalPatients }}</div>
 							<div class="stat-change critical">
 								<mat-icon>priority_high</mat-icon>
 								Requires immediate attention
@@ -107,7 +107,7 @@
 								<mat-icon class="stat-icon reports-icon">assignment</mat-icon>
 								<span class="stat-label">Pending Reports</span>
 							</div>
-							<div class="stat-value">{{ dashboardStats.pendingReports }}</div>
+							<div class="stat-value">{{ DashboardStatsDto.pendingReports }}</div>
 							<div class="stat-change warning">
 								<mat-icon>pending_actions</mat-icon>
 								Review required

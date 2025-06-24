@@ -121,15 +121,15 @@
 		<div class="stats-grid">
 			<div class="stat-card" (click)="navigateToLabReports()">
 				<div class="stat-content">
-					<div class="stat-number">{{ dashboardStats.totalLabReports }}</div>
+					<div class="stat-number">{{ DashboardStatsDto.totalLabReports }}</div>
 					<div class="stat-label">Lab Reports</div>
 				</div>
 				<mat-icon class="stat-icon">science</mat-icon>
 			</div>
 
-			<div class="stat-card critical" *ngIf="dashboardStats.criticalAlerts > 0">
+			<div class="stat-card critical" *ngIf="DashboardStatsDto.criticalAlerts > 0">
 				<div class="stat-content">
-					<div class="stat-number">{{ dashboardStats.criticalAlerts }}</div>
+					<div class="stat-number">{{ DashboardStatsDto.criticalAlerts }}</div>
 					<div class="stat-label">Critical Alerts</div>
 				</div>
 				<mat-icon class="stat-icon">warning</mat-icon>
@@ -137,7 +137,7 @@
 
 			<div class="stat-card" (click)="navigateToMessages()">
 				<div class="stat-content">
-					<div class="stat-number">{{ dashboardStats.unreadMessages }}</div>
+					<div class="stat-number">{{ DashboardStatsDto.unreadMessages }}</div>
 					<div class="stat-label">Unread Messages</div>
 				</div>
 				<mat-icon class="stat-icon">mail</mat-icon>
@@ -145,7 +145,7 @@
 
 			<div class="stat-card">
 				<div class="stat-content">
-					<div class="stat-number">{{ dashboardStats.healthScore }}%</div>
+					<div class="stat-number">{{ DashboardStatsDto.healthScore }}%</div>
 					<div class="stat-label">Health Score</div>
 				</div>
 				<mat-icon class="stat-icon">health_and_safety</mat-icon>

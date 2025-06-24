@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
+import { forkJoin, Subject, takeUntil } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -7,37 +7,18 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MessageService, Message } from '../../../core/services/message.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
-
-interface SystemMetrics {
-	totalUsers: number;
-	activeUsers: number;
-	totalDoctors: number;
-	totalPatients: number;
-	totalAdmins: number;
-	systemUptime: string;
-	serverLoad: number;
-	databaseSize: string;
-	dailyLogins: number;
-	monthlyRegistrations: number;
-}
-
-interface UserActivity {
-	id: number;
-	userName: string;
-	userType: string;
-	action: string;
-	timestamp: Date;
-	ipAddress: string;
-	status: 'Success' | 'Failed' | 'Warning';
-}
-
-interface SystemAlert {
-	id: number;
-	type: 'Critical' | 'Warning' | 'Info';
-	message: string;
-	timestamp: Date;
-	resolved: boolean;
-}
+import {
+	DashboardStatsDto,
+	FeedbackDto,
+	HospitalInfoDto,
+	LabReportDto,
+	UserActivityDto,
+	SystemAlert,
+	SystemMetrics,
+	AdminDashboardData,
+	CurrentUser
+} from '../../../core/models';
+import { DashboardService } from '../../../core/services/dashboard.service';
 
 @Component({
 	selector: 'app-admin-dashboard',
@@ -45,15 +26,57 @@ interface SystemAlert {
 	templateUrl: './dashboard.component.html',
 	styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class AdminDashboardComponent implements OnInit, OnDestroy {
 	@ViewChild(MatPaginator) paginator!: MatPaginator;
 	@ViewChild(MatSort) sort!: MatSort;
 
 	private destroy$ = new Subject<void>();
 
-	currentUser: any;
-	isDarkMode = false;
+	// **DATA FROM BACKEND DATABASE**
+	dashboardData: AdminDashboardData | null = null;
 	isLoading = true;
+	isDarkMode = false;
+	error: string | null = null;
+	currentUser: CurrentUser | null = null; // Fixed type
+
+	// **TABLE DATA SOURCES**
+	labReportsDataSource = new MatTableDataSource<LabReportDto>();
+	userActivitiesDataSource = new MatTableDataSource<UserActivityDto>();
+	feedbackDataSource = new MatTableDataSource<FeedbackDto>();
+
+	// **DISPLAY COLUMNS**
+	labReportsDisplayedColumns: string[] = ['patientName', 'testPerformed', 'testedBy', 'testedDate', 'status', 'actions'];
+	userActivitiesDisplayedColumns: string[] = ['userName', 'userType', 'action', 'timestamp', 'status'];
+	feedbackDisplayedColumns: string[] = ['userName', 'emailId', 'comments', 'createdAt', 'actions'];
+
+	// **CHARTS CONFIGURATION**
+	public systemOverviewChartType: ChartType = 'doughnut';
+	public systemOverviewChartData: ChartData<'doughnut'> = {
+		labels: ['Patients', 'Doctors', 'Lab Reports', 'Messages'],
+		datasets: [{
+			data: [0, 0, 0, 0],
+			backgroundColor: [
+				'#4299ed',
+				'#4caf50',
+				'#ff9800',
+				'#9c27b0'
+			],
+			borderWidth: 0
+		}]
+	};
+
+	public monthlyActivityChartType: ChartType = 'line';
+	public monthlyActivityChartData: ChartData<'line'> = {
+		labels: [],
+		datasets: [{
+			label: 'User Activities',
+			data: [],
+			borderColor: '#4299ed',
+			backgroundColor: 'rgba(66, 153, 237, 0.1)',
+			tension: 0.4,
+			fill: true
+		}]
+	};
 
 	// System Metrics
 	systemMetrics: SystemMetrics = {
@@ -70,8 +93,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	};
 
 	// User Activity Data
-	userActivities: UserActivity[] = [];
-	activitiesDataSource = new MatTableDataSource<UserActivity>();
+	userActivities: UserActivityDto[] = [];
+	activitiesDataSource = new MatTableDataSource<UserActivityDto>();
 	activitiesDisplayedColumns: string[] = ['timestamp', 'user', 'userType', 'action', 'ipAddress', 'status'];
 
 	// System Alerts
@@ -145,18 +168,156 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	constructor(
 		private authService: AuthService,
 		private messageService: MessageService,
-		private themeService: ThemeService
+		private themeService: ThemeService,
+		private dashboardService: DashboardService,
 	) { }
 
 	ngOnInit(): void {
 		this.initializeDashboard();
 		this.subscribeToTheme();
-		this.loadMockData();
+		this.loadAdminDashboardData();
 	}
 
 	ngOnDestroy(): void {
 		this.destroy$.next();
 		this.destroy$.complete();
+	}
+
+	private loadAdminDashboardData(): void {
+		this.isLoading = true;
+		this.error = null;
+
+		forkJoin({
+			systemStats: this.dashboardService.getSystemStats(),
+			recentLabReports: this.dashboardService.getCriticalLabReports(),
+			userActivities: this.dashboardService.getRecentUserActivities(20),
+			hospitalInfo: this.dashboardService.getHospitalInfo(),
+			recentFeedback: this.dashboardService.getRecentFeedback()
+		}).pipe(takeUntil(this.destroy$))
+			.subscribe({
+				next: (data) => {
+					this.dashboardData = {
+						systemStats: data.systemStats,
+						recentLabReports: data.recentLabReports.slice(0, 10),
+						recentUserActivities: data.userActivities,
+						hospitalInfo: data.hospitalInfo,
+						recentFeedback: data.recentFeedback.slice(0, 10),
+						criticalAlerts: data.recentLabReports.filter(report =>
+							report.cholesterolLevel > 240 ||
+							report.phLevel < 7.0 ||
+							report.phLevel > 7.8
+						),
+						systemAlerts: this.generateMockSystemAlerts() // Generate mock alerts for now
+					};
+
+					this.setupDataSources();
+					this.updateCharts();
+					this.fillSystemMetrics();
+					this.isLoading = false;
+
+					console.log('Admin dashboard data loaded from database:', this.dashboardData);
+				},
+				error: (error) => {
+					this.error = 'Failed to load admin dashboard data. Please try again.';
+					this.isLoading = false;
+					console.error('Error loading admin dashboard:', error);
+				}
+			});
+	}
+
+	private generateMockSystemAlerts(): SystemAlert[] {
+		return [
+			{
+				id: 1,
+				type: 'warning',
+				message: 'Server maintenance scheduled for tonight at 2:00 AM',
+				timestamp: new Date(Date.now() - 3600000),
+				isRead: false,
+				priority: 'medium'
+			},
+			{
+				id: 2,
+				type: 'info',
+				message: 'New feature: Real-time patient monitoring is now available',
+				timestamp: new Date(Date.now() - 7200000),
+				isRead: false,
+				priority: 'low'
+			},
+			{
+				id: 3,
+				type: 'error',
+				message: 'Database backup failed - manual intervention required',
+				timestamp: new Date(Date.now() - 10800000),
+				isRead: true,
+				priority: 'high'
+			}
+		];
+	}
+
+	private setupDataSources(): void {
+		if (this.dashboardData) {
+			this.labReportsDataSource.data = this.dashboardData.recentLabReports;
+			this.userActivitiesDataSource.data = this.dashboardData.recentUserActivities;
+			this.feedbackDataSource.data = this.dashboardData.recentFeedback;
+			this.systemAlerts = this.dashboardData.systemAlerts;
+
+			// Setup pagination after view init
+			setTimeout(() => {
+				if (this.paginator) {
+					this.labReportsDataSource.paginator = this.paginator;
+				}
+				if (this.sort) {
+					this.labReportsDataSource.sort = this.sort;
+				}
+			});
+		}
+	}
+
+	private updateCharts(): void {
+		if (this.dashboardData) {
+			// Update system overview chart with real data
+			this.systemOverviewChartData.datasets[0].data = [
+				this.dashboardData.systemStats.totalPatients,
+				this.dashboardData.systemStats.totalDoctors,
+				this.dashboardData.systemStats.totalLabReports,
+				this.dashboardData.systemStats.pendingMessages
+			];
+
+			// Update monthly activity chart with real user activity data
+			const last7Days = this.getLast7Days();
+			const activityCounts = this.getActivityCountsForDays(last7Days);
+
+			this.monthlyActivityChartData.labels = last7Days.map(date =>
+				date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+			);
+			this.monthlyActivityChartData.datasets[0].data = activityCounts;
+		}
+	}
+
+	private getLast7Days(): Date[] {
+		const days = [];
+		for (let i = 6; i >= 0; i--) {
+			const date = new Date();
+			date.setDate(date.getDate() - i);
+			days.push(date);
+		}
+		return days;
+	}
+
+	private getActivityCountsForDays(days: Date[]): number[] {
+		if (!this.dashboardData?.recentUserActivities) return new Array(7).fill(0);
+
+		return days.map(day => {
+			const dayStart = new Date(day);
+			dayStart.setHours(0, 0, 0, 0);
+			const dayEnd = new Date(day);
+			dayEnd.setHours(23, 59, 59, 999);
+
+			return this.dashboardData!.recentUserActivities.filter(activity => {
+				const activityDate = new Date(activity.timestamp);
+				return activityDate >= dayStart && activityDate <= dayEnd;
+			}).length;
+		});
 	}
 
 	private initializeDashboard(): void {
@@ -184,100 +345,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		}, 1500);
 	}
 
-	private loadMockData(): void {
-		// Mock system metrics
-		this.systemMetrics = {
-			totalUsers: 180,
-			activeUsers: 145,
-			totalDoctors: 25,
-			totalPatients: 150,
-			totalAdmins: 5,
-			systemUptime: '45 days',
-			serverLoad: 65,
-			databaseSize: '2.4 GB',
-			dailyLogins: 89,
-			monthlyRegistrations: 23
-		};
-
-		// Mock user activities
-		this.userActivities = [
-			{
-				id: 1,
-				userName: 'Dr. Smith',
-				userType: 'Doctor',
-				action: 'Viewed patient record',
-				timestamp: new Date('2024-12-15T10:30:00'),
-				ipAddress: '192.168.1.100',
-				status: 'Success'
-			},
-			{
-				id: 2,
-				userName: 'John Doe',
-				userType: 'Patient',
-				action: 'Updated medical history',
-				timestamp: new Date('2024-12-15T10:25:00'),
-				ipAddress: '192.168.1.101',
-				status: 'Success'
-			},
-			{
-				id: 3,
-				userName: 'Admin User',
-				userType: 'Admin',
-				action: 'System configuration change',
-				timestamp: new Date('2024-12-15T10:20:00'),
-				ipAddress: '192.168.1.102',
-				status: 'Warning'
-			},
-			{
-				id: 4,
-				userName: 'Dr. Johnson',
-				userType: 'Doctor',
-				action: 'Failed login attempt',
-				timestamp: new Date('2024-12-15T10:15:00'),
-				ipAddress: '192.168.1.103',
-				status: 'Failed'
-			}
-		];
-
-		// Mock system alerts
-		this.systemAlerts = [
-			{
-				id: 1,
-				type: 'Warning',
-				message: 'High server load detected (85%)',
-				timestamp: new Date('2024-12-15T10:30:00'),
-				resolved: false
-			},
-			{
-				id: 2,
-				type: 'Info',
-				message: 'Database backup completed successfully',
-				timestamp: new Date('2024-12-15T09:00:00'),
-				resolved: true
-			},
-			{
-				id: 3,
-				type: 'Critical',
-				message: 'Multiple failed login attempts detected',
-				timestamp: new Date('2024-12-15T08:45:00'),
-				resolved: false
-			}
-		];
-
-		// Set up data sources
-		this.activitiesDataSource.data = this.userActivities;
-
-		// Set up pagination and sorting after view init
-		setTimeout(() => {
-			if (this.paginator) {
-				this.activitiesDataSource.paginator = this.paginator;
-			}
-			if (this.sort) {
-				this.activitiesDataSource.sort = this.sort;
-			}
-		});
-	}
-
 	private updateChartTheme(): void {
 		if (this.chartOptions && this.chartOptions.plugins) {
 			// Update chart colors based on theme
@@ -291,6 +358,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	private fillSystemMetrics(): void {
+		if (!this.dashboardData?.systemStats) return;
+
+		const stats = this.dashboardData.systemStats;
+
+		this.systemMetrics = {
+			// **USE REAL DATA FROM BACKEND DashboardStatsDto**
+			totalUsers: stats.totalUsers ?? ((stats.totalPatients ?? 0) + (stats.totalDoctors ?? 0) + (stats.totalAdmins ?? 0)),
+			activeUsers: stats.activeUsers ?? 0,
+			totalDoctors: stats.totalDoctors ?? 0,
+			totalPatients: stats.totalPatients ?? 0,
+			totalAdmins: stats.totalAdmins ?? 0,
+			systemUptime: stats.systemUptime ?? 'Unknown',
+			serverLoad: stats.serverLoad ?? 0,
+			databaseSize: stats.databaseSize ?? 'Unknown',
+			dailyLogins: stats.dailyLogins ?? 0,
+			monthlyRegistrations: stats.monthlyRegistrations ?? 0
+		};
+
+		console.log('System metrics filled with real backend data:', this.systemMetrics);
+	}
+
+	// **USER ACTIONS**
+	public refreshData(): void {
+		this.loadAdminDashboardData();
+	}
+
 	getStatusClass(status: string): string {
 		switch (status.toLowerCase()) {
 			case 'success': return 'status-stable';
@@ -302,7 +396,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
 	getAlertClass(type: string): string {
 		switch (type.toLowerCase()) {
-			case 'critical': return 'alert-critical';
+			case 'error': return 'alert-critical';
 			case 'warning': return 'alert-warning';
 			case 'info': return 'alert-info';
 			default: return 'alert-info';
@@ -319,11 +413,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	}
 
 	resolveAlert(alert: SystemAlert): void {
-		alert.resolved = true;
+		alert.isRead = true; // Fixed property name
 		console.log('Alert resolved:', alert);
 	}
 
-	viewUserDetails(activity: UserActivity): void {
+	viewUserDetails(activity: UserActivityDto): void {
 		console.log('View user details:', activity);
 	}
 
@@ -334,7 +428,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	refreshSystemMetrics(): void {
 		this.isLoading = true;
 		setTimeout(() => {
-			this.loadMockData();
 			this.isLoading = false;
 		}, 1000);
 	}

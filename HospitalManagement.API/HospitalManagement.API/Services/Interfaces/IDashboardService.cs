@@ -7,5 +7,7 @@ namespace HospitalManagement.API.Services.Interfaces
         Task<DashboardStatsDto> GetSystemStatsAsync();
         Task<PatientDashboardDto?> GetPatientDashboardAsync(int patientId);
         Task<DoctorDashboardDto?> GetDoctorDashboardAsync(int doctorId);
+
+        Task<List<UserActivityDto>> GetRecentUserActivitiesAsync(int limit = 20);
     }
 }

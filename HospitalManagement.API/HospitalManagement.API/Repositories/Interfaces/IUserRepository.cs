@@ -12,6 +12,10 @@ namespace HospitalManagement.API.Repositories.Interfaces
         Task<bool> UserIdExistsAsync(string userId);
 
         Task<int> CountByUserTypeAsync(string userType);
+        Task<int> CountActiveUsersAsync();
+        Task<int> CountLoginsTodayAsync();
+        Task<int> CountRegistrationsThisMonthAsync();
+
 
     }
 }

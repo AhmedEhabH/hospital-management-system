@@ -49,7 +49,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	isLoading = true;
 
 	// Dashboard Statistics
-	dashboardStats = {
+	DashboardStatsDto = {
 		totalPatients: 0,
 		todayAppointments: 0,
 		pendingReports: 0,
@@ -154,7 +154,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			.pipe(takeUntil(this.destroy$))
 			.subscribe({
 				next: (messages: Message[]) => {
-					this.dashboardStats.unreadMessages = messages.filter((m: Message) => !m.isRead).length;
+					this.DashboardStatsDto.unreadMessages = messages.filter((m: Message) => !m.isRead).length;
 				},
 				error: (error: any) => console.error('Error loading messages:', error)
 			});
@@ -257,11 +257,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		];
 
 		// Update dashboard stats
-		this.dashboardStats = {
+		this.DashboardStatsDto = {
 			totalPatients: this.patients.length,
 			todayAppointments: this.todayAppointments.length,
 			pendingReports: 5,
-			unreadMessages: this.dashboardStats.unreadMessages,
+			unreadMessages: this.DashboardStatsDto.unreadMessages,
 			criticalPatients: this.patients.filter(p => p.status === 'Critical').length,
 			completedToday: 8
 		};

@@ -6,10 +6,21 @@ namespace HospitalManagement.API.Models.DTOs
     {
         public int TotalPatients { get; set; }
         public int TotalDoctors { get; set; }
+        public int TotalAdmins { get; set; } // NEW
+        public int TotalUsers { get; set; }  // NEW
+        public int ActiveUsers { get; set; } // NEW
         public int TotalLabReports { get; set; }
         public int CriticalAlerts { get; set; }
         public int PendingMessages { get; set; }
         public int RecentFeedback { get; set; }
+
+        // **STEP 5: Add new system metrics properties**
+        public string SystemUptime { get; set; } = string.Empty;
+        public double ServerLoad { get; set; }
+        public string DatabaseSize { get; set; } = string.Empty;
+        public int DailyLogins { get; set; }
+        public int MonthlyRegistrations { get; set; }
+
         public DateTime LastUpdated { get; set; }
     }
 

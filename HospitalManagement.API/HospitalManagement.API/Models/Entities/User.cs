@@ -47,6 +47,9 @@ namespace HospitalManagement.API.Models.Entities
         [Required, StringLength(20)]
         public string UserType { get; set; } = string.Empty; // Admin, Doctor, Patient
 
+        // NEW: Add LastLogin property to fix CS1061 errors
+        public DateTime? LastLogin { get; set; }
+
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? UpdatedAt { get; set; }
 

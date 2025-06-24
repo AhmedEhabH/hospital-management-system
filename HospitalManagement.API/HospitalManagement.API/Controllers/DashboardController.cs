@@ -92,5 +92,27 @@ namespace HospitalManagement.API.Controllers
                 return StatusCode(500, "Internal server error occurred while fetching doctor dashboard");
             }
         }
+
+        /// <summary>
+        /// Get recent user activities for admin dashboard
+        /// </summary>
+        /// <param name="limit">Number of activities to retrieve</param>
+        /// <returns>List of recent user activities</returns>
+        [HttpGet("user-activities")]
+        public async Task<ActionResult<List<UserActivityDto>>> GetRecentUserActivities([FromQuery] int limit = 20)
+        {
+            try
+            {
+                _logger.LogInformation("Fetching recent user activities with limit: {Limit}", limit);
+                var activities = await _dashboardService.GetRecentUserActivitiesAsync(limit);
+                return Ok(activities);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred while fetching user activities");
+                return StatusCode(500, "Internal server error occurred while fetching user activities");
+            }
+        }
+
     }
 }

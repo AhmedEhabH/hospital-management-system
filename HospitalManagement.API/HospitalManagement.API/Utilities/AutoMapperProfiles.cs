@@ -65,6 +65,8 @@ namespace HospitalManagement.API.Utilities
                     Unit = "°C",
                     Status = "Normal" // Will be calculated in service
                 }));
+            //CreateMap<DashboardStats, DashboardStatsDto>().ReverseMap();
+
 
         }
     }

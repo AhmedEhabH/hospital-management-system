@@ -5,6 +5,7 @@ using HospitalManagement.API.Models.Entities;
 using HospitalManagement.API.Repositories.Interfaces;
 using HospitalManagement.API.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using System.Runtime.Versioning;
 
 namespace HospitalManagement.API.Services.Implementations
 {
@@ -39,27 +40,49 @@ namespace HospitalManagement.API.Services.Implementations
             _logger = logger;
         }
 
+        [SupportedOSPlatform("windows")]
         public async Task<DashboardStatsDto> GetSystemStatsAsync()
         {
             try
             {
                 _logger.LogInformation("Calculating system dashboard statistics");
 
+                // Get user counts
                 var totalPatients = await _userRepository.CountByUserTypeAsync("Patient");
                 var totalDoctors = await _userRepository.CountByUserTypeAsync("Doctor");
+                var totalAdmins = await _userRepository.CountByUserTypeAsync("Admin");
+                var totalUsers = totalPatients + totalDoctors + totalAdmins;
+                var activeUsers = await _userRepository.CountActiveUsersAsync();
+
+                // Get other metrics
                 var totalLabReports = await _labReportRepository.GetTotalCountAsync();
                 var criticalAlerts = await _labReportRepository.GetCriticalCountAsync();
                 var pendingMessages = await _messageRepository.GetUnreadCountAsync();
                 var recentFeedback = await _feedbackRepository.GetRecentCountAsync(30);
+                var dailyLogins = await _userRepository.CountLoginsTodayAsync();
+                var monthlyRegistrations = await _userRepository.CountRegistrationsThisMonthAsync();
+
+                // **STEP 6: Use Program static methods for system metrics**
+                var uptime = Program.GetSystemUptime();
+                var serverLoad = Program.GetServerLoad();
+                var databaseSize = Program.GetDatabaseSize(_context.Database.GetConnectionString() ?? "");
 
                 return new DashboardStatsDto
                 {
                     TotalPatients = totalPatients,
                     TotalDoctors = totalDoctors,
+                    TotalAdmins = totalAdmins,
+                    TotalUsers = totalUsers,
+                    ActiveUsers = activeUsers,
                     TotalLabReports = totalLabReports,
                     CriticalAlerts = criticalAlerts,
                     PendingMessages = pendingMessages,
                     RecentFeedback = recentFeedback,
+                    SystemUptime = uptime,
+                    ServerLoad = serverLoad,
+                    DatabaseSize = databaseSize,
+                    DailyLogins = dailyLogins,
+                    MonthlyRegistrations = monthlyRegistrations,
                     LastUpdated = DateTime.UtcNow
                 };
             }

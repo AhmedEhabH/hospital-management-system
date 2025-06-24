@@ -39,7 +39,7 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 	unreadMessages = 0;
 
 	// Dashboard metrics derived from actual data
-	dashboardStats = {
+	DashboardStatsDto = {
 		totalLabReports: 0,
 		criticalAlerts: 0,
 		unreadMessages: 0,
@@ -175,7 +175,7 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 						.slice(0, 3);
 
 					this.updateHealthMetrics();
-					this.updateDashboardStats();
+					this.updateDashboardStatsDto();
 					this.setupDataSources();
 					this.updateChartData();
 					this.loading = false;
@@ -215,9 +215,9 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	private updateDashboardStats(): void {
+	private updateDashboardStatsDto(): void {
 		if (this.dashboardData) {
-			this.dashboardStats = {
+			this.DashboardStatsDto = {
 				totalLabReports: this.dashboardData.labReports?.length || 0,
 				criticalAlerts: this.getCriticalAlerts().length,
 				unreadMessages: this.dashboardData.messages?.filter(m => !m.isRead).length || 0,
@@ -225,7 +225,7 @@ export class PatientDashboardComponent implements OnInit, OnDestroy {
 				completedAppointments: this.dashboardData.upcomingAppointments?.filter(a => a.status === 'Completed').length || 0,
 				healthScore: this.calculateHealthScore()
 			};
-			this.unreadMessages = this.dashboardStats.unreadMessages;
+			this.unreadMessages = this.DashboardStatsDto.unreadMessages;
 		}
 	}
 
