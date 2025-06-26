@@ -205,6 +205,7 @@ namespace HospitalManagement.API.Services.Implementations
 
                 var doctorPatients = await _context.Users
                     .Where(u => doctorPatientIds.Contains(u.Id))
+                    .OrderBy(u => u.Id)
                     .Take(20)
                     .ToListAsync();
 
