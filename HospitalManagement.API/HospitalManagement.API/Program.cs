@@ -238,6 +238,9 @@ app.MapControllers();
 
 // Map SignalR Hub
 app.MapHub<CommunicationHub>("/hubs/communication");
+// In the app configuration section, add:
+app.MapHub<MedicalAlertsHub>("/hubs/medical-alerts");
+
 
 // Health check endpoint
 app.MapGet("/health", () => Results.Ok(new { Status = "Healthy", Timestamp = DateTime.UtcNow }));

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace HospitalManagement.API.Migrations
 {
     /// <inheritdoc />
-    public partial class AddDashboardEntities : Migration
+    public partial class Init : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -50,6 +50,7 @@ namespace HospitalManagement.API.Migrations
                     Zip = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     PhoneNo = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false),
                     UserType = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    LastLogin = table.Column<DateTime>(type: "datetime2", nullable: true),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },

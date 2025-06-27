@@ -49,7 +49,44 @@ namespace HospitalManagement.API.Data.Seeding
                         PhoneNo = "+20-11-87654321",
                         UserType = "Doctor",
                         CreatedAt = DateTime.UtcNow
-                    }
+                    },
+                    // Doctor Users
+                    new User
+                    {
+                        FirstName = "Dr. Amelia",
+                        LastName = "Carter",
+                        Gender = "Female",
+                        Age = 45,
+                        UserId = "doctor001",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Doctor@123"),
+                        Email = "amelia.carter@hospital.com",
+                        Address = "789 Medical Center",
+                        City = "Cairo",
+                        State = "Cairo",
+                        Zip = "11511",
+                        PhoneNo = "+20-100-6789",
+                        UserType = "Doctor",
+                        CreatedAt = DateTime.UtcNow.AddDays(-60),
+                        LastLogin = DateTime.UtcNow.AddMinutes(-5)
+                    },
+                    new User
+                    {
+                        FirstName = "Dr. Ethan",
+                        LastName = "Bennett",
+                        Gender = "Male",
+                        Age = 38,
+                        UserId = "doctor002",
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword("Doctor@123"),
+                        Email = "ethan.bennett@hospital.com",
+                        Address = "321 Neurology Wing",
+                        City = "Giza",
+                        State = "Giza",
+                        Zip = "12511",
+                        PhoneNo = "+20-100-7890",
+                        UserType = "Doctor",
+                        CreatedAt = DateTime.UtcNow.AddDays(-45),
+                        LastLogin = DateTime.UtcNow.AddMinutes(-10)
+                    },
                 };
 
                 context.Users.AddRange(doctors);

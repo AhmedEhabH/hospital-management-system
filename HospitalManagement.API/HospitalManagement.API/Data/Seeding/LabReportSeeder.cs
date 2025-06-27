@@ -1,4 +1,5 @@
 ﻿using HospitalManagement.API.Models.Entities;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 namespace HospitalManagement.API.Data.Seeding
@@ -7,53 +8,87 @@ namespace HospitalManagement.API.Data.Seeding
     {
         public async Task SeedAsync(HospitalDbContext context)
         {
-            if (!context.LabReports.Any())
+            if (!await context.LabReports.AnyAsync())
             {
                 Log.Information("Seeding lab reports...");
 
-                var patientUsers = context.Users.Where(u => u.UserType == "Patient").ToList();
+                var patients = await context.Users.Where(u => u.UserType == "Patient").ToListAsync();
+                var doctors = await context.Users.Where(u => u.UserType == "Doctor").ToListAsync();
 
-                if (patientUsers.Any())
+                var labReports = new List<LabReport>();
+
+                foreach (var patient in patients)
                 {
-                    var labReports = new List<LabReport>
+                    // Generate 3-5 lab reports per patient
+                    for (int i = 0; i < Random.Shared.Next(3, 6); i++)
                     {
-                        new LabReport
-                        {
-                            PatientId = patientUsers.First().Id,
-                            TestedBy = "Dr. Ahmed Hassan",
-                            TestPerformed = "Complete Blood Count (CBC)",
-                            PhLevel = 7.4m,
-                            CholesterolLevel = 180.5m,
-                            SucroseLevel = 95.2m,
-                            WhiteBloodCellsRatio = 7.2m,
-                            RedBloodCellsRatio = 4.5m,
-                            HeartBeatRatio = 72.0m,
-                            Reports = "All values within normal range. Patient is healthy.",
-                            TestedDate = DateTime.UtcNow.AddDays(-7),
-                            CreatedAt = DateTime.UtcNow
-                        },
-                        new LabReport
-                        {
-                            PatientId = patientUsers.First().Id,
-                            TestedBy = "Dr. Fatima Ali",
-                            TestPerformed = "Lipid Panel",
-                            PhLevel = 7.35m,
-                            CholesterolLevel = 195.0m,
-                            SucroseLevel = 88.7m,
-                            WhiteBloodCellsRatio = 6.8m,
-                            RedBloodCellsRatio = 4.3m,
-                            HeartBeatRatio = 68.0m,
-                            Reports = "Cholesterol slightly elevated. Recommend dietary changes.",
-                            TestedDate = DateTime.UtcNow.AddDays(-14),
-                            CreatedAt = DateTime.UtcNow
-                        }
-                    };
+                        var doctor = doctors[Random.Shared.Next(doctors.Count)];
+                        var testDate = DateTime.UtcNow.AddDays(-Random.Shared.Next(1, 90));
 
-                    context.LabReports.AddRange(labReports);
-                    await context.SaveChangesAsync();
-                    Log.Information("Lab reports seeded successfully.");
+                        labReports.Add(new LabReport
+                        {
+                            PatientId = patient.Id,
+                            TestedBy = $"Dr. {doctor.FirstName} {doctor.LastName}",
+                            TestPerformed = GetRandomTestType(),
+                            PhLevel = GetRandomDecimal(6.5, 8.5, 2),
+                            CholesterolLevel = GetRandomDecimal(150, 300, 1),
+                            SucroseLevel = GetRandomDecimal(70, 200, 1),
+                            WhiteBloodCellsRatio = GetRandomDecimal(4000, 15000, 0),
+                            RedBloodCellsRatio = GetRandomDecimal(3.5, 6.0, 2),
+                            HeartBeatRatio = GetRandomDecimal(60, 120, 0),
+                            Reports = GetRandomReportNotes(),
+                            TestedDate = testDate,
+                            CreatedAt = testDate
+                        });
+
+                    }
                 }
+
+                context.LabReports.AddRange(labReports);
+                await context.SaveChangesAsync();
+                Log.Information("Lab reports seeded successfully.");
+
             }
+        }
+
+        private static decimal GetRandomDecimal(double min, double max, int decimals)
+        {
+            return (decimal)Math.Round(Random.Shared.NextDouble() * (max - min) + min, decimals);
+        }
+
+
+        private static string GetRandomTestType()
+        {
+            var tests = new[]
+            {
+                "Complete Blood Count (CBC)",
+                "Basic Metabolic Panel",
+                "Lipid Panel",
+                "Liver Function Tests",
+                "Thyroid Function Tests",
+                "Urinalysis",
+                "Blood Glucose Test",
+                "Hemoglobin A1C",
+                "Cardiac Enzymes",
+                "Inflammatory Markers"
+            };
+            return tests[Random.Shared.Next(tests.Length)];
+        }
+
+        private static string GetRandomReportNotes()
+        {
+            var notes = new[]
+            {
+                "All values within normal range. Continue current treatment plan.",
+                "Slight elevation in cholesterol levels. Recommend dietary modifications.",
+                "Blood glucose levels elevated. Follow up with endocrinologist recommended.",
+                "Excellent results. Patient showing good response to treatment.",
+                "Minor abnormalities detected. Repeat testing in 3 months.",
+                "Critical values detected. Immediate medical attention required.",
+                "Results consistent with previous tests. No changes needed.",
+                "Improvement noted from previous results. Continue current medication."
+            };
+            return notes[Random.Shared.Next(notes.Length)];
         }
     }
 }
