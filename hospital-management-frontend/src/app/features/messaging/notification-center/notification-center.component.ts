@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs'; // FIXED: Add missing import
-import { SignalRService } from '../../../core/services/signalr.service'; // FIXED: Add missing imports
+import { SignalrService } from '../../../core/services/signalr.service'; // FIXED: Add missing imports
 import { MedicalAlert, NotificationData } from '../../../core/models/dtos';
 
 interface NotificationCategory {
@@ -26,7 +26,7 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
 
 	private subscriptions: Subscription[] = []; // FIXED: Now properly typed
 
-	constructor(private signalRService: SignalRService) { }
+	constructor(private SignalrService: SignalrService) { }
 
 	ngOnInit(): void {
 		this.subscribeToNotifications();
@@ -40,7 +40,7 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
 	private subscribeToNotifications(): void {
 		// FIXED: Add proper type annotations
 		this.subscriptions.push(
-			this.signalRService.notificationReceived$
+			this.SignalrService.notificationReceived$
 				.subscribe((notification: NotificationData | null) => {
 					if (notification) {
 						this.notifications.unshift(notification);
@@ -51,7 +51,7 @@ export class NotificationCenterComponent implements OnInit, OnDestroy {
 
 	private subscribeToCriticalAlerts(): void {
 		this.subscriptions.push(
-			this.signalRService.criticalAlert$
+			this.SignalrService.criticalAlert$
 				.subscribe((alert: MedicalAlert | null) => { // FIXED: Now properly typed
 					if (alert) {
 						this.criticalAlerts.unshift(alert);

@@ -140,13 +140,13 @@
 		<mat-form-field appearance="outline" class="message-input">
 			<textarea matInput [(ngModel)]="newMessage" (input)="onTyping()" (keydown)="onKeyDown($event)"
 				placeholder="Type your message..." cdkTextareaAutosize cdkAutosizeMinRows="1" cdkAutosizeMaxRows="4"
-				[disabled]="!conversation || !signalRService.isConnected()">
+				[disabled]="!conversation || !SignalrService.isConnected()">
       </textarea>
 		</mat-form-field>
 
 		<div class="send-actions">
 			<button mat-icon-button (click)="sendMessage()"
-				[disabled]="(!newMessage.trim() && selectedFiles.length === 0) || !conversation || !signalRService.isConnected()"
+				[disabled]="(!newMessage.trim() && selectedFiles.length === 0) || !conversation || !SignalrService.isConnected()"
 				matTooltip="Send message">
 				<mat-icon>send</mat-icon>
 			</button>

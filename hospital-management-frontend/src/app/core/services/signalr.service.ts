@@ -3,14 +3,15 @@ import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signal
 import { BehaviorSubject, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
-import { ChatMessage, MedicalAlert, NotificationData, TypingIndicator, UserPresence } from '../models/dtos';
+import { AppointmentReminder, ChatMessage, CriticalAlert, MedicalAlert, NotificationData, OnlineUser, SystemNotification, TypingIndicator, UserPresence } from '../models/dtos';
 
 @Injectable({
 	providedIn: 'root'
 })
-export class SignalRService {
+export class SignalrService {
 
 	private hubConnection: HubConnection | null = null;
+	private isConnect = false;
 	private connectionState = new BehaviorSubject<string>('Disconnected');
 	private medicalAlerts = new BehaviorSubject<MedicalAlert[]>([]);
 	private notifications = new BehaviorSubject<NotificationData[]>([]);
@@ -26,9 +27,22 @@ export class SignalRService {
 	public notifications$ = this.notifications.asObservable();
 	public messageReceived$ = this.messageReceived.asObservable();
 	public typingIndicator$ = this.typingIndicator.asObservable();
-	public onlineUsers$ = this.onlineUsers.asObservable();
+	// public onlineUsers$ = this.onlineUsers.asObservable();
 	public notificationReceived$ = this.notificationReceived.asObservable();
 	public criticalAlert$ = this.criticalAlert.asObservable();
+
+	private criticalAlertsSubject = new BehaviorSubject<CriticalAlert[]>([]);
+	private appointmentRemindersSubject = new BehaviorSubject<AppointmentReminder[]>([]);
+	private systemNotificationsSubject = new BehaviorSubject<SystemNotification[]>([]);
+	private onlineUsersSubject = new BehaviorSubject<OnlineUser[]>([]);
+	private connectionStatusSubject = new BehaviorSubject<boolean>(false);
+
+	public criticalAlerts$ = this.criticalAlertsSubject.asObservable();
+	public appointmentReminders$ = this.appointmentRemindersSubject.asObservable();
+	public systemNotifications$ = this.systemNotificationsSubject.asObservable();
+	public onlineUsers$ = this.onlineUsersSubject.asObservable();
+	public connectionStatus$ = this.connectionStatusSubject.asObservable();
+
 
 	constructor(
 		private authService: AuthService
@@ -43,7 +57,8 @@ export class SignalRService {
 		});
 	}
 
-	public async startConnection(): Promise<void> {
+
+	/* public async startConnection(): Promise<void> {
 		if (this.hubConnection?.state === 'Connected') {
 			return;
 		}
@@ -74,15 +89,15 @@ export class SignalRService {
 			console.error('SignalR Connection failed:', error);
 			this.connectionState.next('Failed');
 		}
-	}
+	} */
 
-	public async stopConnection(): Promise<void> {
+	/* public async stopConnection(): Promise<void> {
 		if (this.hubConnection) {
 			await this.hubConnection.stop();
 			this.connectionState.next('Disconnected');
 			console.log('SignalR Disconnected');
 		}
-	}
+	} */
 
 	private async joinUserGroup(): Promise<void> {
 		const currentUser = this.authService.getCurrentUser();
@@ -192,7 +207,7 @@ export class SignalRService {
 		this.addMedicalAlert(alert);
 		this.addNotification(data);
 		this.criticalAlert.next(alert);
-		this.showBrowserNotification(data);
+		// this.showBrowserNotification(data);
 		this.playAlertSound();
 	}
 
@@ -212,7 +227,7 @@ export class SignalRService {
 
 		this.addMedicalAlert(alert);
 		this.addNotification(data);
-		this.showBrowserNotification(data);
+		// this.showBrowserNotification(data);
 		this.playEmergencySound();
 	}
 
@@ -221,7 +236,7 @@ export class SignalRService {
 		this.notificationReceived.next(data);
 
 		if (data.priority === 'critical' || data.priority === 'high') {
-			this.showBrowserNotification(data);
+			// this.showBrowserNotification(data);
 		}
 	}
 
@@ -238,7 +253,7 @@ export class SignalRService {
 		};
 
 		this.addNotification(notificationData);
-		this.showBrowserNotification(notificationData);
+		// this.showBrowserNotification(notificationData);
 	}
 
 	private addMedicalAlert(alert: MedicalAlert): void {
@@ -253,7 +268,7 @@ export class SignalRService {
 		this.notifications.next(updatedNotifications);
 	}
 
-	private showBrowserNotification(data: NotificationData): void {
+	/* private showBrowserNotification(data: NotificationData): void {
 		if ('Notification' in window && Notification.permission === 'granted') {
 			const notification = new Notification(data.title, {
 				body: data.message,
@@ -276,7 +291,7 @@ export class SignalRService {
 				setTimeout(() => notification.close(), 5000);
 			}
 		}
-	}
+	} */
 
 	private playAlertSound(): void {
 		const audio = new Audio('/assets/sounds/medical-alert.mp3');
@@ -332,7 +347,7 @@ export class SignalRService {
 		}
 	}
 
-	public async sendAppointmentReminder(patientId: number, appointmentDate: Date, doctorName: string): Promise<void> {
+	/* public async sendAppointmentReminder(patientId: number, appointmentDate: Date, doctorName: string): Promise<void> {
 		if (this.hubConnection?.state === 'Connected') {
 			try {
 				await this.hubConnection.invoke('SendAppointmentReminder', patientId, appointmentDate, doctorName);
@@ -340,7 +355,7 @@ export class SignalRService {
 				console.error('Failed to send appointment reminder:', error);
 			}
 		}
-	}
+	} */
 
 	public async notifyDoctorsOfEmergency(patientId: number, emergencyDetails: string): Promise<void> {
 		if (this.hubConnection?.state === 'Connected') {
@@ -371,13 +386,13 @@ export class SignalRService {
 		this.medicalAlerts.next([]);
 	}
 
-	public requestNotificationPermission(): void {
+	/* public requestNotificationPermission(): void {
 		if ('Notification' in window && Notification.permission === 'default') {
 			Notification.requestPermission().then(permission => {
 				console.log('Notification permission:', permission);
 			});
 		}
-	}
+	} */
 
 	// Get connection status
 	public isConnected(): boolean {
@@ -386,5 +401,239 @@ export class SignalRService {
 
 	public getConnectionState(): string {
 		return this.connectionState.value;
+	}
+
+	public async startConnection(): Promise<void> {
+		if (this.isConnect) {
+			console.log('SignalR connection already established');
+			return;
+		}
+
+		const currentUser = this.authService.getCurrentUser();
+		if (!currentUser) {
+			console.error('No authenticated user found');
+			return;
+		}
+
+		try {
+			this.hubConnection = new HubConnectionBuilder()
+				.withUrl(`${environment.apiUrl}/hubs/medical-alerts`, {
+					accessTokenFactory: () => this.authService.getToken() || ''
+				})
+				.withAutomaticReconnect([0, 2000, 10000, 30000])
+				.configureLogging(LogLevel.Information)
+				.build();
+
+			// Set up event listeners
+			this.setupEventListeners();
+
+			// Start connection
+			await this.hubConnection.start();
+			this.isConnect = true;
+			this.connectionStatusSubject.next(true);
+
+			// Join user group
+			await this.hubConnection.invoke('JoinUserGroup',
+				currentUser.id.toString(),
+				currentUser.userType
+			);
+
+			console.log('✅ SignalR connection established successfully');
+
+			// Get initial online users if admin
+			if (currentUser.userType === 'Admin') {
+				await this.refreshOnlineUsers();
+			}
+
+		} catch (error) {
+			console.error('❌ Error starting SignalR connection:', error);
+			this.connectionStatusSubject.next(false);
+		}
+	}
+
+	private setupEventListeners(): void {
+		if (!this.hubConnection) return;
+
+		// Critical medical alerts
+		this.hubConnection.on('CriticalMedicalAlert', (alert: CriticalAlert) => {
+			console.log('🚨 Critical medical alert received:', alert);
+			const currentAlerts = this.criticalAlertsSubject.value;
+			this.criticalAlertsSubject.next([alert, ...currentAlerts]);
+
+			// Show browser notification for critical alerts
+			this.showBrowserNotification(
+				'🚨 Critical Medical Alert',
+				`${alert.alertMessage} - Patient: ${alert.patientName}`,
+				'critical'
+			);
+		});
+
+		// Personal medical alerts for patients
+		this.hubConnection.on('PersonalMedicalAlert', (alert: CriticalAlert) => {
+			console.log('⚠️ Personal medical alert received:', alert);
+			this.showBrowserNotification(
+				'⚠️ Medical Alert',
+				alert.alertMessage,
+				'warning'
+			);
+		});
+
+		// Appointment reminders
+		this.hubConnection.on('AppointmentReminder', (reminder: AppointmentReminder) => {
+			console.log('📅 Appointment reminder received:', reminder);
+			const currentReminders = this.appointmentRemindersSubject.value;
+			this.appointmentRemindersSubject.next([reminder, ...currentReminders]);
+
+			this.showBrowserNotification(
+				'📅 Appointment Reminder',
+				reminder.reminderMessage,
+				'info'
+			);
+		});
+
+		// System notifications
+		this.hubConnection.on('SystemNotification', (notification: SystemNotification) => {
+			console.log('📢 System notification received:', notification);
+			const currentNotifications = this.systemNotificationsSubject.value;
+			this.systemNotificationsSubject.next([notification, ...currentNotifications]);
+		});
+
+		// Online user tracking (for admins)
+		this.hubConnection.on('UserConnected', (user: any) => {
+			console.log('👤 User connected:', user);
+			this.refreshOnlineUsers();
+		});
+
+		this.hubConnection.on('UserDisconnected', (user: any) => {
+			console.log('👤 User disconnected:', user);
+			this.refreshOnlineUsers();
+		});
+
+		// Connection state management
+		this.hubConnection.onreconnecting(() => {
+			console.log('🔄 SignalR reconnecting...');
+			this.connectionStatusSubject.next(false);
+		});
+
+		this.hubConnection.onreconnected(() => {
+			console.log('✅ SignalR reconnected successfully');
+			this.connectionStatusSubject.next(true);
+		});
+
+		this.hubConnection.onclose(() => {
+			console.log('❌ SignalR connection closed');
+			this.isConnect = false;
+			this.connectionStatusSubject.next(false);
+		});
+	}
+
+	public async sendCriticalAlert(alert: Omit<CriticalAlert, 'createdAt'>): Promise<void> {
+		if (!this.hubConnection || !this.isConnected) {
+			throw new Error('SignalR connection not established');
+		}
+
+		try {
+			await this.hubConnection.invoke('SendCriticalAlert', {
+				...alert,
+				createdAt: new Date().toISOString()
+			});
+			console.log('✅ Critical alert sent successfully');
+		} catch (error) {
+			console.error('❌ Error sending critical alert:', error);
+			throw error;
+		}
+	}
+
+	public async sendAppointmentReminder(reminder: AppointmentReminder): Promise<void> {
+		if (!this.hubConnection || !this.isConnected) {
+			throw new Error('SignalR connection not established');
+		}
+
+		try {
+			await this.hubConnection.invoke('SendAppointmentReminder', reminder);
+			console.log('✅ Appointment reminder sent successfully');
+		} catch (error) {
+			console.error('❌ Error sending appointment reminder:', error);
+			throw error;
+		}
+	}
+
+	public async sendSystemNotification(notification: Omit<SystemNotification, 'createdAt'>): Promise<void> {
+		if (!this.hubConnection || !this.isConnected) {
+			throw new Error('SignalR connection not established');
+		}
+
+		try {
+			await this.hubConnection.invoke('SendSystemNotification', {
+				...notification,
+				createdAt: new Date().toISOString()
+			});
+			console.log('✅ System notification sent successfully');
+		} catch (error) {
+			console.error('❌ Error sending system notification:', error);
+			throw error;
+		}
+	}
+
+	public async refreshOnlineUsers(): Promise<void> {
+		if (!this.hubConnection || !this.isConnected) return;
+
+		try {
+			const onlineUsers = await this.hubConnection.invoke('GetOnlineUsers');
+			this.onlineUsersSubject.next(onlineUsers);
+			console.log('👥 Online users refreshed:', onlineUsers);
+		} catch (error) {
+			console.error('❌ Error refreshing online users:', error);
+		}
+	}
+
+	private showBrowserNotification(title: string, body: string, type: 'critical' | 'warning' | 'info'): void {
+		if ('Notification' in window && Notification.permission === 'granted') {
+			const notification = new Notification(title, {
+				body,
+				icon: '/assets/icons/medical-alert.png',
+				badge: '/assets/icons/hospital-badge.png',
+				tag: `medical-alert-${Date.now()}`,
+				requireInteraction: type === 'critical'
+			});
+
+			// Auto-close non-critical notifications
+			if (type !== 'critical') {
+				setTimeout(() => notification.close(), 5000);
+			}
+		}
+	}
+
+	public async requestNotificationPermission(): Promise<void> {
+		if ('Notification' in window && Notification.permission === 'default') {
+			const permission = await Notification.requestPermission();
+			console.log('Notification permission:', permission);
+		}
+	}
+
+	public async stopConnection(): Promise<void> {
+		if (this.hubConnection && this.isConnect) {
+			try {
+				await this.hubConnection.stop();
+				this.isConnect = false;
+				this.connectionStatusSubject.next(false);
+				console.log('✅ SignalR connection stopped');
+			} catch (error) {
+				console.error('❌ Error stopping SignalR connection:', error);
+			}
+		}
+	}
+
+	// Clear notifications
+	public clearCriticalAlerts(): void {
+		this.criticalAlertsSubject.next([]);
+	}
+
+	public clearAppointmentReminders(): void {
+		this.appointmentRemindersSubject.next([]);
+	}
+
+	public clearSystemNotifications(): void {
+		this.systemNotificationsSubject.next([]);
 	}
 }

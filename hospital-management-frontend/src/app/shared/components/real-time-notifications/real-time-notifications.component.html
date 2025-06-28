@@ -1,0 +1,78 @@
+<div class="real-time-notifications">
+	<!-- Connection Status -->
+	<div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+		<mat-icon>{{ getConnectionStatusIcon() }}</mat-icon>
+		<span>{{ getConnectionStatusText() }}</span>
+	</div>
+
+	<!-- Critical Alerts Panel -->
+	<div *ngIf="criticalAlerts.length > 0" class="alerts-panel critical-alerts">
+		<div class="panel-header">
+			<mat-icon>warning</mat-icon>
+			<h3>Critical Medical Alerts ({{ criticalAlerts.length }})</h3>
+			<button mat-icon-button (click)="clearCriticalAlerts()" matTooltip="Clear All">
+				<mat-icon>clear_all</mat-icon>
+			</button>
+		</div>
+		<div class="alerts-list">
+			<div *ngFor="let alert of criticalAlerts.slice(0, 5)" class="alert-item critical">
+				<div class="alert-content">
+					<div class="alert-header">
+						<span class="alert-type">{{ alert.alertType }}</span>
+						<span class="alert-time">{{ alert.createdAt | date:'short' }}</span>
+					</div>
+					<div class="alert-message">{{ alert.alertMessage }}</div>
+					<div class="alert-details">
+						<span>Patient: {{ alert.patientName }}</span>
+						<span>Doctor: {{ alert.doctorName }}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Appointment Reminders Panel -->
+	<div *ngIf="appointmentReminders.length > 0" class="alerts-panel appointment-reminders">
+		<div class="panel-header">
+			<mat-icon>event</mat-icon>
+			<h3>Appointment Reminders ({{ appointmentReminders.length }})</h3>
+			<button mat-icon-button (click)="clearAppointmentReminders()" matTooltip="Clear All">
+				<mat-icon>clear_all</mat-icon>
+			</button>
+		</div>
+		<div class="alerts-list">
+			<div *ngFor="let reminder of appointmentReminders.slice(0, 3)" class="alert-item appointment">
+				<div class="alert-content">
+					<div class="alert-message">{{ reminder.reminderMessage }}</div>
+					<div class="alert-details">
+						<span>Doctor: {{ reminder.doctorName }}</span>
+						<span>Department: {{ reminder.department }}</span>
+						<span>Date: {{ reminder.appointmentDate | date:'short' }}</span>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- System Notifications Panel -->
+	<div *ngIf="systemNotifications.length > 0" class="alerts-panel system-notifications">
+		<div class="panel-header">
+			<mat-icon>info</mat-icon>
+			<h3>System Notifications ({{ systemNotifications.length }})</h3>
+			<button mat-icon-button (click)="clearSystemNotifications()" matTooltip="Clear All">
+				<mat-icon>clear_all</mat-icon>
+			</button>
+		</div>
+		<div class="alerts-list">
+			<div *ngFor="let notification of systemNotifications.slice(0, 3)" class="alert-item system">
+				<div class="alert-content">
+					<div class="alert-header">
+						<span class="alert-title">{{ notification.title }}</span>
+						<span class="alert-time">{{ notification.createdAt | date:'short' }}</span>
+					</div>
+					<div class="alert-message">{{ notification.message }}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>

@@ -139,3 +139,35 @@ export interface Conversation {
 	conversationType: 'direct' | 'group';
 	participants: any[];
 }
+
+export interface CriticalAlert {
+	patientId: number;
+	labReportId?: number;
+	alertMessage: string;
+	alertType: 'Critical' | 'Warning' | 'Emergency';
+	createdAt: string;
+	doctorName: string;
+	patientName: string;
+}
+
+export interface AppointmentReminder {
+	patientId: number;
+	appointmentDate: string;
+	doctorName: string;
+	department: string;
+	reminderMessage: string;
+}
+
+export interface SystemNotification {
+	message: string;
+	type: 'Info' | 'Warning' | 'Maintenance';
+	createdAt: string;
+	title: string;
+}
+
+export interface OnlineUser {
+	userId: string;
+	userType: string;
+	connectionCount: number;
+	lastSeen: string;
+}

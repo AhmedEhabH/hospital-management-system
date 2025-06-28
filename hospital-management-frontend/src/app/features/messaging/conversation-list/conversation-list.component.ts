@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { SignalRService } from '../../../core/services/signalr.service';
+import { SignalrService } from '../../../core/services/signalr.service';
 import { ConversationItem, UserPresence } from '../../../core/models/dtos';
 
 
@@ -26,14 +26,14 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 	private subscriptions: Subscription[] = [];
 
 	constructor(
-		private signalRService: SignalRService,
+		private SignalrService: SignalrService,
 		private router: Router
 	) { }
 
 	ngOnInit(): void {
 		this.isDarkMode = document.body.classList.contains('dark-theme');
 		this.loadConversations();
-		this.subscribeToOnlineUsers();
+		// this.subscribeToOnlineUsers();
 	}
 
 	ngOnDestroy(): void {
@@ -84,15 +84,15 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 		this.loading = false;
 	}
 
-	private subscribeToOnlineUsers(): void {
-		this.subscriptions.push(
-			this.signalRService.onlineUsers$
-				.subscribe((users: UserPresence[]) => {
-					this.onlineUsers = users;
-					this.updateConversationOnlineStatus();
-				})
-		);
-	}
+	// private subscribeToOnlineUsers(): void {
+	// 	this.subscriptions.push(
+	// 		this.SignalrService.onlineUsers$
+	// 			.subscribe((users: UserPresence[]) => {
+	// 				this.onlineUsers = users;
+	// 				this.updateConversationOnlineStatus();
+	// 			})
+	// 	);
+	// }
 
 	private updateConversationOnlineStatus(): void {
 		this.conversations.forEach(conversation => {

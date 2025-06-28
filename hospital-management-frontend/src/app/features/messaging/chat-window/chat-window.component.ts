@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, Input, ViewChild, ElementRef } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SignalRService } from '../../../core/services/signalr.service';
+import { SignalrService } from '../../../core/services/signalr.service';
 import {
 	ChatMessage,
 	TypingIndicator,
@@ -35,7 +35,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 	private subscriptions: Subscription[] = [];
 	private typingTimeout: any;
 
-	constructor(public signalRService: SignalRService) { }
+	constructor(public SignalrService: SignalrService) { }
 
 	ngOnInit(): void {
 		this.isDarkMode = document.body.classList.contains('dark-theme');
@@ -66,7 +66,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 
 	private subscribeToMessages(): void {
 		this.subscriptions.push(
-			this.signalRService.messageReceived$
+			this.SignalrService.messageReceived$
 				.subscribe((message: ChatMessage | null) => {
 					if (message && message.conversationId === this.conversationId) {
 						this.messages.push(message);
@@ -78,7 +78,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 
 	private subscribeToTypingIndicators(): void {
 		this.subscriptions.push(
-			this.signalRService.typingIndicator$
+			this.SignalrService.typingIndicator$
 				.subscribe((indicator: TypingIndicator | null) => {
 					if (indicator && indicator.conversationId === this.conversationId) {
 						if (indicator.isTyping) {
@@ -222,7 +222,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 				};
 
 				try {
-					await this.signalRService.sendMessage(message);
+					await this.SignalrService.sendMessage(message);
 					this.messages.push(message);
 					this.newMessage = '';
 					this.selectedFiles = [];
@@ -237,7 +237,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 	public async sendTypingIndicator(isTyping: boolean): Promise<void> {
 		if (this.otherParticipant) {
 			try {
-				await this.signalRService.sendTypingIndicator(
+				await this.SignalrService.sendTypingIndicator(
 					this.otherParticipant.userId,
 					isTyping,
 					this.conversationId
@@ -250,7 +250,7 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 
 	public async markMessageAsRead(messageId: string): Promise<void> {
 		try {
-			await this.signalRService.markMessageAsRead(messageId);
+			await this.SignalrService.markMessageAsRead(messageId);
 		} catch (error) {
 			console.error('Failed to mark message as read:', error);
 		}

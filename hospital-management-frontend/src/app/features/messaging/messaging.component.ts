@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, Subscription, takeUntil } from 'rxjs';
-import { SignalRService } from '../../core/services/signalr.service';
+import { SignalrService } from '../../core/services/signalr.service';
 import { MessageService, Message, Conversation } from '../../core/services/message.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
@@ -42,7 +42,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 	private subscriptions: Subscription[] = [];
 
-	constructor(private signalRService: SignalRService) { }
+	constructor(private SignalrService: SignalrService) { }
 
 	ngOnInit(): void {
 		// FIXED: Initialize all properties
@@ -52,7 +52,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		this.loadConversations();
 		this.subscribeToMessages();
 		this.subscribeToNotifications();
-		this.subscribeToOnlineUsers();
+		// this.subscribeToOnlineUsers();
 		this.subscribeToConnectionState();
 	}
 
@@ -93,7 +93,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 	private subscribeToConnectionState(): void {
 		this.subscriptions.push(
-			this.signalRService.connectionState$.subscribe(state => {
+			this.SignalrService.connectionState$.subscribe(state => {
 				this.isConnected = state === 'Connected';
 			})
 		);
@@ -101,7 +101,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 	private subscribeToMessages(): void {
 		this.subscriptions.push(
-			this.signalRService.messageReceived$
+			this.SignalrService.messageReceived$
 				.subscribe((message: ChatMessage | null) => {
 					if (message) {
 						this.handleIncomingMessage(message);
@@ -112,7 +112,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 
 	private subscribeToNotifications(): void {
 		this.subscriptions.push(
-			this.signalRService.notificationReceived$
+			this.SignalrService.notificationReceived$
 				.subscribe((notificationData: NotificationData | null) => {
 					if (notificationData) {
 						this.handleIncomingNotification(notificationData);
@@ -121,14 +121,14 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	private subscribeToOnlineUsers(): void {
-		this.subscriptions.push(
-			this.signalRService.onlineUsers$
-				.subscribe((users: UserPresence[]) => {
-					this.onlineUsers = users;
-				})
-		);
-	}
+	// private subscribeToOnlineUsers(): void {
+	// 	this.subscriptions.push(
+	// 		this.SignalrService.onlineUsers$
+	// 			.subscribe((users: UserPresence[]) => {
+	// 				this.onlineUsers = users;
+	// 			})
+	// 	);
+	// }
 
 	private handleIncomingMessage(message: ChatMessage): void {
 		console.log('New message received:', message);

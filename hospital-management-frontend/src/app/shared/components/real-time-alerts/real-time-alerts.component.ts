@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SignalRService } from '../../../core/services/signalr.service';
+import { SignalrService } from '../../../core/services/signalr.service';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MedicalAlert, NotificationData } from '../../../core/models/dtos';
@@ -22,18 +22,18 @@ export class RealTimeAlertsComponent implements OnInit, OnDestroy {
 	private subscriptions: Subscription[] = [];
 
 	constructor(
-		private signalRService: SignalRService,
+		private SignalrService: SignalrService,
 		private router: Router,
 		private snackBar: MatSnackBar
 	) { }
 
 	ngOnInit(): void {
 		// Request notification permission
-		this.signalRService.requestNotificationPermission();
+		this.SignalrService.requestNotificationPermission();
 
 		// Subscribe to connection state
 		this.subscriptions.push(
-			this.signalRService.connectionState$.subscribe(state => {
+			this.SignalrService.connectionState$.subscribe(state => {
 				this.connectionState = state;
 				if (state === 'Connected') {
 					this.showConnectionStatus('Connected to real-time alerts', 'success');
@@ -45,7 +45,7 @@ export class RealTimeAlertsComponent implements OnInit, OnDestroy {
 
 		// Subscribe to medical alerts
 		this.subscriptions.push(
-			this.signalRService.medicalAlerts$.subscribe(alerts => {
+			this.SignalrService.medicalAlerts$.subscribe(alerts => {
 				this.medicalAlerts = alerts;
 				this.updateUnreadCount();
 
@@ -62,7 +62,7 @@ export class RealTimeAlertsComponent implements OnInit, OnDestroy {
 
 		// Subscribe to general notifications
 		this.subscriptions.push(
-			this.signalRService.notifications$.subscribe(notifications => {
+			this.SignalrService.notifications$.subscribe(notifications => {
 				this.notifications = notifications;
 			})
 		);
@@ -103,15 +103,15 @@ export class RealTimeAlertsComponent implements OnInit, OnDestroy {
 	}
 
 	public acknowledgeAlert(alert: MedicalAlert): void {
-		this.signalRService.acknowledgeAlert(alert.id);
+		this.SignalrService.acknowledgeAlert(alert.id);
 	}
 
 	public clearAlert(alert: MedicalAlert): void {
-		this.signalRService.clearAlert(alert.id);
+		this.SignalrService.clearAlert(alert.id);
 	}
 
 	public clearAllAlerts(): void {
-		this.signalRService.clearAllAlerts();
+		this.SignalrService.clearAllAlerts();
 	}
 
 	public viewAlertDetails(alert: MedicalAlert): void {

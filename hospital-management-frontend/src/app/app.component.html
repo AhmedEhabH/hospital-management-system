@@ -2,5 +2,8 @@
 	<app-header *ngIf="showHeader"></app-header>
 	<main class="main-content" [class.with-header]="showHeader">
 		<router-outlet></router-outlet>
+
+		<!-- Real-time notifications -->
+		<app-real-time-notifications></app-real-time-notifications>
 	</main>
 </div>

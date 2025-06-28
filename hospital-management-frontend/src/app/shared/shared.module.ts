@@ -27,6 +27,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { PageNotFoundModule } from './components/page-not-found/page-not-found.module';
+import { RealTimeNotificationsComponent } from './components/real-time-notifications/real-time-notifications.component';
 
 @NgModule({
 	declarations: [
@@ -38,7 +39,8 @@ import { PageNotFoundModule } from './components/page-not-found/page-not-found.m
 		LogoutButtonComponent,
 		UnauthorizedComponent,
 		RealTimeAlertsComponent,
-		
+		RealTimeNotificationsComponent,
+
 	],
 	imports: [
 		CommonModule,
@@ -84,6 +86,7 @@ import { PageNotFoundModule } from './components/page-not-found/page-not-found.m
 		MatDividerModule,
 		MatProgressBarModule,
 		PageNotFoundModule,
+		RealTimeNotificationsComponent
 	]
 })
 export class SharedModule { }
