@@ -32,6 +32,7 @@ import { MatDialog, MatDialogActions, MatDialogModule } from '@angular/material/
 import { EventEditDialogComponent } from './event-edit-dialog/event-edit-dialog.component';
 import { ExportOptionsDialogComponent } from './export-options-dialog/export-options-dialog.component';
 import { MatRadioButton, MatRadioModule } from '@angular/material/radio';
+import { MedicalHistoryFormComponent } from './medical-history-form/medical-history-form.component';
 
 @NgModule({
 	declarations: [
@@ -41,7 +42,8 @@ import { MatRadioButton, MatRadioModule } from '@angular/material/radio';
 		DetailsComponent,
   EventDetailsDialogComponent,
   EventEditDialogComponent,
-  ExportOptionsDialogComponent
+  ExportOptionsDialogComponent,
+  MedicalHistoryFormComponent
 	],
 	imports: [
 		CommonModule,
