@@ -1,1 +1,252 @@
-<p>medical-history-form works!</p>
+<div class="medical-history-form-container" [class.dark-theme]="isDarkMode">
+	<!-- Loading Overlay -->
+	<div *ngIf="isLoading" class="loading-overlay">
+		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+		<div class="loading-content">
+			<mat-icon class="loading-icon">health_and_safety</mat-icon>
+			<h3>{{ isEditMode ? 'Updating' : 'Saving' }} Medical History...</h3>
+			<p>Processing your medical information securely</p>
+		</div>
+	</div>
+
+	<!-- Form Header -->
+	<div class="form-header medical-gradient">
+		<div class="header-content">
+			<div class="header-info">
+				<mat-icon class="header-icon">medical_information</mat-icon>
+				<div class="header-text">
+					<h1>{{ isEditMode ? 'Update' : 'Create' }} Medical History</h1>
+					<p>Comprehensive medical history and health information management</p>
+				</div>
+			</div>
+			<div class="header-actions">
+				<button mat-icon-button (click)="onCancel()" matTooltip="Cancel" class="cancel-button">
+					<mat-icon>close</mat-icon>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Form Content -->
+	<div class="form-content">
+		<form [formGroup]="medicalHistoryForm" (ngSubmit)="onSubmit()" class="medical-form">
+
+			<!-- Personal Medical History Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">person</mat-icon>
+					<h2>Personal Medical History</h2>
+				</div>
+
+				<div class="form-grid">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Personal Medical History</mat-label>
+						<textarea matInput formControlName="personalHistory"
+							placeholder="Previous surgeries, major illnesses, hospitalizations..." rows="4"
+							maxlength="500">
+            </textarea>
+						<mat-hint align="end">{{ getControlValue('personalHistory')?.length || 0 }}/500</mat-hint>
+						<mat-error *ngIf="hasError('personalHistory')">
+							{{ getErrorMessage('personalHistory') }}
+						</mat-error>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Frequently Occurring Diseases</mat-label>
+						<textarea matInput formControlName="frequentlyOccurringDisease"
+							placeholder="Recurring conditions, chronic symptoms..." rows="3" maxlength="500">
+            </textarea>
+						<mat-hint align="end">{{ getControlValue('frequentlyOccurringDisease')?.length || 0
+							}}/500</mat-hint>
+						<mat-error *ngIf="hasError('frequentlyOccurringDisease')">
+							{{ getErrorMessage('frequentlyOccurringDisease') }}
+						</mat-error>
+					</mat-form-field>
+				</div>
+			</div>
+
+			<!-- Family Medical History Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">family_restroom</mat-icon>
+					<h2>Family Medical History</h2>
+				</div>
+
+				<div class="form-grid">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Family Medical History</mat-label>
+						<textarea matInput formControlName="familyHistory"
+							placeholder="Family history of diabetes, heart disease, cancer, genetic conditions..."
+							rows="4" maxlength="500">
+            </textarea>
+						<mat-hint align="end">{{ getControlValue('familyHistory')?.length || 0 }}/500</mat-hint>
+						<mat-error *ngIf="hasError('familyHistory')">
+							{{ getErrorMessage('familyHistory') }}
+						</mat-error>
+					</mat-form-field>
+				</div>
+			</div>
+
+			<!-- Allergies Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">warning</mat-icon>
+					<h2>Allergies & Reactions</h2>
+				</div>
+
+				<div class="form-grid">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Known Allergies</mat-label>
+						<textarea matInput formControlName="allergies"
+							placeholder="Food allergies, drug allergies, environmental allergies..." rows="3"
+							maxlength="500">
+            </textarea>
+						<mat-hint align="end">{{ getControlValue('allergies')?.length || 0 }}/500</mat-hint>
+						<mat-error *ngIf="hasError('allergies')">
+							{{ getErrorMessage('allergies') }}
+						</mat-error>
+					</mat-form-field>
+				</div>
+			</div>
+
+			<!-- Chronic Conditions Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">health_and_safety</mat-icon>
+					<h2>Chronic Conditions</h2>
+				</div>
+
+				<div class="conditions-grid">
+					<mat-checkbox formControlName="hasAsthma" class="condition-checkbox">
+						<div class="condition-info">
+							<span class="condition-name">Asthma</span>
+							<span class="condition-description">Respiratory condition affecting breathing</span>
+						</div>
+					</mat-checkbox>
+
+					<mat-checkbox formControlName="hasBloodPressure" class="condition-checkbox">
+						<div class="condition-info">
+							<span class="condition-name">High Blood Pressure</span>
+							<span class="condition-description">Hypertension requiring monitoring</span>
+						</div>
+					</mat-checkbox>
+
+					<mat-checkbox formControlName="hasCholesterol" class="condition-checkbox">
+						<div class="condition-info">
+							<span class="condition-name">High Cholesterol</span>
+							<span class="condition-description">Elevated cholesterol levels</span>
+						</div>
+					</mat-checkbox>
+
+					<mat-checkbox formControlName="hasDiabetes" class="condition-checkbox">
+						<div class="condition-info">
+							<span class="condition-name">Diabetes</span>
+							<span class="condition-description">Blood sugar regulation disorder</span>
+						</div>
+					</mat-checkbox>
+
+					<mat-checkbox formControlName="hasHeartDisease" class="condition-checkbox">
+						<div class="condition-info">
+							<span class="condition-name">Heart Disease</span>
+							<span class="condition-description">Cardiovascular conditions</span>
+						</div>
+					</mat-checkbox>
+				</div>
+			</div>
+
+			<!-- Lifestyle Factors Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">lifestyle</mat-icon>
+					<h2>Lifestyle Factors</h2>
+				</div>
+
+				<div class="lifestyle-grid">
+					<!-- Tobacco Use -->
+					<div class="lifestyle-group">
+						<mat-checkbox formControlName="usesTobacco" class="lifestyle-checkbox">
+							<span class="lifestyle-label">Tobacco Use</span>
+						</mat-checkbox>
+
+						<div *ngIf="getControlValue('usesTobacco')" class="lifestyle-details">
+							<mat-form-field appearance="outline" class="lifestyle-field">
+								<mat-label>Cigarette Packs Per Day</mat-label>
+								<input matInput type="number" formControlName="cigarettePacksPerDay" min="0" max="10"
+									step="0.5">
+								<mat-error *ngIf="hasError('cigarettePacksPerDay')">
+									{{ getErrorMessage('cigarettePacksPerDay') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline" class="lifestyle-field">
+								<mat-label>Years of Smoking</mat-label>
+								<input matInput type="number" formControlName="smokingYears" min="0" max="100">
+								<mat-error *ngIf="hasError('smokingYears')">
+									{{ getErrorMessage('smokingYears') }}
+								</mat-error>
+							</mat-form-field>
+						</div>
+					</div>
+
+					<!-- Alcohol Consumption -->
+					<div class="lifestyle-group">
+						<mat-checkbox formControlName="drinksAlcohol" class="lifestyle-checkbox">
+							<span class="lifestyle-label">Alcohol Consumption</span>
+						</mat-checkbox>
+
+						<div *ngIf="getControlValue('drinksAlcohol')" class="lifestyle-details">
+							<mat-form-field appearance="outline" class="lifestyle-field">
+								<mat-label>Alcoholic Drinks Per Week</mat-label>
+								<input matInput type="number" formControlName="alcoholicDrinksPerWeek" min="0" max="50">
+								<mat-error *ngIf="hasError('alcoholicDrinksPerWeek')">
+									{{ getErrorMessage('alcoholicDrinksPerWeek') }}
+								</mat-error>
+							</mat-form-field>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Current Medications Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">medication</mat-icon>
+					<h2>Current Medications</h2>
+				</div>
+
+				<div class="form-grid">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Current Medications</mat-label>
+						<textarea matInput formControlName="currentMedications"
+							placeholder="List all current medications, dosages, and frequency..." rows="4"
+							maxlength="500">
+            </textarea>
+						<mat-hint align="end">{{ getControlValue('currentMedications')?.length || 0 }}/500</mat-hint>
+						<mat-error *ngIf="hasError('currentMedications')">
+							{{ getErrorMessage('currentMedications') }}
+						</mat-error>
+					</mat-form-field>
+				</div>
+			</div>
+
+			<!-- Form Actions -->
+			<div class="form-actions">
+				<button type="button" mat-stroked-button class="cancel-btn" (click)="onCancel()" [disabled]="isLoading">
+					<mat-icon>cancel</mat-icon>
+					Cancel
+				</button>
+
+				<button type="button" mat-stroked-button class="reset-btn" (click)="resetForm()" [disabled]="isLoading">
+					<mat-icon>refresh</mat-icon>
+					Reset Form
+				</button>
+
+				<button type="submit" mat-raised-button color="primary" class="submit-btn"
+					[disabled]="medicalHistoryForm.invalid || isLoading">
+					<mat-icon>{{ isEditMode ? 'update' : 'save' }}</mat-icon>
+					{{ isEditMode ? 'Update' : 'Save' }} Medical History
+				</button>
+			</div>
+		</form>
+	</div>
+</div>

@@ -1,11 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MedicalHistoryService } from '../../../core/services/medical-history.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MedicalHistoryDto } from '../../../core/models/medical-history.model';
-import { Observable } from 'rxjs';
+import { Observable, Subject, takeUntil } from 'rxjs';
+import { ThemeService } from '../../../core/services/theme.service';
 
 /**
  * Medical History Form Component
@@ -20,12 +21,15 @@ import { Observable } from 'rxjs';
 	templateUrl: './medical-history-form.component.html',
 	styleUrls: ['./medical-history-form.component.scss']
 })
-export class MedicalHistoryFormComponent implements OnInit {
+export class MedicalHistoryFormComponent implements OnInit, OnDestroy {
 	medicalHistoryForm: FormGroup;
+	isDarkMode = false;
 	isLoading = false;
 	isEditMode = false;
 	currentUser: any = null;
 	patientId: number | null = null;
+
+	private destroy$ = new Subject<void>();
 
 	constructor(
 		private fb: FormBuilder,
@@ -33,19 +37,34 @@ export class MedicalHistoryFormComponent implements OnInit {
 		private authService: AuthService,
 		private snackBar: MatSnackBar,
 		private router: Router,
-		private route: ActivatedRoute
+		private route: ActivatedRoute,
+		private themeService: ThemeService
 	) {
 		this.medicalHistoryForm = this.createForm();
+	}
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
 	}
 
 	ngOnInit(): void {
 		this.currentUser = this.authService.getCurrentUser();
+		this.subscribeToTheme();
 		this.patientId = this.route.snapshot.params['patientId'] || this.currentUser?.id;
+
 
 		if (this.route.snapshot.params['id']) {
 			this.isEditMode = true;
 			this.loadMedicalHistory(this.route.snapshot.params['id']);
 		}
+	}
+
+	private subscribeToTheme(): void {
+		this.themeService.isDarkMode$
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(isDark => {
+				this.isDarkMode = isDark;
+			});
 	}
 
 	/**

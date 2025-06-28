@@ -43,10 +43,14 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { LabReportsModule } from './features/lab-reports/lab-reports.module';
+import { PatientRegistrationComponent } from './features/registration/patient-registration/patient-registration.component';
+import { FeedbackFormComponent } from './features/feedback/feedback-form/feedback-form.component';
 
 @NgModule({
 	declarations: [
 		AppComponent,
+  PatientRegistrationComponent,
+  FeedbackFormComponent,
 
 	],
 	imports: [

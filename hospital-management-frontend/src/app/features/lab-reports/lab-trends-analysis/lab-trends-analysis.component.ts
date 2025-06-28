@@ -1,8 +1,9 @@
 import { Component, Input, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
-import { LabReportService, LabTrendData } from '../../../core/services/lab-report.service';
+import { LabReportService } from '../../../core/services/lab-report.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { LabReportDto } from '../../../core/models';
 
 @Component({
 	selector: 'app-lab-trends-analysis',
@@ -19,7 +20,7 @@ export class LabTrendsAnalysisComponent implements OnInit, OnDestroy {
 	isLoading = true;
 
 	// Trend Data
-	trendsData: LabTrendData[] = [];
+	trendsData: LabReportDto [] = [];
 	selectedTests: string[] = ['Hemoglobin', 'Total Cholesterol', 'Glucose'];
 	dateRange = {
 		start: new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000), // 6 months ago
@@ -102,7 +103,7 @@ export class LabTrendsAnalysisComponent implements OnInit, OnDestroy {
 
 	ngOnInit(): void {
 		this.subscribeToTheme();
-		this.loadTrendsData();
+		// this.loadTrendsData();
 	}
 
 	ngOnDestroy(): void {
@@ -119,7 +120,7 @@ export class LabTrendsAnalysisComponent implements OnInit, OnDestroy {
 			});
 	}
 
-	private loadTrendsData(): void {
+	/* private loadTrendsData(): void {
 		this.isLoading = true;
 
 		this.labReportService.getLabTrendsData(this.patientId, this.selectedTests, this.dateRange)
@@ -136,9 +137,9 @@ export class LabTrendsAnalysisComponent implements OnInit, OnDestroy {
 					this.isLoading = false;
 				}
 			});
-	}
+	} */
 
-	private updateChartData(): void {
+	/* private updateChartData(): void {
 		if (this.trendsData.length === 0) return;
 
 		// Get all unique dates
@@ -181,9 +182,9 @@ export class LabTrendsAnalysisComponent implements OnInit, OnDestroy {
 			labels: sortedDates,
 			datasets: datasets
 		};
-	}
+	} */
 
-	private calculateTrendStatistics(): void {
+	/* private calculateTrendStatistics(): void {
 		let improving = 0;
 		let worsening = 0;
 		let stable = 0;
@@ -215,7 +216,7 @@ export class LabTrendsAnalysisComponent implements OnInit, OnDestroy {
 			stableTrends: stable,
 			criticalValues: critical
 		};
-	}
+	} */
 
 	private isImprovingTrend(testName: string, change: number): boolean {
 		// For cholesterol, glucose, etc., lower is better
@@ -294,11 +295,11 @@ export class LabTrendsAnalysisComponent implements OnInit, OnDestroy {
 
 	// Public Methods
 	onTestSelectionChange(): void {
-		this.loadTrendsData();
+		// this.loadTrendsData();
 	}
 
 	onDateRangeChange(): void {
-		this.loadTrendsData();
+		// this.loadTrendsData();
 	}
 
 	exportTrends(): void {
