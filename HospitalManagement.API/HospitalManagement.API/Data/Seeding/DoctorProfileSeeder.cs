@@ -87,6 +87,25 @@ namespace HospitalManagement.API.Data.Seeding
                         CreatedAt = DateTime.UtcNow.AddDays(-45),
                         LastLogin = DateTime.UtcNow.AddMinutes(-10)
                     },
+                    new User
+                    {
+                        FirstName = "Sarah",
+                        LastName = "Johnson",
+                        Gender = "Female",
+                        Age = 42,
+                        UserId = "doc001",
+                        // FIXED: Use Password property instead of PasswordHash
+                        PasswordHash  = BCrypt.Net.BCrypt.HashPassword("Doctor@123"),
+                        Email = "sarah.johnson@hospital.com",
+                        Address = "456 Medical Avenue",
+                        City = "Medical City",
+                        State = "Healthcare State",
+                        Zip = "12346",
+                        PhoneNo = "+1-555-0002",
+                        UserType = "Doctor",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    },
                 };
 
                 context.Users.AddRange(doctors);
