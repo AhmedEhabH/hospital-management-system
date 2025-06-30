@@ -1,1 +1,186 @@
-<p>lab-report-form works!</p>
+<div class="lab-report-form-container" [class.dark-theme]="isDarkMode">
+	<!-- Loading Overlay -->
+	<div *ngIf="isLoading" class="loading-overlay">
+		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+		<div class="loading-content">
+			<mat-icon class="loading-icon">science</mat-icon>
+			<h3>{{ isEditMode ? 'Updating' : 'Saving' }} Lab Report...</h3>
+			<p>Processing medical data securely</p>
+		</div>
+	</div>
+
+	<!-- Form Header -->
+	<div class="form-header medical-gradient">
+		<div class="header-content">
+			<div class="header-info">
+				<mat-icon class="header-icon">science</mat-icon>
+				<div class="header-text">
+					<h1>{{ isEditMode ? 'Update' : 'Create' }} Lab Report</h1>
+					<p>Professional laboratory results and medical analysis management</p>
+				</div>
+			</div>
+			<div class="header-actions">
+				<button mat-icon-button (click)="onCancel()" matTooltip="Cancel" class="cancel-button">
+					<mat-icon>close</mat-icon>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Form Content -->
+	<div class="form-content">
+		<form [formGroup]="labReportForm" (ngSubmit)="onSubmit()" class="medical-form">
+
+			<!-- Basic Information Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">info</mat-icon>
+					<h2>Basic Information</h2>
+				</div>
+
+				<div class="form-grid">
+					<mat-form-field appearance="outline">
+						<mat-label>Tested By</mat-label>
+						<input matInput formControlName="testedBy" placeholder="Name of technician or doctor">
+						<mat-error *ngIf="hasError('testedBy')">
+							{{ getErrorMessage('testedBy') }}
+						</mat-error>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Test Performed</mat-label>
+						<input matInput formControlName="testPerformed"
+							placeholder="Type of test (e.g., Blood Test, CBC)">
+						<mat-error *ngIf="hasError('testPerformed')">
+							{{ getErrorMessage('testPerformed') }}
+						</mat-error>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Test Date</mat-label>
+						<input matInput type="date" formControlName="testedDate">
+						<mat-error *ngIf="hasError('testedDate')">
+							{{ getErrorMessage('testedDate') }}
+						</mat-error>
+					</mat-form-field>
+				</div>
+			</div>
+
+			<!-- Laboratory Results Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">assessment</mat-icon>
+					<h2>Laboratory Results</h2>
+					<div class="section-subtitle">Enter medical values with real-time critical alert detection</div>
+				</div>
+
+				<div class="form-grid results-grid">
+					<mat-form-field appearance="outline">
+						<mat-label>pH Level</mat-label>
+						<input matInput type="number" formControlName="phLevel" step="0.01" placeholder="0.0 - 14.0">
+						<mat-hint>Normal: 7.35 - 7.45</mat-hint>
+						<mat-error *ngIf="hasError('phLevel')">
+							{{ getErrorMessage('phLevel') }}
+						</mat-error>
+						<div *ngIf="getControlValue('phLevel') > 0" class="value-status"
+							[ngClass]="getMedicalStatus('phLevel', getControlValue('phLevel')).class">
+							{{ getMedicalStatus('phLevel', getControlValue('phLevel')).status }}
+						</div>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Cholesterol (mg/dL)</mat-label>
+						<input matInput type="number" formControlName="cholesterolLevel" placeholder="mg/dL">
+						<mat-hint>Normal: < 200, High:> 240</mat-hint>
+						<mat-error *ngIf="hasError('cholesterolLevel')">
+							{{ getErrorMessage('cholesterolLevel') }}
+						</mat-error>
+						<div *ngIf="getControlValue('cholesterolLevel') > 0" class="value-status"
+							[ngClass]="getMedicalStatus('cholesterolLevel', getControlValue('cholesterolLevel')).class">
+							{{ getMedicalStatus('cholesterolLevel', getControlValue('cholesterolLevel')).status }}
+						</div>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Blood Sugar (mg/dL)</mat-label>
+						<input matInput type="number" formControlName="sucroseLevel" placeholder="mg/dL">
+						<mat-hint>Normal: 70-99, High: > 126</mat-hint>
+						<mat-error *ngIf="hasError('sucroseLevel')">
+							{{ getErrorMessage('sucroseLevel') }}
+						</mat-error>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>White Blood Cells (x10^9/L)</mat-label>
+						<input matInput type="number" formControlName="whiteBloodCellsRatio" step="0.1"
+							placeholder="x10^9/L">
+						<mat-hint>Normal: 4.5 - 11.0</mat-hint>
+						<mat-error *ngIf="hasError('whiteBloodCellsRatio')">
+							{{ getErrorMessage('whiteBloodCellsRatio') }}
+						</mat-error>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Red Blood Cells (x10^12/L)</mat-label>
+						<input matInput type="number" formControlName="redBloodCellsRatio" step="0.1"
+							placeholder="x10^12/L">
+						<mat-hint>Normal: 4.1 - 5.9</mat-hint>
+						<mat-error *ngIf="hasError('redBloodCellsRatio')">
+							{{ getErrorMessage('redBloodCellsRatio') }}
+						</mat-error>
+					</mat-form-field>
+
+					<mat-form-field appearance="outline">
+						<mat-label>Heart Rate (bpm)</mat-label>
+						<input matInput type="number" formControlName="heartBeatRatio" placeholder="beats per minute">
+						<mat-hint>Normal: 60 - 100</mat-hint>
+						<mat-error *ngIf="hasError('heartBeatRatio')">
+							{{ getErrorMessage('heartBeatRatio') }}
+						</mat-error>
+					</mat-form-field>
+				</div>
+			</div>
+
+			<!-- Detailed Report Section -->
+			<div class="medical-card form-section">
+				<div class="section-header">
+					<mat-icon class="section-icon">description</mat-icon>
+					<h2>Medical Analysis & Notes</h2>
+				</div>
+
+				<div class="form-grid">
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Medical Report & Analysis</mat-label>
+						<textarea matInput formControlName="reports"
+							placeholder="Detailed findings, medical observations, recommendations, and clinical notes..."
+							rows="6" maxlength="1000">
+            </textarea>
+						<mat-hint align="end">{{ getControlValue('reports')?.length || 0 }}/1000</mat-hint>
+						<mat-error *ngIf="hasError('reports')">
+							{{ getErrorMessage('reports') }}
+						</mat-error>
+					</mat-form-field>
+				</div>
+			</div>
+
+			<!-- Form Actions -->
+			<div class="form-actions">
+				<button type="button" mat-stroked-button class="cancel-btn" (click)="onCancel()" [disabled]="isLoading">
+					<mat-icon>cancel</mat-icon>
+					Cancel
+				</button>
+
+				<button type="button" mat-stroked-button class="reset-btn" (click)="resetForm()" [disabled]="isLoading">
+					<mat-icon>refresh</mat-icon>
+					Reset Form
+				</button>
+
+				<button type="submit" mat-raised-button color="primary" class="submit-btn"
+					[disabled]="labReportForm.invalid || isLoading">
+					<mat-icon>{{ isEditMode ? 'update' : 'save' }}</mat-icon>
+					{{ isEditMode ? 'Update' : 'Save' }} Lab Report
+				</button>
+			</div>
+		</form>
+	</div>
+</div>

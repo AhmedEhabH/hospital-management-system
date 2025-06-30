@@ -2,6 +2,20 @@
 @use '@angular/material' as mat;
 
 
+// Mixins
+@mixin flex-between {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+@mixin flex-center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+
 // Medical-themed color palette following 2025 healthcare design trends
 $hospital-primary: mat.m2-define-palette((50: #e8f4fd,
 			100: #c6e2fa,
