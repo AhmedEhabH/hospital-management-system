@@ -38,6 +38,7 @@ import { LabReportsComponent } from './lab-reports.component';
 import { CriticalAlertsComponent } from './critical-alerts/critical-alerts.component';
 import { LabComparisonComponent } from './lab-comparison/lab-comparison.component';
 import { LabReportFormComponent } from './lab-report-form/lab-report-form.component';
+import { LabReportsListComponent } from './lab-reports-list/lab-reports-list.component';
 
 @NgModule({
 	declarations: [
@@ -45,6 +46,7 @@ import { LabReportFormComponent } from './lab-report-form/lab-report-form.compon
 		LabComparisonComponent,
 		CriticalAlertsComponent,
   LabReportFormComponent,
+  LabReportsListComponent,
 	],
 	imports: [
 		CommonModule, // This provides *ngIf, *ngFor directives

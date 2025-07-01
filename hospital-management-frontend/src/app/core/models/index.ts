@@ -12,6 +12,7 @@ export * from './interfaces/ui.interface';
 export * from './user.model';
 export * from './medical-history.model';
 export * from './lab-report.model';
+export * from './appointment.model.model';
 // export * from './message.model';
 // export * from './feedback.model';
 // export * from './hospital.model';

@@ -33,6 +33,9 @@ import { EventEditDialogComponent } from './event-edit-dialog/event-edit-dialog.
 import { ExportOptionsDialogComponent } from './export-options-dialog/export-options-dialog.component';
 import { MatRadioButton, MatRadioModule } from '@angular/material/radio';
 import { MedicalHistoryFormComponent } from './medical-history-form/medical-history-form.component';
+import { MedicalHistoryListComponent } from './medical-history-list/medical-history-list.component';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatTableModule } from '@angular/material/table';
 
 @NgModule({
 	declarations: [
@@ -40,10 +43,11 @@ import { MedicalHistoryFormComponent } from './medical-history-form/medical-hist
 		TimelineComponent,
 		FormComponent,
 		DetailsComponent,
-  EventDetailsDialogComponent,
-  EventEditDialogComponent,
-  ExportOptionsDialogComponent,
-  MedicalHistoryFormComponent
+		EventDetailsDialogComponent,
+		EventEditDialogComponent,
+		ExportOptionsDialogComponent,
+		MedicalHistoryFormComponent,
+		MedicalHistoryListComponent
 	],
 	imports: [
 		CommonModule,
@@ -71,7 +75,9 @@ import { MedicalHistoryFormComponent } from './medical-history-form/medical-hist
 		MatStepperModule,
 		MatProgressBarModule,    // FIXES mat-progress-bar errors
 		MatDialogModule,
-		MatRadioModule
+		MatRadioModule,
+		MatPaginatorModule,
+		MatTableModule,
 	]
 })
 export class MedicalHistoryModule { }

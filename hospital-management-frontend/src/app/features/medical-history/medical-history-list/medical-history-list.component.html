@@ -1,0 +1,130 @@
+<div class="medical-history-container">
+	<!-- Header -->
+	<div class="page-header medical-gradient">
+		<div class="container header-container">
+			<div class="header-content">
+				<mat-icon class="header-icon">medical_information</mat-icon>
+				<div class="header-text">
+					<h1>Medical History</h1>
+					<p>Comprehensive medical history and health records management</p>
+				</div>
+			</div>
+			<div class="header-actions">
+				<button mat-raised-button color="primary" (click)="createMedicalHistory()">
+					<mat-icon>add</mat-icon>
+					Add Medical History
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Content -->
+	<div class="container content-container">
+		<div class="medical-card">
+			<!-- Search and Filters -->
+			<div class="table-header">
+				<mat-form-field appearance="outline" class="search-field">
+					<mat-label>Search medical history</mat-label>
+					<input matInput (keyup)="applyFilter($event)"
+						placeholder="Search by condition, allergy, or medication">
+					<mat-icon matSuffix>search</mat-icon>
+				</mat-form-field>
+			</div>
+
+			<!-- Medical History Table -->
+			<div class="table-container">
+				<mat-table [dataSource]="dataSource" matSort class="medical-table">
+					<!-- Personal History Column -->
+					<ng-container matColumnDef="personalHistory">
+						<mat-header-cell *matHeaderCellDef mat-sort-header>Personal History</mat-header-cell>
+						<mat-cell *matCellDef="let history">
+							<div class="history-cell">
+								<div class="history-text">{{ history.personalHistory || 'No personal history recorded'
+									}}</div>
+							</div>
+						</mat-cell>
+					</ng-container>
+
+					<!-- Allergies Column -->
+					<ng-container matColumnDef="allergies">
+						<mat-header-cell *matHeaderCellDef>Allergies</mat-header-cell>
+						<mat-cell *matCellDef="let history">
+							<div class="allergies-cell">
+								<mat-chip-set *ngIf="history.allergies; else noAllergies">
+									<mat-chip class="allergy-chip">{{ history.allergies }}</mat-chip>
+								</mat-chip-set>
+								<ng-template #noAllergies>
+									<span class="no-data">No known allergies</span>
+								</ng-template>
+							</div>
+						</mat-cell>
+					</ng-container>
+
+					<!-- Chronic Conditions Column -->
+					<ng-container matColumnDef="chronicConditions">
+						<mat-header-cell *matHeaderCellDef>Chronic Conditions</mat-header-cell>
+						<mat-cell *matCellDef="let history">
+							<div class="conditions-cell">
+								<mat-chip-set *ngIf="getChronicConditions(history).length > 0; else noConditions">
+									<mat-chip *ngFor="let condition of getChronicConditions(history)"
+										class="condition-chip">
+										{{ condition }}
+									</mat-chip>
+								</mat-chip-set>
+								<ng-template #noConditions>
+									<span class="no-data">No chronic conditions</span>
+								</ng-template>
+							</div>
+						</mat-cell>
+					</ng-container>
+
+					<!-- Current Medications Column -->
+					<ng-container matColumnDef="medications">
+						<mat-header-cell *matHeaderCellDef>Current Medications</mat-header-cell>
+						<mat-cell *matCellDef="let history">
+							<div class="medications-cell">
+								<div class="medication-text">{{ history.currentMedications || 'No current medications'
+									}}</div>
+							</div>
+						</mat-cell>
+					</ng-container>
+
+					<!-- Actions Column -->
+					<ng-container matColumnDef="actions">
+						<mat-header-cell *matHeaderCellDef>Actions</mat-header-cell>
+						<mat-cell *matCellDef="let history">
+							<div class="action-buttons">
+								<button mat-icon-button (click)="editMedicalHistory(history.id)" matTooltip="Edit">
+									<mat-icon>edit</mat-icon>
+								</button>
+							</div>
+						</mat-cell>
+					</ng-container>
+
+					<mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
+					<mat-row *matRowDef="let row; columns: displayedColumns;" class="clickable-row"></mat-row>
+				</mat-table>
+
+				<!-- Loading State -->
+				<div *ngIf="isLoading" class="loading-state">
+					<mat-progress-bar mode="indeterminate"></mat-progress-bar>
+					<p>Loading medical history...</p>
+				</div>
+
+				<!-- Empty State -->
+				<div *ngIf="!isLoading && dataSource.data.length === 0" class="empty-state">
+					<mat-icon>medical_information</mat-icon>
+					<h3>No Medical History Found</h3>
+					<p>Start by adding your first medical history record</p>
+					<button mat-raised-button color="primary" (click)="createMedicalHistory()">
+						<mat-icon>add</mat-icon>
+						Add Medical History
+					</button>
+				</div>
+
+				<!-- Paginator -->
+				<mat-paginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+			</div>
+		</div>
+	</div>
+</div>

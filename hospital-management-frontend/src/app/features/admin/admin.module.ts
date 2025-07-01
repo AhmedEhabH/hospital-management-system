@@ -44,6 +44,7 @@ import { SystemAnalyticsComponent } from './system-analytics/system-analytics.co
 import { HospitalManagementComponent } from './hospital-management/hospital-management.component';
 import { AuditLogsComponent } from './audit-logs/audit-logs.component';
 import { SettingsComponent } from './settings/settings.component';
+import { PatientManagementComponent } from './patient-management/patient-management.component';
 
 @NgModule({
 	declarations: [
@@ -52,7 +53,8 @@ import { SettingsComponent } from './settings/settings.component';
 		SystemAnalyticsComponent,
 		HospitalManagementComponent,
 		AuditLogsComponent,
-		SettingsComponent
+		SettingsComponent,
+  PatientManagementComponent
 	],
 	imports: [
 		CommonModule,

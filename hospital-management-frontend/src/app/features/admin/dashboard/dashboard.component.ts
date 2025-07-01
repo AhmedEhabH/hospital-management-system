@@ -456,4 +456,59 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 	navigateToSettings(): void {
 		console.log('Navigate to settings');
 	}
+
+	/**
+ * Gets recent activities from real database data
+ */
+	public getRecentActivities(): any[] {
+		if (!this.dashboardData?.recentUserActivities) return [];
+
+		return this.dashboardData.recentUserActivities.slice(0, 10).map(activity => ({
+			id: activity.id,
+			user: activity.userName,
+			userType: activity.userType,
+			action: activity.action,
+			timestamp: activity.timestamp,
+			status: activity.status,
+			icon: this.getActivityIcon(activity.action),
+			statusClass: this.getActivityStatusClass(activity.status)
+		}));
+	}
+
+	/**
+ * Gets CSS class for activity status
+ */
+	public getActivityStatusClass(status: string): string {
+		switch (status?.toLowerCase()) {
+			case 'success': return 'status-stable';
+			case 'completed': return 'status-stable';
+			case 'failed': return 'status-critical';
+			case 'error': return 'status-critical';
+			case 'warning': return 'status-warning';
+			case 'pending': return 'status-info';
+			case 'in progress': return 'status-warning';
+			default: return 'status-info';
+		}
+	}
+
+
+	/**
+	 * Gets appropriate icon for activity type
+	 */
+	private getActivityIcon(action: string): string {
+		if (action.includes('login')) return 'login';
+		if (action.includes('lab report')) return 'science';
+		if (action.includes('medical history')) return 'medical_information';
+		if (action.includes('message')) return 'mail';
+		if (action.includes('appointment')) return 'event';
+		return 'activity';
+	}
+
+	/**
+	 * Refreshes recent activities
+	 */
+	public refreshActivities(): void {
+		this.loadAdminDashboardData();
+	}
+
 }

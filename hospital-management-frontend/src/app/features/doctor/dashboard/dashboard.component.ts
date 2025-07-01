@@ -3,6 +3,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { MedicalHistoryService } from '../../../core/services/medical-history.service';
 import { LabReportService } from '../../../core/services/lab-report.service';
@@ -10,6 +11,7 @@ import { MessageService, Message } from '../../../core/services/message.service'
 import { ThemeService } from '../../../core/services/theme.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
+import { AppointmentDto } from '../../../core/models'; // ADDED: Import AppointmentDto
 
 interface Patient {
 	id: number;
@@ -22,15 +24,6 @@ interface Patient {
 	lastVisit: Date;
 	status: 'Critical' | 'Stable' | 'Monitoring' | 'Discharged';
 	condition: string;
-}
-
-interface Appointment {
-	id: number;
-	patientName: string;
-	time: string;
-	type: string;
-	status: 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled';
-	priority: 'High' | 'Medium' | 'Low';
 }
 
 @Component({
@@ -68,9 +61,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	patientsDataSource = new MatTableDataSource<Patient>();
 	patientsDisplayedColumns: string[] = ['name', 'age', 'gender', 'lastVisit', 'status', 'condition', 'actions'];
 
-	// Appointment Data - FROM DATABASE
-	todayAppointments: Appointment[] = [];
-	appointmentsDataSource = new MatTableDataSource<Appointment>();
+	// Appointment Data - FROM DATABASE WITH PROPER DTO TYPING
+	todayAppointments: AppointmentDto[] = []; // FIXED: Use AppointmentDto instead of any
+	appointmentsDataSource = new MatTableDataSource<AppointmentDto>();
 	appointmentsDisplayedColumns: string[] = ['time', 'patient', 'type', 'priority', 'status', 'actions'];
 
 	// Recent Activities - FROM DATABASE
@@ -122,13 +115,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		private labReportService: LabReportService,
 		private messageService: MessageService,
 		private themeService: ThemeService,
-		private dashboardService: DashboardService // ADDED: Dashboard service for real data
+		private dashboardService: DashboardService,
+		private router: Router
 	) { }
 
 	ngOnInit(): void {
 		this.initializeDashboard();
 		this.subscribeToTheme();
-		this.loadRealDashboardData(); // CHANGED: Load real data instead of mock
+		this.loadRealDashboardData();
 	}
 
 	ngOnDestroy(): void {
@@ -207,22 +201,28 @@ export class DashboardComponent implements OnInit, OnDestroy {
 			firstName: patient.firstName,
 			lastName: patient.lastName,
 			email: patient.email,
-			age: this.calculateAge(patient.dateOfBirth) || 0, // Calculate age if DOB available
+			age: this.calculateAge(patient.dateOfBirth) || 0,
 			gender: patient.gender || 'Unknown',
 			phoneNo: patient.phoneNo || 'N/A',
-			lastVisit: new Date(), // Use current date as placeholder
+			lastVisit: new Date(),
 			status: this.determinePatientStatus(patient),
-			condition: 'General Care' // Default condition
+			condition: 'General Care'
 		}));
 
-		// **CONVERT REAL APPOINTMENTS DATA**
-		this.todayAppointments = this.dashboardData.todayAppointments.map((appointment: any) => ({
+		// **CONVERT REAL APPOINTMENTS DATA WITH PROPER DTO TYPING**
+		this.todayAppointments = this.dashboardData.todayAppointments.map((appointment: any): AppointmentDto => ({
 			id: appointment.id,
+			doctorName: appointment.doctorName,
 			patientName: appointment.patientName,
+			date: appointment.date,
 			time: appointment.time,
+			department: appointment.department,
 			type: appointment.type,
 			status: appointment.status as 'Scheduled' | 'In Progress' | 'Completed' | 'Cancelled',
-			priority: appointment.priority || 'Medium' as 'High' | 'Medium' | 'Low'
+			priority: appointment.priority || 'Medium' as 'High' | 'Medium' | 'Low',
+			notes: appointment.notes,
+			patientId: appointment.patientId,
+			doctorId: appointment.doctorId
 		}));
 
 		// **GENERATE REAL ACTIVITIES FROM DATABASE DATA**
@@ -284,7 +284,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	}
 
 	private generateActivitiesFromRealData(): any[] {
-		const activities:any = [];
+		const activities : any= [];
 
 		// Add activities from completed appointments
 		const completedAppointments = this.dashboardData.todayAppointments
@@ -403,7 +403,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		}
 	}
 
-	// **USER ACTIONS - ENHANCED WITH REAL DATA**
+	// **USER ACTIONS - ENHANCED WITH REAL DATA AND PROPER DTO TYPING**
 	getStatusClass(status: string): string {
 		switch (status.toLowerCase()) {
 			case 'critical': return 'status-critical';
@@ -423,6 +423,63 @@ export class DashboardComponent implements OnInit, OnDestroy {
 		}
 	}
 
+	/**
+	 * Gets CSS class for appointment status
+	 */
+	public getAppointmentStatusClass(status: string): string {
+		switch (status?.toLowerCase()) {
+			case 'scheduled': return 'status-info';
+			case 'in progress': return 'status-warning';
+			case 'completed': return 'status-stable';
+			case 'cancelled': return 'status-critical';
+			default: return 'status-info';
+		}
+	}
+
+	/**
+	 * Gets CSS class for activity status
+	 */
+	public getActivityStatusClass(status: string): string {
+		switch (status?.toLowerCase()) {
+			case 'success': return 'status-stable';
+			case 'completed': return 'status-stable';
+			case 'failed': return 'status-critical';
+			case 'error': return 'status-critical';
+			case 'warning': return 'status-warning';
+			case 'pending': return 'status-info';
+			case 'in progress': return 'status-warning';
+			default: return 'status-info';
+		}
+	}
+
+	/**
+	 * Starts an appointment consultation with proper DTO typing
+	 */
+	public startAppointment(appointment: AppointmentDto): void { // FIXED: Use AppointmentDto instead of any
+		console.log('Starting appointment:', appointment);
+		// Update appointment status to "In Progress"
+		// Navigate to consultation interface
+		this.router.navigate(['/consultation', appointment.id]);
+	}
+
+	/**
+	 * Completes an appointment with proper DTO typing
+	 */
+	public completeAppointment(appointment: AppointmentDto): void { // FIXED: Use AppointmentDto instead of any
+		console.log('Completing appointment:', appointment);
+		// Update appointment status to "Completed"
+		// Show completion dialog or navigate to summary
+	}
+
+	/**
+	 * Reschedules an appointment with proper DTO typing
+	 */
+	public rescheduleAppointment(appointment: AppointmentDto): void { // FIXED: Use AppointmentDto instead of any
+		console.log('Rescheduling appointment:', appointment);
+		// Open reschedule dialog
+		// Update appointment date/time
+	}
+
 	viewPatientDetails(patient: Patient): void {
 		console.log('View patient details from database:', patient);
 		// Navigate to patient details page with real patient data
@@ -431,21 +488,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 	editPatientRecord(patient: Patient): void {
 		console.log('Edit patient record from database:', patient);
 		// Open edit patient dialog with real patient data
-	}
-
-	startAppointment(appointment: Appointment): void {
-		console.log('Start appointment from database:', appointment);
-		// Navigate to appointment interface with real appointment data
-	}
-
-	completeAppointment(appointment: Appointment): void {
-		console.log('Complete appointment from database:', appointment);
-		// Mark appointment as completed in database
-	}
-
-	rescheduleAppointment(appointment: Appointment): void {
-		console.log('Reschedule appointment from database:', appointment);
-		// Open reschedule dialog with real appointment data
 	}
 
 	applyFilter(event: Event): void {

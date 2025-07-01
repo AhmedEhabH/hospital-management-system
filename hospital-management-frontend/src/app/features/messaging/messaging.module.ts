@@ -41,6 +41,7 @@ import { ChatWindowComponent } from './chat-window/chat-window.component';
 import { MessageComposerComponent } from './message-composer/message-composer.component';
 import { NotificationCenterComponent } from './notification-center/notification-center.component';
 import { ComposeMessageComponent } from './compose-message/compose-message.component';
+import { MessagesListComponent } from './messages-list/messages-list.component';
 
 @NgModule({
 	declarations: [
@@ -49,7 +50,8 @@ import { ComposeMessageComponent } from './compose-message/compose-message.compo
 		ChatWindowComponent,
 		MessageComposerComponent,
 		NotificationCenterComponent,
-  ComposeMessageComponent
+  ComposeMessageComponent,
+  MessagesListComponent
 	],
 	imports: [
 		CommonModule,

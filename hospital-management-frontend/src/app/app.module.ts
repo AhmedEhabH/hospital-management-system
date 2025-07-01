@@ -45,12 +45,16 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { LabReportsModule } from './features/lab-reports/lab-reports.module';
 import { PatientRegistrationComponent } from './features/registration/patient-registration/patient-registration.component';
 import { FeedbackFormComponent } from './features/feedback/feedback-form/feedback-form.component';
+import { PatientProfileComponent } from './features/patients/patient-profile/patient-profile.component';
+import { PatientSearchComponent } from './features/patients/patient-search/patient-search.component';
 
 @NgModule({
 	declarations: [
 		AppComponent,
   PatientRegistrationComponent,
   FeedbackFormComponent,
+  PatientProfileComponent,
+  PatientSearchComponent,
 
 	],
 	imports: [
