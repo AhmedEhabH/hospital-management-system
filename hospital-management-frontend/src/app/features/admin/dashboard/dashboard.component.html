@@ -259,6 +259,7 @@
 							<div class="tab-header">
 								<h3>System Activity Log</h3>
 								<div class="header-actions">
+
 									<mat-form-field class="search-field">
 										<mat-label>Search activities</mat-label>
 										<input matInput (keyup)="applyFilter($event)"
@@ -268,6 +269,10 @@
 									<button mat-button color="primary" (click)="navigateToAuditLogs()">
 										View Full Audit Log
 										<mat-icon>arrow_forward</mat-icon>
+									</button>
+									<button mat-raised-button color="accent" routerLink="/registration/patient">
+										<mat-icon>person_add</mat-icon>
+										Register Patient
 									</button>
 								</div>
 							</div>

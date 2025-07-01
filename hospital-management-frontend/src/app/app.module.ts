@@ -47,14 +47,28 @@ import { PatientRegistrationComponent } from './features/registration/patient-re
 import { FeedbackFormComponent } from './features/feedback/feedback-form/feedback-form.component';
 import { PatientProfileComponent } from './features/patients/patient-profile/patient-profile.component';
 import { PatientSearchComponent } from './features/patients/patient-search/patient-search.component';
+import { PatientRecordsComponent } from './features/medical-records/patient-records/patient-records.component';
+import { MedicalTimelineComponent } from './features/medical-records/medical-timeline/medical-timeline.component';
+import { MedicalTrendsComponent } from './features/analytics/medical-trends/medical-trends.component';
+import { PatientOutcomesComponent } from './features/analytics/patient-outcomes/patient-outcomes.component';
+import { MedicalReportsComponent } from './features/reports/medical-reports/medical-reports.component';
+import { ExportManagerComponent } from './features/reports/export-manager/export-manager.component';
+import { ReactiveFormsModule } from '@angular/forms';
+import { RegistrationModule } from './features/registration/registration.module';
 
 @NgModule({
 	declarations: [
 		AppComponent,
-  PatientRegistrationComponent,
-  FeedbackFormComponent,
-  PatientProfileComponent,
-  PatientSearchComponent,
+		FeedbackFormComponent,
+		PatientProfileComponent,
+		PatientSearchComponent,
+		PatientRecordsComponent,
+		MedicalTimelineComponent,
+		MedicalTrendsComponent,
+		PatientOutcomesComponent,
+		MedicalReportsComponent,
+		ExportManagerComponent,
+		
 
 	],
 	imports: [
@@ -63,11 +77,13 @@ import { PatientSearchComponent } from './features/patients/patient-search/patie
 		BrowserModule,
 		AppRoutingModule,
 		BrowserAnimationsModule,
+		ReactiveFormsModule,
 		HttpClientModule,
 
 		CoreModule,
 		// CRITICAL: Import SharedModule to make app-header available
 		SharedModule,
+		RegistrationModule,
 		// Angular Material Core Modules - GLOBAL AVAILABILITY
 		// Angular Material Modules
 		MatToolbarModule,

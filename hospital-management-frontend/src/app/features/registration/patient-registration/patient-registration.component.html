@@ -1,1 +1,367 @@
-<p>patient-registration works!</p>
+<div class="patient-registration-container" [class.dark-theme]="isDarkMode">
+	<!-- Loading Overlay -->
+	<div *ngIf="isLoading" class="loading-overlay">
+		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+		<div class="loading-content">
+			<mat-icon class="loading-icon">person_add</mat-icon>
+			<h3>Creating Your Account...</h3>
+			<p>Setting up your patient profile securely</p>
+		</div>
+	</div>
+
+	<!-- Registration Header -->
+	<div class="registration-header medical-gradient">
+		<div class="container header-container">
+			<div class="header-content">
+				<mat-icon class="header-icon">local_hospital</mat-icon>
+				<div class="header-text">
+					<h1>Patient Registration</h1>
+					<p>Join our comprehensive healthcare management system</p>
+				</div>
+			</div>
+			<div class="header-actions">
+				<button mat-icon-button (click)="onCancel()" matTooltip="Cancel Registration" class="cancel-button">
+					<mat-icon>close</mat-icon>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Progress Indicator -->
+	<div class="progress-container">
+		<div class="container">
+			<mat-progress-bar [value]="getProgressPercentage()" mode="determinate"
+				class="progress-bar"></mat-progress-bar>
+			<div class="step-indicators">
+				<div class="step-indicator" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1">
+					<span class="step-number">1</span>
+					<span class="step-label">Personal Info</span>
+				</div>
+				<div class="step-indicator" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2">
+					<span class="step-number">2</span>
+					<span class="step-label">Contact & Emergency</span>
+				</div>
+				<div class="step-indicator" [class.active]="currentStep >= 3">
+					<span class="step-number">3</span>
+					<span class="step-label">Medical Info</span>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Registration Form -->
+	<div class="container content-container">
+		<form [formGroup]="registrationForm" (ngSubmit)="onSubmit()" class="registration-form">
+
+			<!-- Step 1: Personal Information -->
+			<div *ngIf="currentStep === 1" class="form-step fade-in">
+				<div class="medical-card">
+					<div class="step-header">
+						<mat-icon class="step-icon">person</mat-icon>
+						<h2>Personal Information</h2>
+						<p>Please provide your basic personal details</p>
+					</div>
+
+					<div class="form-grid">
+						<mat-form-field appearance="outline">
+							<mat-label>First Name</mat-label>
+							<input matInput formControlName="firstName" placeholder="Enter your first name">
+							<mat-error *ngIf="hasError('firstName')">
+								{{ getErrorMessage('firstName') }}
+							</mat-error>
+						</mat-form-field>
+
+						<mat-form-field appearance="outline">
+							<mat-label>Last Name</mat-label>
+							<input matInput formControlName="lastName" placeholder="Enter your last name">
+							<mat-error *ngIf="hasError('lastName')">
+								{{ getErrorMessage('lastName') }}
+							</mat-error>
+						</mat-form-field>
+
+						<mat-form-field appearance="outline">
+							<mat-label>Gender</mat-label>
+							<mat-select formControlName="gender">
+								<mat-option value="Male">Male</mat-option>
+								<mat-option value="Female">Female</mat-option>
+								<mat-option value="Other">Other</mat-option>
+							</mat-select>
+							<mat-error *ngIf="hasError('gender')">
+								{{ getErrorMessage('gender') }}
+							</mat-error>
+						</mat-form-field>
+
+						<mat-form-field appearance="outline">
+							<mat-label>Age</mat-label>
+							<input matInput type="number" formControlName="age" placeholder="Your age" min="1"
+								max="120">
+							<mat-error *ngIf="hasError('age')">
+								{{ getErrorMessage('age') }}
+							</mat-error>
+						</mat-form-field>
+
+						<mat-form-field appearance="outline" class="full-width">
+							<mat-label>Date of Birth</mat-label>
+							<input matInput type="date" formControlName="dateOfBirth">
+							<mat-error *ngIf="hasError('dateOfBirth')">
+								{{ getErrorMessage('dateOfBirth') }}
+							</mat-error>
+						</mat-form-field>
+					</div>
+
+					<div class="account-section">
+						<h3>Account Information</h3>
+						<div class="form-grid">
+							<mat-form-field appearance="outline">
+								<mat-label>User ID</mat-label>
+								<input matInput formControlName="userId" placeholder="Choose a unique user ID">
+								<mat-hint>This will be used for login</mat-hint>
+								<mat-error *ngIf="hasError('userId')">
+									{{ getErrorMessage('userId') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline" class="full-width">
+								<mat-label>Email Address</mat-label>
+								<input matInput type="email" formControlName="email"
+									placeholder="your.email@example.com">
+								<mat-error *ngIf="hasError('email')">
+									{{ getErrorMessage('email') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Password</mat-label>
+								<input matInput type="password" formControlName="password"
+									placeholder="Create a strong password">
+								<mat-hint>Must contain uppercase, lowercase, number, and special character</mat-hint>
+								<mat-error *ngIf="hasError('password')">
+									{{ getErrorMessage('password') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Confirm Password</mat-label>
+								<input matInput type="password" formControlName="confirmPassword"
+									placeholder="Confirm your password">
+								<mat-error *ngIf="hasError('confirmPassword')">
+									{{ getErrorMessage('confirmPassword') }}
+								</mat-error>
+							</mat-form-field>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Step 2: Contact Information -->
+			<div *ngIf="currentStep === 2" class="form-step fade-in">
+				<div class="medical-card">
+					<div class="step-header">
+						<mat-icon class="step-icon">contact_phone</mat-icon>
+						<h2>Contact & Emergency Information</h2>
+						<p>Provide your contact details and emergency contact</p>
+					</div>
+
+					<div class="contact-section">
+						<h3>Contact Information</h3>
+						<div class="form-grid">
+							<mat-form-field appearance="outline" class="full-width">
+								<mat-label>Address</mat-label>
+								<input matInput formControlName="address" placeholder="Street address">
+								<mat-error *ngIf="hasError('address')">
+									{{ getErrorMessage('address') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>City</mat-label>
+								<input matInput formControlName="city" placeholder="City">
+								<mat-error *ngIf="hasError('city')">
+									{{ getErrorMessage('city') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>State</mat-label>
+								<input matInput formControlName="state" placeholder="State">
+								<mat-error *ngIf="hasError('state')">
+									{{ getErrorMessage('state') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>ZIP Code</mat-label>
+								<input matInput formControlName="zip" placeholder="12345">
+								<mat-error *ngIf="hasError('zip')">
+									{{ getErrorMessage('zip') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Phone Number</mat-label>
+								<input matInput formControlName="phoneNo" placeholder="+1-555-123-4567">
+								<mat-error *ngIf="hasError('phoneNo')">
+									{{ getErrorMessage('phoneNo') }}
+								</mat-error>
+							</mat-form-field>
+						</div>
+					</div>
+
+					<div class="emergency-section">
+						<h3>Emergency Contact (Optional)</h3>
+						<div class="form-grid">
+							<mat-form-field appearance="outline">
+								<mat-label>Emergency Contact Name</mat-label>
+								<input matInput formControlName="emergencyContactName" placeholder="Full name">
+								<mat-error *ngIf="hasError('emergencyContactName')">
+									{{ getErrorMessage('emergencyContactName') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Emergency Contact Phone</mat-label>
+								<input matInput formControlName="emergencyContactPhone" placeholder="+1-555-987-6543">
+								<mat-error *ngIf="hasError('emergencyContactPhone')">
+									{{ getErrorMessage('emergencyContactPhone') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Relationship</mat-label>
+								<input matInput formControlName="emergencyContactRelation"
+									placeholder="e.g., Spouse, Parent, Sibling">
+								<mat-error *ngIf="hasError('emergencyContactRelation')">
+									{{ getErrorMessage('emergencyContactRelation') }}
+								</mat-error>
+							</mat-form-field>
+						</div>
+					</div>
+
+					<div class="insurance-section">
+						<h3>Insurance Information (Optional)</h3>
+						<div class="form-grid">
+							<mat-form-field appearance="outline">
+								<mat-label>Insurance Provider</mat-label>
+								<input matInput formControlName="insuranceProvider"
+									placeholder="Insurance company name">
+								<mat-error *ngIf="hasError('insuranceProvider')">
+									{{ getErrorMessage('insuranceProvider') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline">
+								<mat-label>Policy Number</mat-label>
+								<input matInput formControlName="insurancePolicyNumber" placeholder="Policy number">
+								<mat-error *ngIf="hasError('insurancePolicyNumber')">
+									{{ getErrorMessage('insurancePolicyNumber') }}
+								</mat-error>
+							</mat-form-field>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Step 3: Medical Information -->
+			<div *ngIf="currentStep === 3" class="form-step fade-in">
+				<div class="medical-card">
+					<div class="step-header">
+						<mat-icon class="step-icon">medical_information</mat-icon>
+						<h2>Medical Information</h2>
+						<p>Help us provide better care with your medical background</p>
+					</div>
+
+					<div class="medical-section">
+						<h3>Medical Background (Optional)</h3>
+						<div class="form-grid">
+							<mat-form-field appearance="outline" class="full-width">
+								<mat-label>Current Medical Conditions</mat-label>
+								<textarea matInput formControlName="medicalConditions"
+									placeholder="List any current medical conditions, chronic illnesses, or ongoing health issues..."
+									rows="3" maxlength="500">
+                </textarea>
+								<mat-hint align="end">{{ getControlValue('medicalConditions')?.length || 0
+									}}/500</mat-hint>
+								<mat-error *ngIf="hasError('medicalConditions')">
+									{{ getErrorMessage('medicalConditions') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline" class="full-width">
+								<mat-label>Current Medications</mat-label>
+								<textarea matInput formControlName="currentMedications"
+									placeholder="List all medications you are currently taking, including dosages..."
+									rows="3" maxlength="500">
+                </textarea>
+								<mat-hint align="end">{{ getControlValue('currentMedications')?.length || 0
+									}}/500</mat-hint>
+								<mat-error *ngIf="hasError('currentMedications')">
+									{{ getErrorMessage('currentMedications') }}
+								</mat-error>
+							</mat-form-field>
+
+							<mat-form-field appearance="outline" class="full-width">
+								<mat-label>Allergies</mat-label>
+								<textarea matInput formControlName="allergies"
+									placeholder="List any known allergies to medications, foods, or other substances..."
+									rows="3" maxlength="500">
+                </textarea>
+								<mat-hint align="end">{{ getControlValue('allergies')?.length || 0 }}/500</mat-hint>
+								<mat-error *ngIf="hasError('allergies')">
+									{{ getErrorMessage('allergies') }}
+								</mat-error>
+							</mat-form-field>
+						</div>
+					</div>
+
+					<div class="terms-section">
+						<h3>Terms and Privacy</h3>
+						<div class="checkbox-group">
+							<mat-checkbox formControlName="agreeToTerms" class="terms-checkbox">
+								<span class="checkbox-text">
+									I agree to the <a href="/terms" target="_blank">Terms of Service</a>
+								</span>
+							</mat-checkbox>
+							<mat-error *ngIf="hasError('agreeToTerms')">
+								You must agree to the terms of service
+							</mat-error>
+
+							<mat-checkbox formControlName="agreeToPrivacy" class="privacy-checkbox">
+								<span class="checkbox-text">
+									I agree to the <a href="/privacy" target="_blank">Privacy Policy</a> and consent to
+									the collection and use of my medical information
+								</span>
+							</mat-checkbox>
+							<mat-error *ngIf="hasError('agreeToPrivacy')">
+								You must agree to the privacy policy
+							</mat-error>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<!-- Navigation Buttons -->
+			<div class="form-navigation">
+				<button type="button" mat-stroked-button class="nav-button prev-button" (click)="previousStep()"
+					[disabled]="currentStep === 1">
+					<mat-icon>arrow_back</mat-icon>
+					Previous
+				</button>
+
+				<div class="nav-spacer"></div>
+
+				<button type="button" mat-raised-button color="primary" class="nav-button next-button"
+					(click)="nextStep()" *ngIf="currentStep < totalSteps" [disabled]="(currentStep === 1 && !personalInfoValid) || 
+                           (currentStep === 2 && !contactInfoValid)">
+					Next
+					<mat-icon>arrow_forward</mat-icon>
+				</button>
+
+				<button type="submit" mat-raised-button color="primary" class="nav-button submit-button"
+					*ngIf="currentStep === totalSteps" [disabled]="registrationForm.invalid || isLoading">
+					<mat-icon>person_add</mat-icon>
+					Complete Registration
+				</button>
+			</div>
+		</form>
+	</div>
+</div>

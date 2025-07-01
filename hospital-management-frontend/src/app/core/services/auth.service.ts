@@ -8,7 +8,7 @@ import {
 	UserRegistrationDto,
 	RegistrationResultDto,
 	UserInfoDto
-} from '../models/dtos';
+} from '../models';
 
 @Injectable({
 	providedIn: 'root'

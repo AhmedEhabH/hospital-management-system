@@ -20,24 +20,24 @@ export interface LoginDto {
 	userType: string;
 }
 
-export interface RegistrationResultDto {
-	success: boolean;
-	message: string;
-	userId?: number;
-}
+// export interface RegistrationResultDto {
+// 	success: boolean;
+// 	message: string;
+// 	userId?: number;
+// }
 
-export interface UserRegistrationDto {
-	firstName: string;
-	lastName: string;
-	gender: string;
-	age: number;
-	userId: string;
-	password: string;
-	email: string;
-	address: string;
-	city: string;
-	state: string;
-	zip: string;
-	phoneNo: string;
-	userType: string;
-}
+// export interface UserRegistrationDto {
+// 	firstName: string;
+// 	lastName: string;
+// 	gender: string;
+// 	age: number;
+// 	userId: string;
+// 	password: string;
+// 	email: string;
+// 	address: string;
+// 	city: string;
+// 	state: string;
+// 	zip: string;
+// 	phoneNo: string;
+// 	userType: string;
+// }
