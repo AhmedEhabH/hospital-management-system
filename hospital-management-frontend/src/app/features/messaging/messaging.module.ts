@@ -42,6 +42,7 @@ import { MessageComposerComponent } from './message-composer/message-composer.co
 import { NotificationCenterComponent } from './notification-center/notification-center.component';
 import { ComposeMessageComponent } from './compose-message/compose-message.component';
 import { MessagesListComponent } from './messages-list/messages-list.component';
+import { InboxComponent } from './inbox/inbox.component';
 
 @NgModule({
 	declarations: [
@@ -51,7 +52,8 @@ import { MessagesListComponent } from './messages-list/messages-list.component';
 		MessageComposerComponent,
 		NotificationCenterComponent,
   ComposeMessageComponent,
-  MessagesListComponent
+  MessagesListComponent,
+  InboxComponent
 	],
 	imports: [
 		CommonModule,
