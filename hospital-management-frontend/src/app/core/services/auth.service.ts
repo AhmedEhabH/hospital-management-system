@@ -1,95 +1,143 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import {
-	LoginDto,
-	AuthResultDto,
-	UserRegistrationDto,
-	RegistrationResultDto,
-	UserInfoDto
-} from '../models';
+import { BaseService } from './base.service';
 
+/**
+ * Authentication Service
+ * 
+ * Handles user authentication, token management, and navigation routing
+ * with proper role-based redirection after successful login
+ */
 @Injectable({
 	providedIn: 'root'
 })
-export class AuthService {
-	private apiUrl = `${environment.apiUrl}/api/Auth`;
-	private currentUserSubject = new BehaviorSubject<UserInfoDto | null>(null);
+export class AuthService extends BaseService {
+	private readonly apiUrl = `${environment.apiUrl}/api/Auth`;
+	private currentUserSubject = new BehaviorSubject<any>(null);
 	private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
 
 	public currentUser$ = this.currentUserSubject.asObservable();
 	public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
-	constructor(private http: HttpClient) {
-		this.loadUserFromStorage();
+	constructor(
+		private http: HttpClient,
+		private router: Router
+	) {
+		super();
+		this.initializeAuth();
 	}
 
-	private loadUserFromStorage(): void {
-		const token = localStorage.getItem('token');
-		const user = localStorage.getItem('user');
+	/**
+	 * Initialize authentication state from stored token
+	 */
+	private initializeAuth(): void {
+		const token = this.getToken();
+		const user = this.getCurrentUser();
 
 		if (token && user) {
-			this.currentUserSubject.next(JSON.parse(user));
+			this.currentUserSubject.next(user);
 			this.isAuthenticatedSubject.next(true);
 		}
 	}
 
-	login(loginData: LoginDto): Observable<AuthResultDto> {
-		return this.http.post<AuthResultDto>(`${this.apiUrl}/login`, loginData)
+	/**
+	 * Login user and handle navigation
+	 */
+	login(credentials: any): Observable<any> {
+		return this.http.post<any>(`${this.apiUrl}/login`, credentials)
 			.pipe(
-				tap(result => {
-					if (result.success && result.token && result.user) {
-						localStorage.setItem('token', result.token);
-						localStorage.setItem('user', JSON.stringify(result.user));
-						this.currentUserSubject.next(result.user);
+				tap(response => {
+					if (response.success && response.token && response.user) {
+						// Store authentication data
+						localStorage.setItem('auth-token', response.token);
+						localStorage.setItem('current-user', JSON.stringify(response.user));
+
+						// Update subjects
+						this.currentUserSubject.next(response.user);
 						this.isAuthenticatedSubject.next(true);
+
+						// Navigate based on user role
+						this.navigateAfterLogin(response.user);
 					}
-				})
+				}),
+				catchError(this.handleError)
 			);
 	}
 
-	register(registrationData: UserRegistrationDto): Observable<RegistrationResultDto> {
-		return this.http.post<RegistrationResultDto>(`${this.apiUrl}/register`, registrationData);
+	/**
+	 * Navigate user to appropriate dashboard based on role
+	 */
+	private navigateAfterLogin(user: any): void {
+		const userType = user.userType?.toLowerCase();
+
+		switch (userType) {
+			case 'admin':
+				this.router.navigate(['/admin/dashboard']);
+				break;
+			case 'doctor':
+				this.router.navigate(['/doctor/dashboard']);
+				break;
+			case 'patient':
+				this.router.navigate(['/patient/dashboard']);
+				break;
+			default:
+				this.router.navigate(['/patient/dashboard']);
+				break;
+		}
 	}
 
+	/**
+	 * Register new user
+	 */
+	register(userData: any): Observable<any> {
+		return this.http.post<any>(`${this.apiUrl}/register`, userData)
+			.pipe(catchError(this.handleError));
+	}
+
+	/**
+	 * Logout user and clear authentication
+	 */
 	logout(): void {
-		localStorage.removeItem('token');
-		localStorage.removeItem('user');
+		localStorage.removeItem('auth-token');
+		localStorage.removeItem('current-user');
 		this.currentUserSubject.next(null);
 		this.isAuthenticatedSubject.next(false);
+		this.router.navigate(['/auth/login']);
 	}
 
-	getCurrentUser(): UserInfoDto | null {
-		return this.currentUserSubject.value;
-	}
-
+	/**
+	 * Get stored authentication token
+	 */
 	getToken(): string | null {
-		return localStorage.getItem('token');
+		return localStorage.getItem('auth-token');
 	}
 
+	/**
+	 * Get current user from storage
+	 */
+	getCurrentUser(): any {
+		const userStr = localStorage.getItem('current-user');
+		return userStr ? JSON.parse(userStr) : null;
+	}
+
+	/**
+	 * Check if user is authenticated
+	 */
 	isAuthenticated(): boolean {
-		return this.isAuthenticatedSubject.value;
+		const token = this.getToken();
+		const user = this.getCurrentUser();
+		return !!(token && user);
 	}
 
-	// FIXED: Add missing hasRole method
+	/**
+	 * Check if user has specific role
+	 */
 	hasRole(role: string): boolean {
-		const currentUser = this.getCurrentUser();
-		if (!currentUser) {
-			return false;
-		}
-
-		// Define role hierarchy
-		const roleHierarchy: { [key: string]: number } = {
-			'Patient': 1,
-			'Doctor': 2,
-			'Admin': 3
-		};
-
-		const userRoleLevel = roleHierarchy[currentUser.userType] || 0;
-		const requiredRoleLevel = roleHierarchy[role] || 0;
-
-		// User has role if their level is greater than or equal to required level
-		return userRoleLevel >= requiredRoleLevel;
+		const user = this.getCurrentUser();
+		return user?.userType?.toLowerCase() === role.toLowerCase();
 	}
 }

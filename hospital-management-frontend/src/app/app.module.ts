@@ -59,7 +59,7 @@ import { RegistrationModule } from './features/registration/registration.module'
 @NgModule({
 	declarations: [
 		AppComponent,
-		FeedbackFormComponent,
+		// FeedbackFormComponent,
 		PatientProfileComponent,
 		PatientSearchComponent,
 		PatientRecordsComponent,

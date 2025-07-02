@@ -28,6 +28,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { PageNotFoundModule } from './components/page-not-found/page-not-found.module';
 import { RealTimeNotificationsComponent } from './components/real-time-notifications/real-time-notifications.component';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatChipsModule } from '@angular/material/chips';
 
 @NgModule({
 	declarations: [
@@ -40,6 +43,7 @@ import { RealTimeNotificationsComponent } from './components/real-time-notificat
 		UnauthorizedComponent,
 		RealTimeAlertsComponent,
 		RealTimeNotificationsComponent,
+
 
 	],
 	imports: [
@@ -61,6 +65,9 @@ import { RealTimeNotificationsComponent } from './components/real-time-notificat
 		MatDividerModule,
 		MatProgressBarModule,
 		PageNotFoundModule,
+		MatProgressSpinnerModule,
+		MatTabsModule,
+		MatChipsModule,
 	],
 	exports: [
 		// Export components
@@ -86,7 +93,10 @@ import { RealTimeNotificationsComponent } from './components/real-time-notificat
 		MatDividerModule,
 		MatProgressBarModule,
 		PageNotFoundModule,
-		RealTimeNotificationsComponent
+		RealTimeNotificationsComponent,
+		MatProgressSpinnerModule,
+		MatTabsModule,
+		MatChipsModule,
 	]
 })
 export class SharedModule { }

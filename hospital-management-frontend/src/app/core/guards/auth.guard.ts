@@ -1,7 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
-import { Observable } from 'rxjs';
-import { map, take } from 'rxjs/operators';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
 @Injectable({
@@ -14,29 +12,40 @@ export class AuthGuard implements CanActivate {
 		private router: Router
 	) { }
 
-	canActivate(
-		route: ActivatedRouteSnapshot,
-		state: RouterStateSnapshot
-	): Observable<boolean> | Promise<boolean> | boolean {
+	canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
+		if (this.authService.isAuthenticated()) {
+			// Check if user is trying to access login page while authenticated
+			if (state.url.includes('/auth/login')) {
+				this.redirectToUserDashboard();
+				return false;
+			}
+			return true;
+		} else {
+			// User not authenticated, redirect to login
+			this.router.navigate(['/auth/login'], {
+				queryParams: { returnUrl: state.url }
+			});
+			return false;
+		}
+	}
 
-		return this.authService.isAuthenticated$.pipe(
-			take(1),
-			map(isAuthenticated => {
-				if (isAuthenticated) {
-					// Check for role-based access if specified in route data
-					const requiredRole = route.data?.['role'];
-					if (requiredRole && !this.authService.hasRole(requiredRole)) {
-						this.router.navigate(['/unauthorized']);
-						return false;
-					}
-					return true;
-				} else {
-					this.router.navigate(['/login'], {
-						queryParams: { returnUrl: state.url }
-					});
-					return false;
-				}
-			})
-		);
+	private redirectToUserDashboard(): void {
+		const user = this.authService.getCurrentUser();
+		const userType = user?.userType?.toLowerCase();
+
+		switch (userType) {
+			case 'admin':
+				this.router.navigate(['/admin/dashboard']);
+				break;
+			case 'doctor':
+				this.router.navigate(['/doctor/dashboard']);
+				break;
+			case 'patient':
+				this.router.navigate(['/patient/dashboard']);
+				break;
+			default:
+				this.router.navigate(['/patient/dashboard']);
+				break;
+		}
 	}
 }

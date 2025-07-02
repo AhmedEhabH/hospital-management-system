@@ -32,10 +32,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @NgModule({
 	declarations: [
-		PatientDashboardComponent
+		// PatientDashboardComponent
 	],
 	imports: [
 		CommonModule,
@@ -43,6 +44,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 		ReactiveFormsModule,
 		FormsModule,
 
+		DashboardModule,
 		// Import SharedModule to get ThemeToggleComponent
 		SharedModule,
 

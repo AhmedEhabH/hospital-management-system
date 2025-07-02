@@ -1,19 +1,46 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { MedicalHistoryDto } from '../../../core/models/medical-history.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { MedicalHistoryService } from '../../../core/services/medical-history.service';
 
 @Component({
 	selector: 'app-timeline',
-	standalone:false,
+	standalone: false,
 	templateUrl: './timeline.component.html',
 	styleUrls: ['./timeline.component.scss']
 })
 export class TimelineComponent implements OnInit {
 	@Input() medicalHistories: MedicalHistoryDto[] = [];
+	currentUser: any = null;
 
 	timelineItems: any[] = [];
-
+	constructor(
+		private authService: AuthService,
+		private medicalHistoryService: MedicalHistoryService
+	) { }
 	ngOnInit(): void {
+		this.currentUser = this.authService.getCurrentUser();
 		this.buildTimeline();
+		this.getMedicalHistory();
+	}
+
+	getMedicalHistory() {
+		console.log(this.currentUser);
+		
+		this.medicalHistoryService.getMedicalHistoryByUserId(this.currentUser.id).subscribe({
+			next: (value) => {
+				console.log(value);
+				this.medicalHistories = value;
+			},
+			error: err => {
+				console.error(err);
+
+			},
+			complete:()=>{
+				console.log("Complete");
+				
+			}
+		})
 	}
 
 	private buildTimeline(): void {

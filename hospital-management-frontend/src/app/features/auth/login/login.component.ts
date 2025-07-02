@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject, takeUntil } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
@@ -18,6 +18,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 	isLoading = false;
 	hidePassword = true;
 	isDarkMode = false;
+	returnUrl: string = '';
 	private destroy$ = new Subject<void>();
 
 	userTypes = [
@@ -46,17 +47,48 @@ export class LoginComponent implements OnInit, OnDestroy {
 		private authService: AuthService,
 		private themeService: ThemeService,
 		private router: Router,
-		private snackBar: MatSnackBar
+		private snackBar: MatSnackBar,
+		private route: ActivatedRoute,
 	) { }
 
 	ngOnInit(): void {
 		this.initializeForm();
 		this.subscribeToTheme();
+		// Check if user is already authenticated
+		if (this.authService.isAuthenticated()) {
+			this.redirectToUserDashboard();
+			return;
+		}
+		// Get return URL from route parameters
+		this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '';
 	}
 
 	ngOnDestroy(): void {
 		this.destroy$.next();
 		this.destroy$.complete();
+	}
+
+	private redirectToUserDashboard(): void {
+		const user = this.authService.getCurrentUser();
+		const userType = user?.userType?.toLowerCase();
+		console.log(user);
+		console.log(userType);
+
+
+		switch (userType) {
+			case 'admin':
+				this.router.navigate(['/admin/dashboard']);
+				break;
+			case 'doctor':
+				this.router.navigate(['/doctor/dashboard']);
+				break;
+			case 'patient':
+				this.router.navigate(['/patient/dashboard']);
+				break;
+			default:
+				this.router.navigate(['/patient/dashboard']);
+				break;
+		}
 	}
 
 	private initializeForm(): void {
@@ -87,9 +119,17 @@ export class LoginComponent implements OnInit, OnDestroy {
 						this.isLoading = false;
 						if (result.success) {
 							this.showSuccess('Welcome back! Login successful.');
-							this.navigateBasedOnRole(result.user?.userType);
+							// this.navigateBasedOnRole(result.user?.userType);
+							this.snackBar.open('Login successful!', 'Close', {
+								duration: 3000,
+								panelClass: ['success-snackbar']
+							});
 						} else {
 							this.showError(result.message);
+							this.snackBar.open(result.message || 'Login failed', 'Close', {
+								duration: 3000,
+								panelClass: ['error-snackbar']
+							});
 						}
 					},
 					error: (error: any) => {

@@ -3,60 +3,102 @@ import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 
 const routes: Routes = [
-	// FIXED: Redirect to lab-reports as default page
-	{ path: '', redirectTo: '/auth', pathMatch: 'full' },
+	// Default redirect to login
+	{ path: '', redirectTo: '/auth/login', pathMatch: 'full' },
+
+	// Authentication routes (public access)
 	{
 		path: 'auth',
 		loadChildren: () => import('./features/auth/auth.module').then(m => m.AuthModule)
 	},
+
+	// Registration routes (public access)
 	{
-		path: 'unauthorized',
-		loadChildren: () => import('./shared/components/unauthorized/unauthorized.module').then(m => m.UnauthorizedModule)
+		path: 'registration',
+		loadChildren: () => import('./features/registration/registration.module').then(m => m.RegistrationModule)
 	},
+
+	// Admin routes (protected)
 	{
-		path: 'patient-dashboard',
+		path: 'admin',
 		canActivate: [AuthGuard],
-		data: { role: 'Patient' },
-		loadChildren: () => import('./features/patient/patient.module').then(m => m.PatientModule)
+		children: [
+			{
+				path: 'dashboard',
+				loadChildren: () => import('./features/admin/dashboard/dashboard.module').then(m => m.DashboardModule)
+			},
+			{
+				path: 'patient-management',
+				loadChildren: () => import('./features/admin/patient-management/patient-management.module').then(m => m.PatientManagementModule)
+			},
+			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+		]
 	},
+
+	// Doctor routes (protected)
 	{
-		path: 'doctor-dashboard',
+		path: 'doctor',
 		canActivate: [AuthGuard],
-		data: { role: 'Doctor' },
-		loadChildren: () => import('./features/doctor/doctor.module').then(m => m.DoctorModule)
+		children: [
+			{
+				path: 'dashboard',
+				loadChildren: () => import('./features/doctor/dashboard/dashboard.module').then(m => m.DashboardModule)
+			},
+			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+		]
 	},
+
+	// Patient routes (protected)
 	{
-		path: 'admin-dashboard',
+		path: 'patient',
 		canActivate: [AuthGuard],
-		data: { role: 'Admin' },
-		loadChildren: () => import('./features/admin/admin.module').then(m => m.AdminModule)
+		children: [
+			{
+				path: 'dashboard',
+				loadChildren: () => import('./features/patient/dashboard/dashboard.module').then(m => m.DashboardModule)
+			},
+			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+		]
 	},
+
+	// Medical History routes (protected)
 	{
 		path: 'medical-history',
 		canActivate: [AuthGuard],
 		loadChildren: () => import('./features/medical-history/medical-history.module').then(m => m.MedicalHistoryModule)
 	},
+
+	// Lab Reports routes (protected)
 	{
 		path: 'lab-reports',
 		canActivate: [AuthGuard],
 		loadChildren: () => import('./features/lab-reports/lab-reports.module').then(m => m.LabReportsModule)
 	},
+
+	// Messaging routes (protected)
 	{
 		path: 'messaging',
 		canActivate: [AuthGuard],
 		loadChildren: () => import('./features/messaging/messaging.module').then(m => m.MessagingModule)
 	},
-	// 404 page
+
+	// Feedback routes (protected)
 	{
-		path: '404',
-		loadChildren: () => import('./shared/components/page-not-found/page-not-found.module').then(m => m.PageNotFoundModule)
+		path: 'feedback',
+		canActivate: [AuthGuard],
+		loadChildren: () => import('./features/feedback/feedback.module').then(m => m.FeedbackModule)
 	},
+
 	// Wildcard route - must be last
-	{ path: '**', redirectTo: '/404' }
+	{ path: '**', redirectTo: '/auth/login' }
 ];
 
 @NgModule({
-	imports: [RouterModule.forRoot(routes)],
+	imports: [RouterModule.forRoot(routes, {
+		enableTracing: false,
+		useHash: false,
+		preloadingStrategy: 'preloadingStrategy'
+	})],
 	exports: [RouterModule]
 })
 export class AppRoutingModule { }

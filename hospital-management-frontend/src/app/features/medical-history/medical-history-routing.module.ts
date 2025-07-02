@@ -8,13 +8,13 @@ import { MedicalHistoryFormComponent } from './medical-history-form/medical-hist
 
 const routes: Routes = [
 	// { path: '', redirectTo: 'timeline', pathMatch: 'full' },
+	// { path: 'history', component: MedicalHistoryComponent },
 	{ path: 'timeline', component: TimelineComponent },
-	{ path: 'history', component: MedicalHistoryComponent },
 	{ path: 'form', component: FormComponent },
 	{ path: 'details/:id', component: DetailsComponent },
 	{ path: 'create', component: MedicalHistoryFormComponent },
 	{ path: 'edit/:id', component: MedicalHistoryFormComponent },
-	{ path: '', redirectTo: 'create', pathMatch: 'full' }
+	// { path: '', redirectTo: 'create', pathMatch: 'full' }
 ];
 
 @NgModule({
