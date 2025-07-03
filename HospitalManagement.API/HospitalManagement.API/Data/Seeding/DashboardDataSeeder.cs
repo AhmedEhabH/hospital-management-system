@@ -8,17 +8,71 @@ namespace HospitalManagement.API.Data.Seeding
     {
         public static async Task SeedDashboardDataAsync(HospitalDbContext context)
         {
-            // Seed User Activities
-            await SeedUserActivitiesAsync(context);
+            // Seed sample appointments if none exist
+            if (!await context.Appointments.AnyAsync())
+            {
+                var sampleAppointments = new List<Appointment>
+                {
+                    new Appointment
+                    {
+                        DoctorId = 1,
+                        PatientId = 2,
+                        DoctorName = "Dr. Smith",
+                        PatientName = "John Doe",
+                        // FIXED: Replace Date with StartTime
+                        StartTime = DateTime.Today.AddHours(9),
+                        // FIXED: Replace Time with EndTime (1 hour appointment)
+                        EndTime = DateTime.Today.AddHours(10),
+                        // FIXED: Replace Department with Title
+                        Title = "Cardiology Consultation",
+                        // FIXED: Replace Type with Notes or remove if not needed
+                        Notes = "Routine checkup",
+                        // FIXED: Add Priority to Notes or create new field
+                        Status = "Scheduled"
+                    },
+                    new Appointment
+                    {
+                        DoctorId = 1,
+                        PatientId = 3,
+                        DoctorName = "Dr. Smith",
+                        PatientName = "Jane Smith",
+                        StartTime = DateTime.Today.AddHours(14),
+                        EndTime = DateTime.Today.AddHours(15),
+                        Title = "General Medicine",
+                        Notes = "Follow-up appointment",
+                        Status = "Scheduled"
+                    },
+                    new Appointment
+                    {
+                        DoctorId = 2,
+                        PatientId = 4,
+                        DoctorName = "Dr. Johnson",
+                        PatientName = "Bob Wilson",
+                        StartTime = DateTime.Today.AddDays(1).AddHours(10),
+                        EndTime = DateTime.Today.AddDays(1).AddHours(11),
+                        Title = "Neurology Consultation",
+                        Notes = "Initial consultation",
+                        Status = "Scheduled"
+                    }
+                };
 
-            // Seed Appointments
-            await SeedAppointmentsAsync(context);
-
-            // Seed Health Metrics
-            await SeedHealthMetricsAsync(context);
-
-            await context.SaveChangesAsync();
+                await context.Appointments.AddRangeAsync(sampleAppointments);
+                await context.SaveChangesAsync();
+            }
         }
+        //public static async Task SeedDashboardDataAsync(HospitalDbContext context)
+        //{
+        //    // Seed User Activities
+        //    await SeedUserActivitiesAsync(context);
+
+        //    // Seed Appointments
+        //    await SeedAppointmentsAsync(context);
+
+        //    // Seed Health Metrics
+        //    await SeedHealthMetricsAsync(context);
+
+        //    await context.SaveChangesAsync();
+        //}
 
         private static async Task SeedUserActivitiesAsync(HospitalDbContext context)
         {
@@ -96,12 +150,9 @@ namespace HospitalManagement.API.Data.Seeding
                             PatientId = patient.Id,
                             DoctorName = $"Dr. {doctor.FirstName} {doctor.LastName}",
                             PatientName = $"{patient.FirstName} {patient.LastName}",
-                            Date = appointmentDate,
-                            Time = GenerateAppointmentTime(i),
-                            Department = GetRandomDepartment(),
-                            Type = GetRandomAppointmentType(),
+                            
                             Status = GetAppointmentStatus(appointmentDate),
-                            Priority = GetRandomPriority()
+                            
                         };
 
                         appointments.Add(appointment);

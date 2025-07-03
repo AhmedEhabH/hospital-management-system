@@ -32,6 +32,10 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 
+
+import { CalendarModule, DateAdapter } from 'angular-calendar';
+import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
+
 @NgModule({
 	declarations: [
 		ThemeToggleComponent,
@@ -68,6 +72,12 @@ import { MatChipsModule } from '@angular/material/chips';
 		MatProgressSpinnerModule,
 		MatTabsModule,
 		MatChipsModule,
+
+		
+		CalendarModule.forRoot({
+			provide: DateAdapter,
+			useFactory: adapterFactory,
+		}),
 	],
 	exports: [
 		// Export components
@@ -97,6 +107,7 @@ import { MatChipsModule } from '@angular/material/chips';
 		MatProgressSpinnerModule,
 		MatTabsModule,
 		MatChipsModule,
-	]
+		CalendarModule,
+	],
 })
 export class SharedModule { }

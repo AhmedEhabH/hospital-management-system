@@ -88,15 +88,15 @@ namespace HospitalManagement.API.Models.DTOs
     }
 
     // Placeholder for future appointment implementation
-    public class AppointmentDto
-    {
-        public int Id { get; set; }
-        public string DoctorName { get; set; } = string.Empty;
-        public string PatientName { get; set; } = string.Empty;
-        public DateTime Date { get; set; }
-        public string Time { get; set; } = string.Empty;
-        public string Department { get; set; } = string.Empty;
-        public string Type { get; set; } = string.Empty;
-        public string Status { get; set; } = string.Empty;
-    }
+    //public class AppointmentDto
+    //{
+    //    public int Id { get; set; }
+    //    public string DoctorName { get; set; } = string.Empty;
+    //    public string PatientName { get; set; } = string.Empty;
+    //    public DateTime Date { get; set; }
+    //    public string Time { get; set; } = string.Empty;
+    //    public string Department { get; set; } = string.Empty;
+    //    public string Type { get; set; } = string.Empty;
+    //    public string Status { get; set; } = string.Empty;
+    //}
 }

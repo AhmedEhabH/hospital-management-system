@@ -111,10 +111,19 @@ namespace HospitalManagement.API.Services.Implementations
 
                 // Get real appointments data
                 var upcomingAppointments = await _context.Appointments
-                    .Where(a => a.PatientId == patientId && a.Date >= DateTime.Today)
-                    .OrderBy(a => a.Date)
-                    .ThenBy(a => a.Time)
-                    .Take(10)
+                    .Where(a => a.PatientId == patientId && a.StartTime.Date >= DateTime.Today)
+                    .OrderBy(a => a.StartTime)
+                    .Select(a => new AppointmentDto
+                    {
+                        Id = a.Id,
+                        DoctorName = a.DoctorName,
+                        PatientName = a.PatientName,
+                        StartTime = a.StartTime,
+                        EndTime = a.EndTime,
+                        Title = a.Title,
+                        Status = a.Status,
+                        Notes = a.Notes
+                    })
                     .ToListAsync();
 
                 // Get latest health metrics
@@ -192,8 +201,20 @@ namespace HospitalManagement.API.Services.Implementations
 
                 // Get real today's appointments
                 var todayAppointments = await _context.Appointments
-                    .Where(a => a.DoctorId == doctorId && a.Date.Date == DateTime.Today)
-                    .OrderBy(a => a.Time)
+                    .Where(a => a.DoctorId == doctorId && a.StartTime.Date == DateTime.Today)
+                    .Include(a => a.Patient)
+                    .Select(a => new AppointmentDto
+                    {
+                        Id = a.Id,
+                        DoctorName = a.DoctorName,
+                        PatientName = a.PatientName,
+                        // FIXED: Map StartTime and EndTime properly
+                        StartTime = a.StartTime,
+                        EndTime = a.EndTime,
+                        Title = a.Title,
+                        Status = a.Status,
+                        Notes = a.Notes
+                    })
                     .ToListAsync();
 
                 // Get doctor's patients from appointments
@@ -258,8 +279,9 @@ namespace HospitalManagement.API.Services.Implementations
             try
             {
                 var appointments = await _context.Appointments
-                    .Where(a => a.DoctorId == doctorId && a.Date.Date == DateTime.Today)
-                    .OrderBy(a => a.Time)
+                    .Where(a => a.StartTime.Date == DateTime.Today)
+                    .Include(a => a.Doctor)
+                    .Include(a => a.Patient)
                     .ToListAsync();
 
                 return _mapper.Map<List<AppointmentDto>>(appointments);

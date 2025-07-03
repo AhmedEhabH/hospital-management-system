@@ -6,6 +6,7 @@
  */
 export interface AppointmentDto {
 	id: number;
+	title: string;
 	doctorName: string;
 	patientName: string;
 	date: string; // ISO date string
@@ -17,6 +18,28 @@ export interface AppointmentDto {
 	notes?: string;
 	patientId?: number;
 	doctorId?: number;
+	startTime: string; // Use string for ISO date format
+	endTime: string;   // Use string for ISO date format
+}
+
+export interface CreateAppointmentDto {
+	doctorId: number;
+	patientId: number;
+	startTime: string;
+	durationInMinutes?: number;
+	title: string;
+	notes?: string;
+}
+
+// FIXED: Add the missing DoctorAvailabilityDto
+export interface DoctorAvailabilityDto {
+	doctorId: number;
+	availableSlots: TimeSlot[];
+}
+
+export interface TimeSlot {
+	startTime: string;
+	endTime: string;
 }
 
 /**

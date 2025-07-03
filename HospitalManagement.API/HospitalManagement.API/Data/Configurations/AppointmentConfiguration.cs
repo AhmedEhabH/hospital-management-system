@@ -8,59 +8,81 @@ namespace HospitalManagement.API.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<Appointment> builder)
         {
-            // Table configuration
             builder.ToTable("Appointments");
 
-            // Primary key
-            builder.HasKey(e => e.Id);
+            builder.HasKey(a => a.Id);
 
-            // Properties configuration
-            builder.Property(e => e.DoctorName)
-                   .IsRequired()
-                   .HasMaxLength(100);
+            builder.Property(a => a.Id)
+                .ValueGeneratedOnAdd();
 
-            builder.Property(e => e.PatientName)
-                   .IsRequired()
-                   .HasMaxLength(100);
+            builder.Property(a => a.DoctorName)
+                .IsRequired()
+                .HasMaxLength(100);
 
-            builder.Property(e => e.Date)
-                   .IsRequired();
+            builder.Property(a => a.PatientName)
+                .IsRequired()
+                .HasMaxLength(100);
 
-            builder.Property(e => e.Time)
-                   .IsRequired()
-                   .HasMaxLength(10);
+            // FIXED: Replace Date with StartTime
+            builder.Property(a => a.StartTime)
+                .IsRequired()
+                .HasColumnType("datetime2");
 
-            builder.Property(e => e.Department)
-                   .HasMaxLength(50);
+            // FIXED: Replace Time with EndTime
+            builder.Property(a => a.EndTime)
+                .IsRequired()
+                .HasColumnType("datetime2");
 
-            builder.Property(e => e.Type)
-                   .HasMaxLength(50);
+            // FIXED: Replace Department with Title
+            builder.Property(a => a.Title)
+                .IsRequired()
+                .HasMaxLength(200);
 
-            builder.Property(e => e.Status)
-                   .HasMaxLength(20)
-                   .HasDefaultValue("Scheduled");
+            // FIXED: Replace Type with Notes (or remove if not needed)
+            builder.Property(a => a.Notes)
+                .HasMaxLength(1000);
 
-            builder.Property(e => e.Priority)
-                   .HasMaxLength(10)
-                   .HasDefaultValue("Medium");
+            // FIXED: Remove Priority configuration or add it to Notes
+            builder.Property(a => a.Status)
+                .IsRequired()
+                .HasMaxLength(50);
 
             // Foreign key relationships
-            builder.HasOne(e => e.Doctor)
-                   .WithMany()
-                   .HasForeignKey(e => e.DoctorId)
-                   .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(a => a.Doctor)
+                .WithMany()
+                .HasForeignKey(a => a.DoctorId)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasOne(e => e.Patient)
-                   .WithMany()
-                   .HasForeignKey(e => e.PatientId)
-                   .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(a => a.Patient)
+                .WithMany()
+                .HasForeignKey(a => a.PatientId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Indexes for performance
-            builder.HasIndex(e => e.DoctorId);
-            builder.HasIndex(e => e.PatientId);
-            builder.HasIndex(e => e.Date);
-            builder.HasIndex(e => e.Status);
-            builder.HasIndex(e => new { e.DoctorId, e.Date }); // Composite index for doctor's daily schedule
+            builder.HasIndex(a => a.DoctorId);
+            builder.HasIndex(a => a.PatientId);
+            // FIXED: Replace Date index with StartTime
+            builder.HasIndex(a => a.StartTime);
+            builder.HasIndex(a => a.Status);
+
+            // Seed data
+            builder.HasData(
+                new Appointment
+                {
+                    Id = 1,
+                    DoctorId = 1,
+                    PatientId = 2,
+                    DoctorName = "Dr. Smith",
+                    PatientName = "John Doe",
+                    // FIXED: Replace Date with StartTime
+                    StartTime = new DateTime(2025, 1, 15, 9, 0, 0),
+                    // FIXED: Replace Time with EndTime
+                    EndTime = new DateTime(2025, 1, 15, 10, 0, 0),
+                    Title = "Cardiology Consultation",
+                    Status = "Scheduled",
+                    Notes = "Routine checkup"
+                }
+            );
         }
     }
 }

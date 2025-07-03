@@ -1,7 +1,10 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { AppointmentSchedulerComponent } from './appointment-scheduler/appointment-scheduler.component';
 
-const routes: Routes = [];
+const routes: Routes = [
+	{ path: '', component: AppointmentSchedulerComponent }
+];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],

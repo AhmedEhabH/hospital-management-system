@@ -222,7 +222,10 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
 			priority: appointment.priority || 'Medium' as 'High' | 'Medium' | 'Low',
 			notes: appointment.notes,
 			patientId: appointment.patientId,
-			doctorId: appointment.doctorId
+			doctorId: appointment.doctorId,
+			title: appointment.title,
+			startTime: appointment.startTime,
+			endTime: appointment.endTime
 		}));
 
 		// **GENERATE REAL ACTIVITIES FROM DATABASE DATA**
@@ -284,7 +287,7 @@ export class DoctorDashboardComponent implements OnInit, OnDestroy {
 	}
 
 	private generateActivitiesFromRealData(): any[] {
-		const activities : any= [];
+		const activities: any = [];
 
 		// Add activities from completed appointments
 		const completedAppointments = this.dashboardData.todayAppointments

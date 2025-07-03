@@ -22,5 +22,7 @@ namespace HospitalManagement.API.Repositories.Interfaces
         Task<int> CountAsync();
         Task<int> CountAsync(Expression<Func<T, bool>> expression);
         Task SaveChangesAsync();
+
+        Task<IEnumerable<T>> GetByConditionAsync(Expression<Func<T, bool>> expression);
     }
 }
