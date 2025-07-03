@@ -18,9 +18,27 @@ import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2
 
 
 // Components
-import { DashboardComponent } from './dashboard.component';
+import { DoctorDashboardComponent } from './dashboard.component';
 import { DashboardRoutingModule } from './dashboard-routing.module';
 import { SharedModule } from '../../../shared/shared.module';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 // const routes: Routes = [
 // 	{ path: '', component: DashboardComponent }
@@ -28,7 +46,7 @@ import { SharedModule } from '../../../shared/shared.module';
 
 @NgModule({
 	declarations: [
-		DashboardComponent
+		DoctorDashboardComponent
 	],
 	imports: [
 		CommonModule,
@@ -46,6 +64,27 @@ import { SharedModule } from '../../../shared/shared.module';
 		MatSortModule,
 		MatFormFieldModule,
 		MatInputModule,
+		MatToolbarModule,
+		MatButtonModule,
+		MatIconModule,
+		MatSidenavModule,
+		MatListModule,
+		MatSelectModule,
+		MatCheckboxModule,
+		MatRadioModule,
+		MatDatepickerModule,
+		MatNativeDateModule,
+		MatTableModule,
+		MatDialogModule,
+		MatSnackBarModule,
+		MatProgressSpinnerModule,
+		MatMenuModule,
+		MatTabsModule,
+		MatExpansionModule,
+		MatChipsModule,
+		MatBadgeModule,
+		MatSlideToggleModule,
+		MatProgressBarModule,
 
 		// Chart.js
 		// Chart.js

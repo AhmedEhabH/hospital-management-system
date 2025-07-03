@@ -1,10 +1,11 @@
 import { Component, OnInit, OnDestroy, Output, EventEmitter, Input, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
-import { MessageService, Message } from '../../../core/services/message.service';
+import { MessageService } from '../../../core/services/message.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Message } from '../../../core/models';
 
 interface MedicalTemplate {
 	id: string;

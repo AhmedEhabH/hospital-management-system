@@ -3,70 +3,10 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { ChatMessage, Conversation, ConversationItem, Message, MessageAttachment } from '../models';
 
-export interface Message {
-	id: number;
-	senderId: number;
-	receiverId: number;
-	subject: string;
-	messageContent: string;
-	isRead: boolean;
-	sentDate: Date;
-	// Extended properties for chat functionality
-	senderName?: string | null;
-	receiverName?: string | null;
-	messageType?: 'text' | 'image' | 'file' | 'system';
-	attachmentUrl?: string;
-	attachmentName?: string;
-	conversationId?: string;
-}
 
 // FIXED: Update ChatMessage interface to match SignalR interface exactly
-export interface ChatMessage {
-	id: string;
-	senderId: number;
-	senderName: string | null; // Allow null for SignalR compatibility
-	receiverId: number;
-	receiverName: string;
-	message: string; // Maps to messageContent in Message
-	timestamp: Date; // Maps to sentDate in Message
-	messageType: 'text' | 'image' | 'file' | 'system';
-	isRead: boolean;
-	conversationId: string;
-	attachmentUrl?: string;
-	attachmentName?: string;
-}
-
-export interface Conversation {
-	id: string;
-	participants: ConversationParticipant[];
-	lastMessage?: Message | null;
-	lastMessageAt: Date;
-	unreadCount: number;
-	conversationType: 'private' | 'group' | 'medical_team';
-	title?: string;
-	description?: string;
-	createdAt: Date;
-	updatedAt: Date;
-}
-
-export interface ConversationParticipant {
-	userId: number;
-	userName: string;
-	userType: 'Patient' | 'Doctor' | 'Admin';
-	avatar?: string;
-	isOnline: boolean;
-	lastSeen: Date;
-}
-
-export interface MessageAttachment {
-	id: string;
-	fileName: string;
-	fileSize: number;
-	fileType: string;
-	url: string;
-	thumbnailUrl?: string;
-}
 
 @Injectable({
 	providedIn: 'root'
@@ -74,8 +14,8 @@ export interface MessageAttachment {
 export class MessageService {
 	private readonly apiUrl = `${environment.apiUrl}/api/messages`;
 	private messagesSubject = new BehaviorSubject<Message[]>([]);
-	private conversationsSubject = new BehaviorSubject<Conversation[]>([]);
-	private activeConversationSubject = new BehaviorSubject<Conversation | null>(null);
+	private conversationsSubject = new BehaviorSubject<ConversationItem[]>([]);
+	private activeConversationSubject = new BehaviorSubject<ConversationItem | null>(null);
 
 	public messages$ = this.messagesSubject.asObservable();
 	public conversations$ = this.conversationsSubject.asObservable();
@@ -121,8 +61,8 @@ export class MessageService {
 	}
 
 	// Conversation methods
-	getConversations(): Observable<Conversation[]> {
-		return this.http.get<Conversation[]>(`${this.apiUrl}/conversations`)
+	getConversations(): Observable<ConversationItem[]> {
+		return this.http.get<ConversationItem[]>(`${this.apiUrl}/conversations`)
 			.pipe(
 				map(conversations => {
 					this.conversationsSubject.next(conversations);
@@ -197,7 +137,7 @@ export class MessageService {
 	}
 
 	// State management methods
-	setActiveConversation(conversation: Conversation | null): void {
+	setActiveConversation(conversation: ConversationItem | null): void {
 		this.activeConversationSubject.next(conversation);
 	}
 
@@ -284,8 +224,8 @@ export class MessageService {
 		return of(mockMessages);
 	}
 
-	private getMockConversations(): Observable<Conversation[]> {
-		const mockConversations: Conversation[] = [
+	private getMockConversations(): Observable<ConversationItem[]> {
+		const mockConversations: ConversationItem[] = [
 			{
 				id: 'conv-1',
 				participants: [
@@ -306,6 +246,7 @@ export class MessageService {
 						lastSeen: new Date(Date.now() - 300000)
 					}
 				],
+				isOnline: true,
 				lastMessageAt: new Date(),
 				unreadCount: 2,
 				conversationType: 'private',
@@ -316,6 +257,23 @@ export class MessageService {
 		];
 
 		return of(mockConversations);
+	}
+
+	private convertDetailedConversationToConversationItem(detailedConv: any): ConversationItem {
+		return {
+			id: detailedConv.id,
+			title: detailedConv.title,
+			lastMessage: 'Your test results look good.',
+			lastMessageAt: detailedConv.lastMessageAt,
+			unreadCount: detailedConv.unreadCount,
+			participants: detailedConv.participants.map((p: any) => ({
+				id: p.userId,
+				name: p.userName,
+				type: p.userType
+			})),
+			isOnline: detailedConv.participants.some((p: any) => p.isOnline),
+			conversationType: detailedConv.conversationType
+		};
 	}
 
 	private getMockMessages(conversationId: string): Observable<Message[]> {

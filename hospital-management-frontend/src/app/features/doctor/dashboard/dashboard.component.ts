@@ -7,11 +7,11 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { MedicalHistoryService } from '../../../core/services/medical-history.service';
 import { LabReportService } from '../../../core/services/lab-report.service';
-import { MessageService, Message } from '../../../core/services/message.service';
+import { MessageService } from '../../../core/services/message.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { DashboardService } from '../../../core/services/dashboard.service';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
-import { AppointmentDto } from '../../../core/models'; // ADDED: Import AppointmentDto
+import { AppointmentDto, Message } from '../../../core/models'; // ADDED: Import AppointmentDto
 
 interface Patient {
 	id: number;
@@ -32,7 +32,7 @@ interface Patient {
 	templateUrl: './dashboard.component.html',
 	styleUrls: ['./dashboard.component.scss']
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class DoctorDashboardComponent implements OnInit, OnDestroy {
 	@ViewChild(MatPaginator) paginator!: MatPaginator;
 	@ViewChild(MatSort) sort!: MatSort;
 

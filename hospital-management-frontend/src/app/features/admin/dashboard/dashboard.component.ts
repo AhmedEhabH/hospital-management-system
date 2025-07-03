@@ -4,7 +4,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { AuthService } from '../../../core/services/auth.service';
-import { MessageService, Message } from '../../../core/services/message.service';
+import { MessageService } from '../../../core/services/message.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { ChartConfiguration, ChartData, ChartType } from 'chart.js';
 import {

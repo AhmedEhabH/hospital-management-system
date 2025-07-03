@@ -55,10 +55,15 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 		if (this.conversationId) {
 			this.isLoading = true;
 			this.conversation = {
-				id: this.conversationId,
+				id: this.conversationId.toString(),
 				title: this.otherParticipant?.name || 'Medical Consultation',
-				conversationType: 'direct',
-				participants: [this.otherParticipant]
+				conversationType: 'private',
+				participants: [this.otherParticipant],
+				lastMessageAt: new Date(),
+				unreadCount: 0,
+				createdAt: new Date(),
+				updatedAt: new Date()
+
 			};
 			this.isLoading = false;
 		}
@@ -214,11 +219,13 @@ export class ChatWindowComponent implements OnInit, OnDestroy {
 					id: `msg_${Date.now()}`,
 					senderId: 1,
 					receiverId: this.otherParticipant.userId,
-					content: messageContent,
+					message: messageContent,
 					timestamp: new Date(),
 					isRead: false,
 					messageType: this.selectedFiles.length > 0 ? 'file' : 'text',
-					conversationId: this.conversationId
+					conversationId: this.conversationId,
+					senderName: 'Admin User',
+					receiverName: this.otherParticipant.userName
 				};
 
 				try {

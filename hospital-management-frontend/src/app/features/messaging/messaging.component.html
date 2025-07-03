@@ -43,7 +43,8 @@
 				<div class="conversation-info">
 					<div class="conversation-header-info">
 						<h4 class="conversation-title">{{ conversation.title }}</h4>
-						<span class="conversation-time">{{ formatMessageTime(conversation.lastMessageTime) }}</span>
+						<span class="conversation-time" *ngIf="conversation.lastMessageAt">{{
+							formatMessageTime(conversation.lastMessageAt) }}</span>
 					</div>
 
 					<div class="conversation-details">
@@ -61,7 +62,7 @@
 					</div>
 				</div>
 
-				<div class="unread-badge" *ngIf="conversation.unreadCount > 0">
+				<div class="unread-badge" *ngIf="conversation.unreadCount && conversation.unreadCount > 0">
 					<span class="unread-count">{{ conversation.unreadCount > 99 ? '99+' : conversation.unreadCount
 						}}</span>
 				</div>

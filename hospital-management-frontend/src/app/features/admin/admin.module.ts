@@ -38,7 +38,7 @@ import { BaseChartDirective, provideCharts, withDefaultRegisterables } from 'ng2
 import { SharedModule } from '../../shared/shared.module';
 
 import { AdminRoutingModule } from './admin-routing.module';
-import { AdminDashboardComponent } from './dashboard/dashboard.component';
+// import { AdminDashboardComponent } from './dashboard/dashboard.component';
 import { UserManagementComponent } from './user-management/user-management.component';
 import { SystemAnalyticsComponent } from './system-analytics/system-analytics.component';
 import { HospitalManagementComponent } from './hospital-management/hospital-management.component';
@@ -48,7 +48,7 @@ import { PatientManagementComponent } from './patient-management/patient-managem
 
 @NgModule({
 	declarations: [
-		AdminDashboardComponent,
+		// AdminDashboardComponent,
 		UserManagementComponent,
 		SystemAnalyticsComponent,
 		HospitalManagementComponent,

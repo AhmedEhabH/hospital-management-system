@@ -32,7 +32,7 @@
 					{{ getConversationIcon(conversation) }}
 				</mat-icon>
 				<div class="online-indicator"
-					*ngIf="conversation.conversationType === 'direct' && conversation.isOnline">
+					*ngIf="conversation.conversationType === 'private' && conversation.isOnline">
 				</div>
 			</div>
 
@@ -40,7 +40,7 @@
 			<div class="conversation-info">
 				<div class="conversation-header-info">
 					<h4 class="conversation-title">{{ conversation.title }}</h4>
-					<span class="conversation-time">{{ formatLastMessageTime(conversation.lastMessageTime) }}</span>
+					<span class="conversation-time" *ngIf="conversation.lastMessageAt">{{ formatlastMessageAt(conversation.lastMessageAt) }}</span>
 				</div>
 
 				<div class="conversation-details">
@@ -56,7 +56,7 @@
 			</div>
 
 			<!-- Unread Badge -->
-			<div class="unread-badge" *ngIf="conversation.unreadCount > 0">
+			<div class="unread-badge" *ngIf="conversation.unreadCount && conversation.unreadCount > 0">
 				<span class="unread-count">{{ getUnreadCountDisplay(conversation) }}</span>
 			</div>
 

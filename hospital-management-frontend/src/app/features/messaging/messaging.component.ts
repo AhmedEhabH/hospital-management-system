@@ -1,11 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { SignalrService } from '../../core/services/signalr.service';
-import { MessageService, Message, Conversation } from '../../core/services/message.service';
+import { MessageService } from '../../core/services/message.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ChatMessage, ConversationItem, NotificationData, UserPresence } from '../../core/models/dtos';
+import { ChatMessage, ConversationItem, NotificationData, OnlineUser, UserPresence } from '../../core/models/dtos';
 
 interface InternalNotification {
 	id: string;
@@ -38,11 +38,17 @@ export class MessagingComponent implements OnInit, OnDestroy {
 	unreadCount = 0;
 	selectedConversationId: string | null = null;
 	showNotifications = false;
-	onlineUsers: UserPresence[] = [];
+	onlineUsers: OnlineUser[] = [];
 
 	private subscriptions: Subscription[] = [];
 
-	constructor(private SignalrService: SignalrService) { }
+	constructor(
+		private SignalrService: SignalrService,
+		private messageService: MessageService,
+		private authService: AuthService,
+		private themeService: ThemeService,
+		private snackBar: MatSnackBar
+	) { }
 
 	ngOnInit(): void {
 		// FIXED: Initialize all properties
@@ -52,7 +58,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		this.loadConversations();
 		this.subscribeToMessages();
 		this.subscribeToNotifications();
-		// this.subscribeToOnlineUsers();
+		this.subscribeToOnlineUsers();
 		this.subscribeToConnectionState();
 	}
 
@@ -68,17 +74,17 @@ export class MessagingComponent implements OnInit, OnDestroy {
 				id: 'conv_1',
 				title: 'Dr. Smith - Cardiology',
 				lastMessage: 'Your test results look good.',
-				lastMessageTime: new Date(),
+				lastMessageAt: new Date(),
 				unreadCount: 2,
 				participants: [{ id: 1, name: 'Dr. Smith', type: 'Doctor' }],
 				isOnline: true,
-				conversationType: 'direct'
+				conversationType: 'private'
 			},
 			{
 				id: 'conv_2',
 				title: 'Medical Team Chat',
 				lastMessage: 'Emergency patient in room 302',
-				lastMessageTime: new Date(Date.now() - 1800000),
+				lastMessageAt: new Date(Date.now() - 1800000),
 				unreadCount: 5,
 				participants: [
 					{ id: 1, name: 'Dr. Smith', type: 'Doctor' },
@@ -88,6 +94,14 @@ export class MessagingComponent implements OnInit, OnDestroy {
 				conversationType: 'group'
 			}
 		];
+		this.messageService.getConversations().subscribe({
+			next: (conversations) => {
+				this.conversations = conversations;
+			},
+			error: (error) => {
+				console.error('Error loading conversations:', error);
+			}
+		})
 		this.isLoading = false;
 	}
 
@@ -121,14 +135,31 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		);
 	}
 
-	// private subscribeToOnlineUsers(): void {
-	// 	this.subscriptions.push(
-	// 		this.SignalrService.onlineUsers$
-	// 			.subscribe((users: UserPresence[]) => {
-	// 				this.onlineUsers = users;
-	// 			})
-	// 	);
-	// }
+	private subscribeToOnlineUsers(): void {
+		this.subscriptions.push(
+			this.SignalrService.onlineUsers$
+				.subscribe({
+					next: (users: OnlineUser[]) => { // Changed from UserPresence[] to OnlineUser[]
+						// Map OnlineUser to UserPresence if needed for display
+						this.onlineUsers = users.map(user => ({
+							userId: user.userId,
+							userName: user.userType, // or get actual username from another source
+							isOnline: true,
+							status: 'online',
+							lastSeen: user.lastSeen,
+							userType: user.userType,
+							connectionCount: user.connectionCount
+						}));
+					},
+					error: (error: any) => {
+						console.error('Error fetching online users:', error);
+					},
+					complete: () => {
+						console.log('Online users subscription completed');
+					}
+				})
+		);
+	}
 
 	private handleIncomingMessage(message: ChatMessage): void {
 		console.log('New message received:', message);
@@ -136,7 +167,7 @@ export class MessagingComponent implements OnInit, OnDestroy {
 		const notification: InternalNotification = {
 			id: `msg_notif_${Date.now()}`,
 			title: 'New Message',
-			message: `You have a new message: ${message.content.substring(0, 50)}...`,
+			message: `You have a new message: ${message.message.substring(0, 50)}...`,
 			type: 'system',
 			priority: 'medium',
 			timestamp: new Date(),

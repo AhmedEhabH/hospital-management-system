@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SignalrService } from '../../../core/services/signalr.service';
-import { ConversationItem, UserPresence } from '../../../core/models/dtos';
+import { ConversationItem, Message, UserPresence } from '../../../core/models/dtos';
 
 
 @Component({
@@ -49,27 +49,27 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 				id: 'conv_1',
 				title: 'Dr. Smith - Cardiology',
 				lastMessage: 'Your test results look good.',
-				lastMessageTime: new Date(),
+				lastMessageAt: new Date(),
 				unreadCount: 2,
 				participants: [{ id: 1, name: 'Dr. Smith', type: 'Doctor' }],
 				isOnline: true,
-				conversationType: 'direct' // FIXED: Add missing property
+				conversationType: 'private' // FIXED: Add missing property
 			},
 			{
 				id: 'conv_2',
 				title: 'Nurse Johnson',
 				lastMessage: 'Please remember your appointment tomorrow.',
-				lastMessageTime: new Date(Date.now() - 3600000),
+				lastMessageAt: new Date(Date.now() - 3600000),
 				unreadCount: 0,
 				participants: [{ id: 2, name: 'Nurse Johnson', type: 'Nurse' }],
 				isOnline: false,
-				conversationType: 'direct' // FIXED: Add missing property
+				conversationType: 'private' // FIXED: Add missing property
 			},
 			{
 				id: 'conv_3',
 				title: 'Medical Team Chat',
 				lastMessage: 'Emergency patient in room 302',
-				lastMessageTime: new Date(Date.now() - 1800000),
+				lastMessageAt: new Date(Date.now() - 1800000),
 				unreadCount: 5,
 				participants: [
 					{ id: 1, name: 'Dr. Smith', type: 'Doctor' },
@@ -111,7 +111,17 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 	public onSearchChange(): void {
 		this.applyFilter();
 	}
+	private returnMessageContent(message: string | Message | null | undefined):string{
+		if (!message) {
+			return '';
+		}
+		if(typeof(message) === 'string'){
+			return message;
+		}
+		return message.messageContent;
+	}
 
+	
 	private applyFilter(): void {
 		if (!this.searchTerm.trim()) {
 			this.filteredConversations = [...this.conversations];
@@ -119,7 +129,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 			const searchLower = this.searchTerm.toLowerCase();
 			this.filteredConversations = this.conversations.filter(conversation =>
 				conversation.title.toLowerCase().includes(searchLower) ||
-				conversation.lastMessage.toLowerCase().includes(searchLower)
+				this.returnMessageContent(conversation.lastMessage).toLowerCase().includes(searchLower)
 			);
 		}
 	}
@@ -138,7 +148,7 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 		return this.onlineUsers.some(user => user.userId === userId && user.isOnline);
 	}
 
-	public formatLastMessageTime(timestamp: Date): string {
+	public formatlastMessageAt(timestamp: Date): string {
 		const now = new Date();
 		const diff = now.getTime() - timestamp.getTime();
 		const minutes = Math.floor(diff / 60000);
@@ -168,16 +178,27 @@ export class ConversationListComponent implements OnInit, OnDestroy {
 	// FIXED: Add missing method
 	public getLastMessagePreview(conversation: ConversationItem): string {
 		const maxLength = 50;
-		if (conversation.lastMessage.length > maxLength) {
-			return conversation.lastMessage.substring(0, maxLength) + '...';
+		if (conversation.lastMessage) {
+			if (typeof (conversation.lastMessage) === 'string') {
+				if (conversation.lastMessage.length > maxLength)
+					return conversation.lastMessage.substring(0, maxLength) + '...';
+				else
+					return conversation.lastMessage;
+			} else {
+				if (conversation.lastMessage.messageContent.length > maxLength) {
+					return conversation.lastMessage.messageContent.substring(0, maxLength) + '...';
+				} else {
+					return conversation.lastMessage.messageContent
+				}
+			}
 		}
-		return conversation.lastMessage;
+		return 'No messages yet';
 	}
-
 	// FIXED: Add missing method
 	public getUnreadCountDisplay(conversation: ConversationItem): string {
+		if (!conversation.unreadCount) return '';
 		if (conversation.unreadCount === 0) return '';
-		if (conversation.unreadCount > 99) return '99+';
+		if (conversation.unreadCount && conversation.unreadCount > 99) return '99+';
 		return conversation.unreadCount.toString();
 	}
 

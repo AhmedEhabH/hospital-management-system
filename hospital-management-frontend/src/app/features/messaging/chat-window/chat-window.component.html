@@ -55,13 +55,13 @@
 					<div class="message-content">
 						<!-- Text Message -->
 						<div *ngIf="message.messageType === 'text'" class="text-message">
-							{{ message.content }}
+							{{ message.message }}
 						</div>
 
 						<!-- Image Message -->
 						<div *ngIf="message.messageType === 'image'" class="image-message">
-							<img [src]="message.content" alt="Shared image" class="message-image"
-								(click)="openImageViewer(message.content)">
+							<img [src]="message.message" alt="Shared image" class="message-image"
+								(click)="openImageViewer(message.message)">
 						</div>
 
 						<!-- File Message -->
@@ -69,7 +69,7 @@
 							<div class="file-info" (click)="downloadAttachment(message)">
 								<mat-icon class="file-icon">{{ getFileIcon(message.messageType) }}</mat-icon>
 								<div class="file-details">
-									<span class="file-name">{{ message.content }}</span>
+									<span class="file-name">{{ message.message }}</span>
 									<span class="file-size">Click to download</span>
 								</div>
 							</div>

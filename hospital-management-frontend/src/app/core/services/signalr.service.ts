@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpTransportType, HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { BehaviorSubject, map, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { AppointmentReminder, ChatMessage, CriticalAlert, MedicalAlert, NotificationData, OnlineUser, SystemNotification, TypingIndicator, UserPresence } from '../models/dtos';
@@ -98,6 +98,25 @@ export class SignalrService {
 			console.log('SignalR Disconnected');
 		}
 	} */
+
+	private mapOnlineUserToUserPresence(onlineUser: OnlineUser): UserPresence {
+		return {
+			userId: onlineUser.userId,
+			userName: onlineUser.userType, // You might want to fetch actual username
+			isOnline: true,
+			status: 'online',
+			lastSeen: onlineUser.lastSeen,
+			userType: onlineUser.userType,
+			connectionCount: onlineUser.connectionCount
+		};
+	}
+
+	// Create a mapped observable
+	public get userPresences$(): Observable<UserPresence[]> {
+		return this.onlineUsers$.pipe(
+			map(users => users.map(user => this.mapOnlineUserToUserPresence(user)))
+		);
+	}
 
 	private async joinUserGroup(): Promise<void> {
 		const currentUser = this.authService.getCurrentUser();
@@ -410,6 +429,7 @@ export class SignalrService {
 		}
 
 		const currentUser = this.authService.getCurrentUser();
+		const token = this.authService.getToken();
 		if (!currentUser) {
 			console.error('No authenticated user found');
 			return;
@@ -418,7 +438,9 @@ export class SignalrService {
 		try {
 			this.hubConnection = new HubConnectionBuilder()
 				.withUrl(`${environment.apiUrl}/hubs/medical-alerts`, {
-					accessTokenFactory: () => this.authService.getToken() || ''
+					accessTokenFactory: () => token || '',
+					skipNegotiation: true,
+					transport: HttpTransportType.WebSockets
 				})
 				.withAutomaticReconnect([0, 2000, 10000, 30000])
 				.configureLogging(LogLevel.Information)
