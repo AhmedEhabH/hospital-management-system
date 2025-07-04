@@ -1,0 +1,19 @@
+<!-- in appointment-details-dialog.component.html -->
+
+<h1 mat-dialog-title>Appointment Details</h1>
+
+<div mat-dialog-content>
+	<p><strong>Title:</strong> {{ data.title }}</p>
+	<p><strong>Patient:</strong> {{ data.patientName }}</p>
+	<p><strong>Doctor:</strong> {{ data.doctorName }}</p>
+	<p><strong>Status:</strong> <span class="status-{{ data.status | lowercase }}">{{ data.status }}</span></p>
+	<p><strong>Date:</strong> {{ data.date | date: 'fullDate' }}</p>
+	<p><strong>Time:</strong> {{ data.startTime | date: 'shortTime' }} - {{ data.endTime | date: 'shortTime' }}</p>
+	<p><strong>Department:</strong> {{ data.department }}</p>
+	<p *ngIf="data.notes"><strong>Notes:</strong> {{ data.notes }}</p>
+</div>
+
+<div mat-dialog-actions align="end">
+	<button mat-button (click)="close()">Close</button>
+	<button mat-flat-button color="primary">Edit Appointment</button>
+</div>

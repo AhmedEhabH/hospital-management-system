@@ -1,1 +1,143 @@
-<p>appointment-scheduler works!</p>
+<div class="appointment-scheduler-container" [class.dark-theme]="isDarkMode">
+	<!-- Loading Overlay -->
+	<div *ngIf="isLoading" class="loading-overlay">
+		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+		<div class="loading-content">
+			<mat-icon class="loading-icon">event</mat-icon>
+			<h3>Loading Appointments...</h3>
+			<p>Fetching your schedule</p>
+		</div>
+	</div>
+
+	<!-- Scheduler Header -->
+	<div class="scheduler-header medical-gradient">
+		<div class="container header-container">
+			<div class="header-content">
+				<mat-icon class="header-icon">event_available</mat-icon>
+				<div class="header-text">
+					<h1>Appointment Scheduler</h1>
+					<p>Professional appointment management with real-time updates</p>
+				</div>
+			</div>
+			<div class="header-actions">
+				<button mat-raised-button color="accent" (click)="openBookingDialog()" class="book-button">
+					<mat-icon>add</mat-icon>
+					Book Appointment
+				</button>
+				<button mat-icon-button (click)="refreshCalendar()" matTooltip="Refresh" class="refresh-button">
+					<mat-icon>refresh</mat-icon>
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Calendar Controls -->
+	<div class="calendar-controls">
+		<div class="container controls-container">
+			<!-- Navigation Controls -->
+			<div class="nav-controls">
+				<button mat-icon-button (click)="previousPeriod()" matTooltip="Previous">
+					<mat-icon>chevron_left</mat-icon>
+				</button>
+				<button mat-raised-button (click)="goToToday()" class="today-button">
+					Today
+				</button>
+				<button mat-icon-button (click)="nextPeriod()" matTooltip="Next">
+					<mat-icon>chevron_right</mat-icon>
+				</button>
+			</div>
+
+			<!-- Current Date Display -->
+			<div class="current-date">
+				<h2>{{ viewDate | date:'MMMM yyyy' }}</h2>
+			</div>
+
+			<!-- View Controls -->
+			<div class="view-controls">
+				<mat-button-toggle-group [value]="view" (change)="setView($event.value)">
+					<mat-button-toggle [value]="CalendarView.Month">
+						<mat-icon>calendar_view_month</mat-icon>
+						Month
+					</mat-button-toggle>
+					<mat-button-toggle [value]="CalendarView.Week">
+						<mat-icon>calendar_view_week</mat-icon>
+						Week
+					</mat-button-toggle>
+					<mat-button-toggle [value]="CalendarView.Day">
+						<mat-icon>calendar_today</mat-icon>
+						Day
+					</mat-button-toggle>
+				</mat-button-toggle-group>
+			</div>
+		</div>
+	</div>
+
+	<!-- Calendar Content -->
+	<div class="container calendar-container">
+		<div class="medical-card calendar-card">
+			<!-- Month View -->
+			<mwl-calendar-month-view *ngIf="view === CalendarView.Month" [viewDate]="viewDate" [events]="events"
+				[refresh]="refresh" [activeDayIsOpen]="activeDayIsOpen" (dayClicked)="dayClicked($event.day)"
+				(eventClicked)="handleEvent('Clicked', $event.event)"
+				(eventTimesChanged)="handleEvent('Dropped or resized', $event.event)">
+			</mwl-calendar-month-view>
+
+			<!-- Week View -->
+			<mwl-calendar-week-view *ngIf="view === CalendarView.Week" [viewDate]="viewDate" [events]="events"
+				[refresh]="refresh" (eventClicked)="handleEvent('Clicked', $event.event)"
+				(eventTimesChanged)="handleEvent('Dropped or resized', $event.event)"
+				(hourSegmentClicked)="hourSegmentClicked($event.date)">
+			</mwl-calendar-week-view>
+
+			<!-- Day View -->
+			<mwl-calendar-day-view *ngIf="view === CalendarView.Day" [viewDate]="viewDate" [events]="events"
+				[refresh]="refresh" (eventClicked)="handleEvent('Clicked', $event.event)"
+				(eventTimesChanged)="handleEvent('Dropped or resized', $event.event)"
+				(hourSegmentClicked)="hourSegmentClicked($event.date)">
+			</mwl-calendar-day-view>
+		</div>
+
+		<!-- Today's Appointments Summary -->
+		<div class="medical-card appointments-summary" *ngIf="view === CalendarView.Week || view === CalendarView.Day">
+			<div class="summary-header">
+				<mat-icon class="summary-icon">today</mat-icon>
+				<h3>Today's Appointments</h3>
+			</div>
+
+			<div class="appointments-list">
+				<div *ngFor="let event of events | slice:0:5" class="appointment-item">
+					<div class="appointment-time">
+						{{ event.start | date:'shortTime' }}
+					</div>
+					<div class="appointment-details">
+						<div class="appointment-title">{{ event.title }}</div>
+						<div class="appointment-status" *ngIf="event.meta"
+							[ngClass]="'status-' + event.meta.status.toLowerCase().replace(' ', '-')">
+							{{ event.meta.status }}
+						</div>
+					</div>
+					<div class="appointment-actions">
+						<button mat-icon-button *ngIf="event.meta && event.meta.status === 'Scheduled'"
+							(click)="startAppointment(event.meta)" matTooltip="Start Appointment">
+							<mat-icon>play_arrow</mat-icon>
+						</button>
+						<button mat-icon-button *ngIf="event.meta && event.meta.status === 'In Progress'"
+							(click)="completeAppointment(event.meta)" matTooltip="Complete Appointment">
+							<mat-icon>check</mat-icon>
+						</button>
+					</div>
+				</div>
+
+				<div *ngIf="events.length === 0" class="no-appointments">
+					<mat-icon>event_busy</mat-icon>
+					<p>No appointments scheduled for today</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Open Day Events (for month view) -->
+	<mwl-calendar-open-day-events [isOpen]="activeDayIsOpen" [events]="events" [date]="viewDate"
+		(eventClicked)="handleEvent('Clicked', $event.event)">
+	</mwl-calendar-open-day-events>
+</div>

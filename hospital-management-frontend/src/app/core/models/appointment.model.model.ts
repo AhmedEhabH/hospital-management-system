@@ -75,3 +75,23 @@ export interface RescheduleAppointmentDto {
 	newTime: string;
 	reason?: string;
 }
+
+/**
+ * Calendar Event interface for angular-calendar integration
+ */
+export interface CalendarAppointmentEvent {
+	id?: number;
+	start: Date;
+	end: Date;
+	title: string;
+	color: {
+		primary: string;
+		secondary: string;
+	};
+	meta: AppointmentDto;
+	draggable?: boolean;
+	resizable?: {
+		beforeStart?: boolean;
+		afterEnd?: boolean;
+	};
+}
