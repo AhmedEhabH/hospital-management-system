@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.SqlServer;
 using HospitalManagement.API.Data;
 using HospitalManagement.API.Data.Seeding;
 using HospitalManagement.API.Hubs;
@@ -48,6 +50,18 @@ builder.Host.UseSerilog(); // Use Serilog for logging
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+//// 2. Add Hangfire services
+//builder.Services.AddHangfire(configuration => configuration
+//    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+//    .UseSimpleAssemblyNameTypeSerializer()
+//    .UseRecommendedSerializerSettings()
+//    // Configure Hangfire to use SQL Server
+//    .UseSqlServerStorage(builder.Configuration.GetConnectionString("HangfireConnection")));
+
+//// 3. Add the Hangfire processing server as a hosted service.
+//// This will start the background job processing.
+//builder.Services.AddHangfireServer();
 
 // --------- SQL Server DbContext Setup (Only if not Testing) ---------
 if (!builder.Environment.IsEnvironment("Testing"))
@@ -152,6 +166,32 @@ Log.Information("All Services registered in DI container.");
 
 //Log.Information("IJwtHelper registered as singleton in DI container.");
 
+// --------- Hangfire Background Job Service Setup ---------
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection"), new SqlServerStorageOptions
+    {
+        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+        QueuePollInterval = TimeSpan.Zero,
+        UseRecommendedIsolationLevel = true,
+        DisableGlobalLocks = true
+    }));
+
+// Add the Hangfire server
+builder.Services.AddHangfireServer(options =>
+{
+    options.WorkerCount = Environment.ProcessorCount * 2;
+    options.Queues = new[] { "critical", "default", "low" };
+});
+
+Log.Information("Hangfire background job service configured successfully");
+
+// Register the notification service
+builder.Services.AddScoped<INotificationService, NotificationService>();
+
 // Add SignalR
 builder.Services.AddSignalR(options =>
 {
@@ -227,7 +267,29 @@ if (app.Environment.IsDevelopment())
         //c.RoutePrefix = string.Empty; // Set Swagger UI at the app's root
     });
     Log.Information("Swagger enabled in development environment");
+
+
+    // Hangfire Dashboard (accessible at /hangfire)
+    app.UseHangfireDashboard("/hangfire", new DashboardOptions
+    {
+        Authorization = new[] { new HangfireAuthorizationFilter() }
+    });
+
+    Log.Information("Hangfire Dashboard enabled at /hangfire");
 }
+
+// Schedule recurring jobs for system maintenance
+RecurringJob.AddOrUpdate(
+    "cleanup-old-notifications",
+    () => Console.WriteLine("Cleaning up old notifications..."),
+    Cron.Daily);
+
+RecurringJob.AddOrUpdate(
+    "system-health-check",
+    () => Console.WriteLine("Performing system health check..."),
+    Cron.Hourly);
+
+Log.Information("Recurring jobs scheduled successfully");
 
 // --------- Enable CORS Middleware ---------
 app.UseCors("AllowAngularApp");
@@ -236,9 +298,22 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 app.UseHttpsRedirection();
 
+
+// 4. Add the Hangfire Dashboard.
+// By default, this is only accessible from localhost.
+// For production, you should secure the dashboard.
+//app.UseHangfireDashboard();
+
 // Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+
+// Optional: Enqueue a sample job to test
+//app.MapGet("/test-hangfire", () => {
+//    Hangfire.BackgroundJob.Enqueue(() => Console.WriteLine("Hello, Hangfire job!"));
+//    return "Test job enqueued!";
+//});
 
 app.MapControllers();
 

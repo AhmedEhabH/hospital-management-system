@@ -37,6 +37,7 @@ import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 import { MatStepperModule } from '@angular/material/stepper';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatOptionModule } from '@angular/material/core';
 
 @NgModule({
 	declarations: [
@@ -76,6 +77,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 		MatTabsModule,
 		MatChipsModule,
 		MatStepperModule,
+		MatOptionModule,
 
 		
 		CalendarModule.forRoot({
@@ -118,6 +120,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 		MatChipsModule,
 		CalendarModule,
 		MatStepperModule,
+		MatOptionModule,
 	],
 })
 export class SharedModule { }

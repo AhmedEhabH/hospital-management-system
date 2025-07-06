@@ -1,9 +1,12 @@
 ﻿// FIXED: Add using directive for the repository interface
-using HospitalManagement.API.Repositories.Interfaces;
-using HospitalManagement.API.Models.Entities;
-using HospitalManagement.API.Models.DTOs;
-using HospitalManagement.API.Services.Interfaces;
 using AutoMapper;
+using Hangfire;
+using HospitalManagement.API.Hubs;
+using HospitalManagement.API.Models.DTOs;
+using HospitalManagement.API.Models.Entities;
+using HospitalManagement.API.Repositories.Interfaces;
+using HospitalManagement.API.Services.Interfaces;
+using Microsoft.AspNetCore.SignalR;
 
 namespace HospitalManagement.API.Services.Implementations
 {
@@ -13,13 +16,24 @@ namespace HospitalManagement.API.Services.Implementations
         private readonly IUserRepository _userRepository; // Assuming you have an IUserRepository
         private readonly IMapper _mapper;
         private readonly ILogger<AppointmentService> _logger;
+        private readonly INotificationService _notificationService;
+        private readonly IHubContext<MedicalAlertsHub> _hubContext;
 
-        public AppointmentService(IAppointmentRepository appointmentRepository, IUserRepository userRepository, IMapper mapper, ILogger<AppointmentService> logger)
+        public AppointmentService(
+            IAppointmentRepository appointmentRepository,
+            IUserRepository userRepository,
+            IMapper mapper,
+            ILogger<AppointmentService> logger,
+            IHubContext<MedicalAlertsHub> hubContext,
+            INotificationService notificationService
+            )
         {
             _appointmentRepository = appointmentRepository;
             _userRepository = userRepository;
             _mapper = mapper;
             _logger = logger;
+            _hubContext = hubContext;
+            _notificationService = notificationService;
         }
 
         public async Task<AppointmentDto> GetAppointmentByIdAsync(int id)
@@ -66,6 +80,29 @@ namespace HospitalManagement.API.Services.Implementations
             var patient = await _userRepository.GetByIdAsync(appointment.PatientId);
             createdDto.DoctorName = $"{doctor?.FirstName} {doctor?.LastName}";
             createdDto.PatientName = $"{patient?.FirstName} {patient?.LastName}";
+
+            try
+            {
+                // Send immediate confirmation email
+                BackgroundJob.Enqueue<INotificationService>(
+                    service => service.SendAppointmentConfirmationEmailAsync(appointment.Id));
+
+                // Schedule reminder email 24 hours before appointment
+                var reminderTime = appointment.StartTime.AddHours(-24);
+                if (reminderTime > DateTime.UtcNow)
+                {
+                    var reminderJobId = _notificationService.ScheduleAppointmentReminder(appointment.Id, reminderTime);
+                    _logger.LogInformation("Scheduled appointment reminder job {JobId} for appointment {AppointmentId}",
+                        reminderJobId, appointment.Id);
+                }
+
+                _logger.LogInformation("Background jobs scheduled successfully for appointment {AppointmentId}", appointment.Id);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error scheduling background jobs for appointment {AppointmentId}", appointment.Id);
+                // Don't fail the appointment creation if background jobs fail
+            }
 
             return createdDto;
         }

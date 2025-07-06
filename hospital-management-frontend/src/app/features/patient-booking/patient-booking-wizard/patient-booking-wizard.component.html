@@ -1,93 +1,224 @@
 <div class="booking-wizard-container" [class.dark-theme]="isDarkMode">
+	<!-- Loading Overlay -->
+	<div *ngIf="isLoading" class="loading-overlay">
+		<mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
+		<div class="loading-content">
+			<mat-icon class="loading-icon">event</mat-icon>
+			<h3>Booking Appointment...</h3>
+			<p>Please wait while we process your request</p>
+		</div>
+	</div>
+
 	<!-- Header -->
-	<div class="wizard-header medical-gradient">
-		<div class="container">
-			<div class="header-content">
-				<mat-icon class="header-icon">event_available</mat-icon>
-				<div class="header-text">
-					<h1>Book a New Appointment</h1>
-					<p>Find the right care, right when you need it.</p>
-				</div>
+	<div class="wizard-header medical-gradient header-layout">
+		<div class="header-content">
+			<mat-icon class="header-icon">event_available</mat-icon>
+			<div class="header-text">
+				<h1>Book Your Appointment</h1>
+				<p>Find the right care, right when you need it</p>
 			</div>
+		</div>
+		<div class="header-actions">
+			<button mat-icon-button routerLink="/patient/dashboard" matTooltip="Back to Dashboard" class="back-button">
+				<mat-icon>arrow_back</mat-icon>
+			</button>
 		</div>
 	</div>
 
 	<!-- Main Content -->
 	<div class="container content-container">
-		<mat-stepper [linear]="true" #stepper class="medical-stepper">
-			<!-- Step 1: Select a Doctor -->
-			<mat-step [completed]="selectedDoctor" label="Select a Specialist">
-				<ng-template matStepLabel>Select a Specialist</ng-template>
-				<div class="step-content">
-					<p class="step-description">Choose a doctor based on their specialty to see their availability.</p>
-					<app-doctor-selection (doctorSelected)="handleDoctorSelected($event)"></app-doctor-selection>
-				</div>
-			</mat-step>
+		<div class="medical-card wizard-card">
+			<mat-stepper [linear]="true" #stepper class="medical-stepper" orientation="horizontal">
 
-			<!-- Step 2: Choose Time Slot -->
-			<mat-step [completed]="selectedSlot" label="Choose an Available Time">
-				<ng-template matStepLabel>Choose an Available Time</ng-template>
-				<div *ngIf="selectedDoctor" class="step-content">
-					<p class="step-description">Select a date and an available time slot for your appointment with
-						<strong>Dr. {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}</strong>.</p>
-					<app-time-slot-selection [doctorId]="selectedDoctor.id" (slotSelected)="handleSlotSelected($event)">
-					</app-time-slot-selection>
-				</div>
-				<div class="step-actions">
-					<button mat-stroked-button matStepperPrevious>Back to Doctor Selection</button>
-				</div>
-			</mat-step>
+				<!-- Step 1: Select a Doctor -->
+				<mat-step [completed]="selectedDoctor" label="Select Specialist">
+					<ng-template matStepLabel>
+						<div class="step-label">
+							<mat-icon>person_search</mat-icon>
+							<span>Select Specialist</span>
+						</div>
+					</ng-template>
 
-			<!-- Step 3: Confirm Details -->
-			<mat-step>
-				<ng-template matStepLabel>Confirm Your Appointment</ng-template>
-				<div class="confirmation-container medical-card">
-					<h2 class="confirmation-title">Confirm Details</h2>
-					<p class="subtitle">Please review your appointment details below before confirming.</p>
+					<div class="step-content">
+						<div class="step-header">
+							<h2>Choose Your Doctor</h2>
+							<p class="step-description">Select a specialist based on your medical needs</p>
+						</div>
 
-					<div class="summary-grid">
-						<!-- Doctor Details -->
-						<div class="summary-item">
-							<mat-icon>person</mat-icon>
-							<div class="summary-text">
-								<strong>Doctor:</strong> {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}
-								<small>{{ selectedDoctor?.specialty }}</small>
+						<app-doctor-selection (doctorSelected)="handleDoctorSelected($event)">
+						</app-doctor-selection>
+					</div>
+				</mat-step>
+
+				<!-- Step 2: Choose Time Slot -->
+				<mat-step [completed]="selectedSlot" label="Choose Time">
+					<ng-template matStepLabel>
+						<div class="step-label">
+							<mat-icon>schedule</mat-icon>
+							<span>Choose Time</span>
+						</div>
+					</ng-template>
+
+					<div *ngIf="selectedDoctor" class="step-content">
+						<div class="step-header">
+							<h2>Select Available Time</h2>
+							<p class="step-description">
+								Choose a convenient time slot for your appointment with
+								<strong>Dr. {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}</strong>
+							</p>
+						</div>
+
+						<!-- Selected Doctor Info -->
+						<div class="selected-doctor-info medical-card">
+							<div class="doctor-avatar">
+								<mat-icon>person</mat-icon>
+							</div>
+							<div class="doctor-details">
+								<h3>Dr. {{ selectedDoctor.firstName }} {{ selectedDoctor.lastName }}</h3>
+								<p class="specialty">{{ selectedDoctor.specialty || 'General Medicine' }}</p>
+								<p class="experience">{{ selectedDoctor.experience || '5+' }} years experience</p>
 							</div>
 						</div>
-						<!-- Appointment Time -->
-						<div class="summary-item">
-							<mat-icon>schedule</mat-icon>
-							<div class="summary-text">
-								<strong>Date & Time:</strong> {{ selectedSlot?.startTime | date:'fullDate' }} at {{
-								selectedSlot?.startTime | date:'shortTime' }}
+
+						<app-time-slot-selection [doctorId]="selectedDoctor.id"
+							(slotSelected)="handleSlotSelected($event)">
+						</app-time-slot-selection>
+					</div>
+
+					<div class="step-actions">
+						<button mat-stroked-button matStepperPrevious class="action-button">
+							<mat-icon>arrow_back</mat-icon>
+							Back to Doctor Selection
+						</button>
+					</div>
+				</mat-step>
+
+				<!-- Step 3: Confirm Details -->
+				<mat-step label="Confirm Booking">
+					<ng-template matStepLabel>
+						<div class="step-label">
+							<mat-icon>check_circle</mat-icon>
+							<span>Confirm</span>
+						</div>
+					</ng-template>
+
+					<div class="step-content">
+						<div class="step-header">
+							<h2>Confirm Your Appointment</h2>
+							<p class="step-description">Please review your appointment details before confirming</p>
+						</div>
+
+						<!-- Appointment Summary -->
+						<div class="appointment-summary">
+							<div class="summary-grid">
+								<!-- Doctor Details -->
+								<div class="summary-item">
+									<div class="summary-icon">
+										<mat-icon>person</mat-icon>
+									</div>
+									<div class="summary-content">
+										<h4>Doctor</h4>
+										<p><strong>Dr. {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName
+												}}</strong></p>
+										<small>{{ selectedDoctor?.specialty || 'General Medicine' }}</small>
+									</div>
+								</div>
+
+								<!-- Appointment Time -->
+								<div class="summary-item">
+									<div class="summary-icon">
+										<mat-icon>schedule</mat-icon>
+									</div>
+									<div class="summary-content">
+										<h4>Date & Time</h4>
+										<p><strong>{{ selectedSlot?.startTime | date:'fullDate' }}</strong></p>
+										<small>{{ selectedSlot?.startTime | date:'shortTime' }} - {{
+											selectedSlot?.endTime | date:'shortTime' }}</small>
+									</div>
+								</div>
+
+								<!-- Duration -->
+								<div class="summary-item">
+									<div class="summary-icon">
+										<mat-icon>timer</mat-icon>
+									</div>
+									<div class="summary-content">
+										<h4>Duration</h4>
+										<p><strong>30 minutes</strong></p>
+										<small>Standard consultation</small>
+									</div>
+								</div>
+
+								<!-- Appointment Type -->
+								<div class="summary-item">
+									<div class="summary-icon">
+										<mat-icon>medical_services</mat-icon>
+									</div>
+									<div class="summary-content">
+										<h4>Type</h4>
+										<p><strong>{{ bookingForm.get('title')?.value }}</strong></p>
+										<small>In-person consultation</small>
+									</div>
+								</div>
 							</div>
+						</div>
+
+						<!-- Appointment Details Form -->
+						<div class="appointment-details medical-card">
+							<h3>Appointment Details</h3>
+							<form [formGroup]="bookingForm" class="booking-form">
+								<mat-form-field appearance="outline" class="full-width">
+									<mat-label>Reason for Visit</mat-label>
+									<mat-select formControlName="title" required>
+										<mat-option value="General Consultation">General Consultation</mat-option>
+										<mat-option value="Follow-up Visit">Follow-up Visit</mat-option>
+										<mat-option value="Annual Checkup">Annual Checkup</mat-option>
+										<mat-option value="Specialist Consultation">Specialist Consultation</mat-option>
+										<mat-option value="Emergency Consultation">Emergency Consultation</mat-option>
+									</mat-select>
+									<mat-hint>Select the primary reason for your visit</mat-hint>
+								</mat-form-field>
+
+								<mat-form-field appearance="outline" class="full-width">
+									<mat-label>Additional Notes (Optional)</mat-label>
+									<textarea matInput formControlName="notes" rows="4"
+										placeholder="Describe your symptoms, concerns, or any additional information for the doctor..."
+										maxlength="500">
+                  </textarea>
+									<mat-hint align="end">{{ bookingForm.get('notes')?.value?.length || 0
+										}}/500</mat-hint>
+								</mat-form-field>
+							</form>
+						</div>
+
+						<!-- Important Information -->
+						<div class="important-info medical-card">
+							<div class="info-header">
+								<mat-icon class="info-icon">info</mat-icon>
+								<h4>Important Information</h4>
+							</div>
+							<ul class="info-list">
+								<li>Please arrive 15 minutes before your scheduled appointment</li>
+								<li>Bring a valid ID and insurance card if applicable</li>
+								<li>You will receive a confirmation email shortly</li>
+								<li>Cancellations must be made at least 24 hours in advance</li>
+							</ul>
 						</div>
 					</div>
 
-					<!-- Appointment Reason Form -->
-					<form [formGroup]="bookingForm" class="confirmation-form">
-						<mat-form-field appearance="outline">
-							<mat-label>Reason for Visit</mat-label>
-							<input matInput formControlName="title" placeholder="e.g., Annual Checkup, Consultation"
-								required>
-						</mat-form-field>
-						<mat-form-field appearance="outline">
-							<mat-label>Additional Notes (Optional)</mat-label>
-							<textarea matInput formControlName="notes" rows="3"
-								placeholder="Provide any additional information for the doctor."></textarea>
-						</mat-form-field>
-					</form>
-				</div>
-
-				<div class="step-actions confirmation-actions">
-					<button mat-stroked-button matStepperPrevious>Back to Time Selection</button>
-					<button mat-raised-button color="primary" (click)="confirmBooking()"
-						[disabled]="isLoading || bookingForm.invalid">
-						<mat-icon>check_circle</mat-icon>
-						{{ isLoading ? 'Booking...' : 'Confirm Appointment' }}
-					</button>
-				</div>
-			</mat-step>
-		</mat-stepper>
+					<div class="step-actions confirmation-actions">
+						<button mat-stroked-button matStepperPrevious class="action-button secondary">
+							<mat-icon>arrow_back</mat-icon>
+							Back to Time Selection
+						</button>
+						<button mat-raised-button color="primary" (click)="confirmBooking()"
+							[disabled]="isLoading || bookingForm.invalid" class="action-button primary">
+							<mat-icon>{{ isLoading ? 'hourglass_empty' : 'check_circle' }}</mat-icon>
+							{{ isLoading ? 'Booking...' : 'Confirm Appointment' }}
+						</button>
+					</div>
+				</mat-step>
+			</mat-stepper>
+		</div>
 	</div>
 </div>
