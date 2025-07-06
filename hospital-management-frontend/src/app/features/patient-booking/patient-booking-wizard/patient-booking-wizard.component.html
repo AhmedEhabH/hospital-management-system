@@ -1,1 +1,93 @@
-<p>patient-booking-wizard works!</p>
+<div class="booking-wizard-container" [class.dark-theme]="isDarkMode">
+	<!-- Header -->
+	<div class="wizard-header medical-gradient">
+		<div class="container">
+			<div class="header-content">
+				<mat-icon class="header-icon">event_available</mat-icon>
+				<div class="header-text">
+					<h1>Book a New Appointment</h1>
+					<p>Find the right care, right when you need it.</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Main Content -->
+	<div class="container content-container">
+		<mat-stepper [linear]="true" #stepper class="medical-stepper">
+			<!-- Step 1: Select a Doctor -->
+			<mat-step [completed]="selectedDoctor" label="Select a Specialist">
+				<ng-template matStepLabel>Select a Specialist</ng-template>
+				<div class="step-content">
+					<p class="step-description">Choose a doctor based on their specialty to see their availability.</p>
+					<app-doctor-selection (doctorSelected)="handleDoctorSelected($event)"></app-doctor-selection>
+				</div>
+			</mat-step>
+
+			<!-- Step 2: Choose Time Slot -->
+			<mat-step [completed]="selectedSlot" label="Choose an Available Time">
+				<ng-template matStepLabel>Choose an Available Time</ng-template>
+				<div *ngIf="selectedDoctor" class="step-content">
+					<p class="step-description">Select a date and an available time slot for your appointment with
+						<strong>Dr. {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}</strong>.</p>
+					<app-time-slot-selection [doctorId]="selectedDoctor.id" (slotSelected)="handleSlotSelected($event)">
+					</app-time-slot-selection>
+				</div>
+				<div class="step-actions">
+					<button mat-stroked-button matStepperPrevious>Back to Doctor Selection</button>
+				</div>
+			</mat-step>
+
+			<!-- Step 3: Confirm Details -->
+			<mat-step>
+				<ng-template matStepLabel>Confirm Your Appointment</ng-template>
+				<div class="confirmation-container medical-card">
+					<h2 class="confirmation-title">Confirm Details</h2>
+					<p class="subtitle">Please review your appointment details below before confirming.</p>
+
+					<div class="summary-grid">
+						<!-- Doctor Details -->
+						<div class="summary-item">
+							<mat-icon>person</mat-icon>
+							<div class="summary-text">
+								<strong>Doctor:</strong> {{ selectedDoctor?.firstName }} {{ selectedDoctor?.lastName }}
+								<small>{{ selectedDoctor?.specialty }}</small>
+							</div>
+						</div>
+						<!-- Appointment Time -->
+						<div class="summary-item">
+							<mat-icon>schedule</mat-icon>
+							<div class="summary-text">
+								<strong>Date & Time:</strong> {{ selectedSlot?.startTime | date:'fullDate' }} at {{
+								selectedSlot?.startTime | date:'shortTime' }}
+							</div>
+						</div>
+					</div>
+
+					<!-- Appointment Reason Form -->
+					<form [formGroup]="bookingForm" class="confirmation-form">
+						<mat-form-field appearance="outline">
+							<mat-label>Reason for Visit</mat-label>
+							<input matInput formControlName="title" placeholder="e.g., Annual Checkup, Consultation"
+								required>
+						</mat-form-field>
+						<mat-form-field appearance="outline">
+							<mat-label>Additional Notes (Optional)</mat-label>
+							<textarea matInput formControlName="notes" rows="3"
+								placeholder="Provide any additional information for the doctor."></textarea>
+						</mat-form-field>
+					</form>
+				</div>
+
+				<div class="step-actions confirmation-actions">
+					<button mat-stroked-button matStepperPrevious>Back to Time Selection</button>
+					<button mat-raised-button color="primary" (click)="confirmBooking()"
+						[disabled]="isLoading || bookingForm.invalid">
+						<mat-icon>check_circle</mat-icon>
+						{{ isLoading ? 'Booking...' : 'Confirm Appointment' }}
+					</button>
+				</div>
+			</mat-step>
+		</mat-stepper>
+	</div>
+</div>

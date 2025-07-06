@@ -1,10 +1,12 @@
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { AppointmentService } from '../../../core/services/appointment.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { CreateAppointmentDto } from '../../../core/models';
+import { ThemeService } from '../../../core/services/theme.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
 	selector: 'app-patient-booking-wizard',
@@ -13,19 +15,23 @@ import { CreateAppointmentDto } from '../../../core/models';
 	styleUrl: './patient-booking-wizard.component.scss'
 })
 
-export class PatientBookingWizardComponent implements OnInit {
+export class PatientBookingWizardComponent implements OnInit, OnDestroy {
 	currentStep = 1;
 	bookingForm: FormGroup;
 	selectedDoctor: any = null; // Will hold doctor info
 	selectedSlot: any = null;   // Will hold time slot info
 	isLoading = false;
+	isDarkMode = false;
+
+	private destroy$ = new Subject<void>();
 
 	constructor(
 		private fb: FormBuilder,
 		private appointmentService: AppointmentService,
 		private authService: AuthService,
 		private snackBar: MatSnackBar,
-		private router: Router
+		private router: Router,
+		private themeService: ThemeService
 	) {
 		this.bookingForm = this.fb.group({
 			title: ['Medical Consultation', Validators.required],
@@ -33,7 +39,23 @@ export class PatientBookingWizardComponent implements OnInit {
 		});
 	}
 
-	ngOnInit(): void { }
+	ngOnInit(): void {
+		this.subscribeToTheme();
+	}
+
+
+	ngOnDestroy(): void {
+		this.destroy$.next();
+		this.destroy$.complete();
+	}
+
+	private subscribeToTheme(): void {
+		this.themeService.isDarkMode$
+			.pipe(takeUntil(this.destroy$))
+			.subscribe(isDark => {
+				this.isDarkMode = isDark;
+			});
+	}
 
 	handleDoctorSelected(doctor: any) {
 		this.selectedDoctor = doctor;

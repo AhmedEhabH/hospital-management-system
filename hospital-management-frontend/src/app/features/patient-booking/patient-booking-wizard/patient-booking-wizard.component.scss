@@ -1,0 +1,149 @@
+@mixin flex-between {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+@mixin flex-center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.booking-wizard-container {
+	padding-bottom: 4rem;
+	background-color: var(--background-color);
+}
+
+.wizard-header {
+	padding: 3rem 0;
+	color: white;
+	text-align: center;
+
+	.header-content {
+		.header-icon {
+			font-size: 3.5rem;
+			width: 3.5rem;
+			height: 3.5rem;
+			margin-bottom: 1rem;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+			font-weight: 700;
+			margin: 0;
+		}
+
+		p {
+			font-size: 1.1rem;
+			opacity: 0.9;
+			margin-top: 0.5rem;
+		}
+	}
+}
+
+.content-container {
+	margin-top: -2.5rem; // Overlap the header slightly for a modern look
+	position: relative;
+	z-index: 10;
+}
+
+.medical-stepper {
+	border-radius: 16px;
+	background-color: var(--surface-color);
+	box-shadow: 0 8px 32px var(--shadow-color);
+
+	::ng-deep .mat-step-header {
+
+		.mat-step-icon-selected,
+		.mat-step-icon-state-done,
+		.mat-step-icon-state-edit {
+			background-color: var(--primary-color) !important;
+			color: white !important;
+		}
+	}
+}
+
+.step-content {
+	padding: 1.5rem 0;
+
+	.step-description {
+		font-size: 1rem;
+		color: var(--text-secondary);
+		margin-bottom: 1.5rem;
+		text-align: center;
+	}
+}
+
+.step-actions {
+	margin-top: 1.5rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--border-color);
+	display: flex;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}
+
+.confirmation-container {
+	padding: 2rem;
+
+	.confirmation-title {
+		font-size: 1.75rem;
+		font-weight: 600;
+		margin-bottom: 0.5rem;
+	}
+
+	.subtitle {
+		color: var(--text-secondary);
+		margin-bottom: 2rem;
+	}
+
+	.summary-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 1.5rem;
+		margin-bottom: 2rem;
+
+		@media (min-width: 768px) {
+			grid-template-columns: 1fr 1fr;
+		}
+	}
+
+	.summary-item {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		padding: 1rem;
+		background-color: rgba(var(--primary-rgb), 0.05);
+		border-left: 4px solid var(--primary-color);
+		border-radius: 8px;
+
+		mat-icon {
+			color: var(--primary-color);
+			font-size: 2rem;
+		}
+
+		.summary-text {
+			display: flex;
+			flex-direction: column;
+
+			strong {
+				font-weight: 600;
+				font-size: 1rem;
+			}
+
+			small {
+				color: var(--text-secondary);
+				font-size: 0.875rem;
+			}
+		}
+	}
+
+	.confirmation-form {
+		margin-top: 1.5rem;
+	}
+}
+
+.confirmation-actions {
+	justify-content: space-between;
+}

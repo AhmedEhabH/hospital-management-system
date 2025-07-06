@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 @Component({
   selector: 'app-time-slot-selection',
@@ -7,5 +7,5 @@ import { Component } from '@angular/core';
   styleUrl: './time-slot-selection.component.scss'
 })
 export class TimeSlotSelectionComponent {
-
+	@Input() doctorId: string ='';
 }

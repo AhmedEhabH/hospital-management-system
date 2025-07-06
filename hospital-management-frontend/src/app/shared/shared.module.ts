@@ -35,6 +35,8 @@ import { MatChipsModule } from '@angular/material/chips';
 
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
+import { MatStepperModule } from '@angular/material/stepper';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
 	declarations: [
@@ -56,6 +58,7 @@ import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 		ReactiveFormsModule,
 		RouterModule,
 
+		// BrowserAnimationsModule,
 		// Angular Material Modules
 		MatToolbarModule,
 		MatButtonModule,
@@ -72,6 +75,7 @@ import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 		MatProgressSpinnerModule,
 		MatTabsModule,
 		MatChipsModule,
+		MatStepperModule,
 
 		
 		CalendarModule.forRoot({
@@ -83,6 +87,11 @@ import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 		// Export components
 		ThemeToggleComponent,
 		LogoutButtonComponent,
+
+		CommonModule,
+		// BrowserAnimationsModule,
+		FormsModule,
+		ReactiveFormsModule,
 
 		HeaderComponent,
 		SidebarComponent,
@@ -108,6 +117,7 @@ import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 		MatTabsModule,
 		MatChipsModule,
 		CalendarModule,
+		MatStepperModule,
 	],
 })
 export class SharedModule { }
