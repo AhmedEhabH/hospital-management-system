@@ -103,9 +103,10 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 	// Chart Configuration for System Analytics
 	public userDistributionChartType: ChartType = 'doughnut';
 	public userDistributionChartData: ChartData<'doughnut'> = {
+
 		labels: ['Patients', 'Doctors', 'Admins'],
 		datasets: [{
-			data: [150, 25, 5],
+			data: [this.systemMetrics.totalPatients, this.systemMetrics.totalDoctors, this.systemMetrics.totalAdmins],
 			backgroundColor: [
 				'#4caf50', // Patients - Green
 				'#2196f3', // Doctors - Blue
@@ -211,8 +212,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 					};
 
 					this.setupDataSources();
-					this.updateCharts();
 					this.fillSystemMetrics();
+					this.updateCharts();
 					this.isLoading = false;
 
 					console.log('Admin dashboard data loaded from database:', this.dashboardData);
@@ -378,6 +379,20 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
 		};
 
 		console.log('System metrics filled with real backend data:', this.systemMetrics);
+		this.userDistributionChartData = {
+
+			labels: ['Patients', 'Doctors', 'Admins'],
+			datasets: [{
+				data: [this.systemMetrics.totalPatients, this.systemMetrics.totalDoctors, this.systemMetrics.totalAdmins],
+				backgroundColor: [
+					'#4caf50', // Patients - Green
+					'#2196f3', // Doctors - Blue
+					'#ff9800'  // Admins - Orange
+				],
+				borderWidth: 2,
+				borderColor: '#ffffff'
+			}]
+		};
 	}
 
 	// **USER ACTIONS**

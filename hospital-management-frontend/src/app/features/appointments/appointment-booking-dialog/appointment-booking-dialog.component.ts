@@ -88,8 +88,8 @@ export class AppointmentBookingDialogComponent implements OnInit {
 				title: this.bookingForm.value.title,
 				notes: this.bookingForm.value.notes,
 				date: selectedSlot.startTime,
-				time: selectedSlot.startTime,
-				department: this.data.department,
+				// startTime: selectedSlot.startTime,
+				// department: this.data.department,
 				type: this.data.type,
 				priority: this.data.priority
 			};

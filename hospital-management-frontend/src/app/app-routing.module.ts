@@ -1,6 +1,7 @@
 import { NgModule } from '@angular/core';
 import { PreloadAllModules, RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
+import { RoleGuard } from './core/guards/role.guard';
 
 const routes: Routes = [
 	// Default redirect to login
@@ -21,7 +22,8 @@ const routes: Routes = [
 	// Admin routes (protected)
 	{
 		path: 'admin',
-		canActivate: [AuthGuard],
+		canActivate: [AuthGuard, RoleGuard],
+		data: { expectedRoles: ['Admin'] },
 		children: [
 			{
 				path: 'dashboard',
@@ -38,7 +40,8 @@ const routes: Routes = [
 	// Doctor routes (protected)
 	{
 		path: 'doctor',
-		canActivate: [AuthGuard],
+		canActivate: [AuthGuard, RoleGuard],
+		data: { expectedRoles: ['Doctor'] },
 		children: [
 			{
 				path: 'dashboard',
@@ -51,13 +54,12 @@ const routes: Routes = [
 	// Patient routes (protected)
 	{
 		path: 'patient',
-		canActivate: [AuthGuard],
+		canActivate: [AuthGuard, RoleGuard],
+		data: { expectedRoles: ['Patient'] },
 		children: [
-			{
-				path: 'dashboard',
-				loadChildren: () => import('./features/patient/dashboard/dashboard.module').then(m => m.DashboardModule)
-			},
-			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+			{ path: 'dashboard', loadChildren: () => import('./features/patient/dashboard/dashboard.module').then(m => m.DashboardModule) },
+			{ path: 'book-appointment', loadChildren: () => import('./features/patient-booking/patient-booking.module').then(m => m.PatientBookingModule) },
+			{ path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 		]
 	},
 
@@ -87,6 +89,13 @@ const routes: Routes = [
 		path: 'feedback',
 		canActivate: [AuthGuard],
 		loadChildren: () => import('./features/feedback/feedback.module').then(m => m.FeedbackModule)
+	},
+
+	// Shared protected routes
+	{ 
+		path: 'appointments',
+		canActivate: [AuthGuard],
+		loadChildren: () => import('./features/appointments/appointments.module').then(m => m.AppointmentsModule)
 	},
 
 	// Wildcard route - must be last

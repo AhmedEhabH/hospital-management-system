@@ -22,14 +22,7 @@ export interface AppointmentDto {
 	endTime: string;   // Use string for ISO date format
 }
 
-export interface CreateAppointmentDto {
-	doctorId: number;
-	patientId: number;
-	startTime: string;
-	durationInMinutes?: number;
-	title: string;
-	notes?: string;
-}
+
 
 // FIXED: Add the missing DoctorAvailabilityDto
 export interface DoctorAvailabilityDto {
@@ -59,13 +52,23 @@ export interface CreateAppointmentDto {
 	doctorId: number;
 	patientId: number;
 	date: string;
-	time: string;
-	department: string;
+	startTime: string;
+	// department: string;
 	type: string;
 	priority: 'High' | 'Medium' | 'Low';
 	notes?: string;
+	durationInMinutes? : number;
+	title: string;
 }
 
+// export interface CreateAppointmentDto {
+// 	doctorId: number;
+// 	patientId: number;
+// 	startTime: string;
+// 	durationInMinutes?: number;
+// 	title: string;
+// 	notes?: string;
+// }
 /**
  * Appointment Reschedule DTO
  */
