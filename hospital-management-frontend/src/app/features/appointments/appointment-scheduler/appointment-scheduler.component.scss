@@ -1,0 +1,50 @@
+// @import '../../../../styles.scss';
+// ... any existing component-specific styles ...
+
+// FIX: Calendar Header Styling
+// Use ::ng-deep to override the default styles of the angular-calendar component.
+:host ::ng-deep {
+	.cal-month-view .cal-header {
+		background-color: var(--surface-color);
+		border-bottom: 2px solid var(--border-color);
+
+		.cal-cell {
+			color: var(--text-secondary);
+			font-weight: 600;
+			text-transform: uppercase;
+			font-size: 0.8rem;
+			padding: 0.75rem 0;
+		}
+	}
+
+	.cal-week-view .cal-header {
+		background-color: var(--surface-color);
+		border: 1px solid var(--border-color);
+		border-bottom: 2px solid var(--border-color);
+
+		.cal-cell {
+			color: var(--text-secondary);
+			font-weight: 600;
+
+			// Highlight today's header
+			&.cal-today {
+				background-color: rgba(66, 153, 237, 0.1); // Using direct RGB of primary color for the var
+				color: var(--primary-color);
+			}
+		}
+	}
+
+	// General styling for the calendar day cells
+	.cal-day-cell {
+		border-right: 1px solid var(--border-color);
+		border-bottom: 1px solid var(--border-color);
+
+		&:hover {
+			background-color: rgba(66, 153, 237, 0.05) !important;
+		}
+
+		&.cal-today {
+			background-color: rgba(66, 153, 237, 0.08) !important;
+		}
+	}
+}
