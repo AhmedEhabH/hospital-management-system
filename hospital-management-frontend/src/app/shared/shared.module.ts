@@ -38,6 +38,9 @@ import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 import { MatStepperModule } from '@angular/material/stepper';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatOptionModule } from '@angular/material/core';
+import { NavigationComponent } from './components/navigation/navigation.component';
+import { MatListModule } from '@angular/material/list';
+import { MatSelectModule } from '@angular/material/select';
 
 @NgModule({
 	declarations: [
@@ -50,6 +53,7 @@ import { MatOptionModule } from '@angular/material/core';
 		UnauthorizedComponent,
 		RealTimeAlertsComponent,
 		RealTimeNotificationsComponent,
+		NavigationComponent,
 
 
 	],
@@ -78,8 +82,10 @@ import { MatOptionModule } from '@angular/material/core';
 		MatChipsModule,
 		MatStepperModule,
 		MatOptionModule,
+		MatListModule,
+		MatSelectModule,
 
-		
+
 		CalendarModule.forRoot({
 			provide: DateAdapter,
 			useFactory: adapterFactory,
@@ -121,6 +127,8 @@ import { MatOptionModule } from '@angular/material/core';
 		CalendarModule,
 		MatStepperModule,
 		MatOptionModule,
+		MatListModule,
+		MatSelectModule,
 	],
 })
 export class SharedModule { }

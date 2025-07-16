@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { ChatMessage, Conversation, ConversationItem, Message, MessageAttachment } from '../models';
+import { ChatMessage, Conversation, ConversationItem, Message, MessageAttachment, MessageDto } from '../models';
 
 
 // FIXED: Update ChatMessage interface to match SignalR interface exactly
@@ -91,26 +91,44 @@ export class MessageService {
 			);
 	}
 
-	sendMessage(conversationId: string, message: string, messageType: string = 'text', attachments?: File[]): Observable<Message> {
+	sendMessage(messageData: MessageDto): Observable<Message> {
 		const formData = new FormData();
-		formData.append('conversationId', conversationId);
-		formData.append('messageContent', message);
-		formData.append('subject', 'Chat Message');
-		formData.append('messageType', messageType);
-
-		if (attachments && attachments.length > 0) {
-			attachments.forEach((file, index) => {
-				formData.append(`attachments[${index}]`, file);
-			});
-		}
+		formData.append('senderId', messageData.senderId.toString());
+		formData.append('receiverId', messageData.receiverId.toString());
+		formData.append('subject', messageData.subject);
+		formData.append('messageContent', messageData.messageContent);
+		formData.append('messageType', 'text');
 
 		return this.http.post<Message>(`${this.apiUrl}`, formData)
 			.pipe(
 				catchError(error => {
 					console.log('API endpoint not available, using mock data for send message');
-					return this.createMockMessage(conversationId, message, messageType);
+					return this.createMockMessage(messageData.senderId, messageData.subject, messageData.messageContent, 'text');
 				})
 			);
+	}
+
+	/**
+	 * Creates mock message for development/testing
+	 */
+	private createMockMessage(senderId: number, subject: string, messageContent: string, messageType: 'text' | 'image' | 'file' | 'system'): Observable<Message> {
+		const mockMessage: Message = {
+			id: Date.now(),
+			senderId: senderId || 0,
+			receiverId: 0,
+			subject: subject,
+			messageContent: messageContent,
+			isRead: false,
+			sentDate: new Date(),
+			messageType: messageType
+		};
+
+		return new Observable(observer => {
+			setTimeout(() => {
+				observer.next(mockMessage);
+				observer.complete();
+			}, 1000);
+		});
 	}
 
 	markAsRead(messageId: number): Observable<void> {
@@ -309,23 +327,23 @@ export class MessageService {
 		return of(mockMessages);
 	}
 
-	private createMockMessage(conversationId: string, message: string, messageType: string): Observable<Message> {
-		const mockMessage: Message = {
-			id: Date.now(),
-			senderId: 1,
-			receiverId: 2,
-			subject: 'Chat Message',
-			messageContent: message,
-			isRead: false,
-			sentDate: new Date(),
-			senderName: 'Current User',
-			receiverName: 'Recipient',
-			messageType: messageType as any,
-			conversationId
-		};
+	// private createMockMessage(conversationId: string, message: string, messageType: string): Observable<Message> {
+	// 	const mockMessage: Message = {
+	// 		id: Date.now(),
+	// 		senderId: 1,
+	// 		receiverId: 2,
+	// 		subject: 'Chat Message',
+	// 		messageContent: message,
+	// 		isRead: false,
+	// 		sentDate: new Date(),
+	// 		senderName: 'Current User',
+	// 		receiverName: 'Recipient',
+	// 		messageType: messageType as any,
+	// 		conversationId
+	// 	};
 
-		return of(mockMessage);
-	}
+	// 	return of(mockMessage);
+	// }
 
 	private createMockAttachment(file: File): Observable<MessageAttachment> {
 		const mockAttachment: MessageAttachment = {

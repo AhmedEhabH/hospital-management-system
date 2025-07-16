@@ -1,1 +1,146 @@
-<p>compose-message works!</p>
+<div class="compose-message-container" [class.dark-theme]="isDarkMode">
+	<!-- Header -->
+	<div class="message-header medical-gradient header-layout">
+		<div class="header-content">
+			<mat-icon class="header-icon">edit</mat-icon>
+			<div class="header-text">
+				<h1>Compose Message</h1>
+				<p>Send secure messages to healthcare professionals</p>
+			</div>
+		</div>
+		<div class="header-actions">
+			<button mat-icon-button (click)="onCancel()" matTooltip="Cancel" class="cancel-button">
+				<mat-icon>close</mat-icon>
+			</button>
+		</div>
+	</div>
+
+	<!-- Message Form -->
+	<div class="container content-container">
+		<div class="medical-card compose-card">
+			<form [formGroup]="messageForm" (ngSubmit)="onSubmit()" class="compose-form">
+
+				<!-- Recipient Selection -->
+				<div class="form-section">
+					<h3>Recipient</h3>
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Select Recipient</mat-label>
+						<mat-select formControlName="receiverId" required>
+							<mat-option *ngFor="let recipient of recipients" [value]="recipient.id">
+								<div class="recipient-option">
+									<mat-icon class="recipient-icon">{{recipient.type === 'Doctor' ? 'medical_services'
+										: 'person'}}</mat-icon>
+									<span class="recipient-name">{{recipient.name}}</span>
+									<small class="recipient-type">{{recipient.type}}</small>
+								</div>
+							</mat-option>
+						</mat-select>
+						<mat-error *ngIf="hasError('receiverId')">
+							{{getErrorMessage('receiverId')}}
+						</mat-error>
+					</mat-form-field>
+				</div>
+
+				<!-- Message Details -->
+				<div class="form-section">
+					<h3>Message Details</h3>
+
+					<div class="form-row">
+						<mat-form-field appearance="outline" class="form-field-70">
+							<mat-label>Subject</mat-label>
+							<input matInput formControlName="subject" placeholder="Enter message subject"
+								maxlength="200">
+							<mat-hint align="end">{{getControlValue('subject')?.length || 0}}/200</mat-hint>
+							<mat-error *ngIf="hasError('subject')">
+								{{getErrorMessage('subject')}}
+							</mat-error>
+						</mat-form-field>
+
+						<mat-form-field appearance="outline" class="form-field-30">
+							<mat-label>Priority</mat-label>
+							<mat-select formControlName="priority">
+								<mat-option value="Low">
+									<mat-icon class="priority-icon low">arrow_downward</mat-icon>
+									Low
+								</mat-option>
+								<mat-option value="Medium">
+									<mat-icon class="priority-icon medium">remove</mat-icon>
+									Medium
+								</mat-option>
+								<mat-option value="High">
+									<mat-icon class="priority-icon high">arrow_upward</mat-icon>
+									High
+								</mat-option>
+							</mat-select>
+						</mat-form-field>
+					</div>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Message Type</mat-label>
+						<mat-select formControlName="messageType">
+							<mat-option value="General">
+								<mat-icon class="type-icon">mail</mat-icon>
+								General
+							</mat-option>
+							<mat-option value="Medical">
+								<mat-icon class="type-icon">medical_information</mat-icon>
+								Medical
+							</mat-option>
+							<mat-option value="Appointment">
+								<mat-icon class="type-icon">event</mat-icon>
+								Appointment
+							</mat-option>
+							<mat-option value="Emergency">
+								<mat-icon class="type-icon">emergency</mat-icon>
+								Emergency
+							</mat-option>
+						</mat-select>
+					</mat-form-field>
+				</div>
+
+				<!-- Message Content -->
+				<div class="form-section">
+					<h3>Message Content</h3>
+
+					<!-- Templates -->
+					<div class="template-section">
+						<mat-form-field appearance="outline" class="template-field">
+							<mat-label>Use Template</mat-label>
+							<mat-select (selectionChange)="applyTemplate($event.value.template)"
+								placeholder="Select a template">
+								<mat-option *ngFor="let template of messageTemplates" [value]="template">
+									{{template.name}}
+								</mat-option>
+							</mat-select>
+						</mat-form-field>
+					</div>
+
+					<mat-form-field appearance="outline" class="full-width">
+						<mat-label>Message</mat-label>
+						<textarea matInput formControlName="message" rows="8" placeholder="Type your message here..."
+							maxlength="1000">
+            </textarea>
+						<mat-hint align="end">{{getControlValue('message')?.length || 0}}/1000</mat-hint>
+						<mat-error *ngIf="hasError('message')">
+							{{getErrorMessage('message')}}
+						</mat-error>
+					</mat-form-field>
+				</div>
+
+				<!-- Form Actions -->
+				<div class="form-actions">
+					<button type="button" mat-stroked-button (click)="onCancel()" class="cancel-btn">
+						<mat-icon>close</mat-icon>
+						Cancel
+					</button>
+
+					<button type="submit" mat-raised-button color="primary"
+						[disabled]="messageForm.invalid || isLoading" class="send-btn">
+						<mat-icon>{{isLoading ? 'hourglass_empty' : 'send'}}</mat-icon>
+						{{isLoading ? 'Sending...' : 'Send Message'}}
+					</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>

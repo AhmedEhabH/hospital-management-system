@@ -1,0 +1,65 @@
+<mat-nav-list>
+	<!-- Dashboard -->
+	<a mat-list-item routerLink="/dashboard" routerLinkActive="active">
+		<mat-icon matListIcon>dashboard</mat-icon>
+		<span matLine>Dashboard</span>
+	</a>
+
+	<!-- Patient Registration -->
+	<a mat-list-item routerLink="/registration/patient" routerLinkActive="active"
+		*ngIf="currentUser?.userType === 'Admin' || currentUser?.userType === 'Doctor'">
+		<mat-icon matListIcon>person_add</mat-icon>
+		<span matLine>Patient Registration</span>
+	</a>
+
+	<!-- Appointments -->
+	<a mat-list-item routerLink="/appointments" routerLinkActive="active">
+		<mat-icon matListIcon>event</mat-icon>
+		<span matLine>Appointments</span>
+	</a>
+
+	<!-- Medical History -->
+	<a mat-list-item routerLink="/medical-history" routerLinkActive="active">
+		<mat-icon matListIcon>medical_information</mat-icon>
+		<span matLine>Medical History</span>
+	</a>
+
+	<!-- Lab Reports -->
+	<a mat-list-item routerLink="/lab-reports" routerLinkActive="active">
+		<mat-icon matListIcon>science</mat-icon>
+		<span matLine>Lab Reports</span>
+	</a>
+
+	<!-- Messages -->
+	<a mat-list-item routerLink="/messaging" routerLinkActive="active">
+		<mat-icon matListIcon>mail</mat-icon>
+		<span matLine>Messages</span>
+	</a>
+
+	<!-- Patient Booking -->
+	<a mat-list-item routerLink="/patient-booking" routerLinkActive="active"
+		*ngIf="currentUser?.userType === 'Patient'">
+		<mat-icon matListIcon>event_available</mat-icon>
+		<span matLine>Book Appointment</span>
+	</a>
+
+	<!-- Quick Actions -->
+	<mat-divider></mat-divider>
+	<h3 matSubheader>Quick Actions</h3>
+
+	<a mat-list-item routerLink="/lab-reports/create" routerLinkActive="active"
+		*ngIf="currentUser?.userType === 'Doctor'">
+		<mat-icon matListIcon>add_circle</mat-icon>
+		<span matLine>New Lab Report</span>
+	</a>
+
+	<a mat-list-item routerLink="/messaging/compose" routerLinkActive="active">
+		<mat-icon matListIcon>edit</mat-icon>
+		<span matLine>Compose Message</span>
+	</a>
+
+	<a mat-list-item routerLink="/feedback" routerLinkActive="active">
+		<mat-icon matListIcon>feedback</mat-icon>
+		<span matLine>Send Feedback</span>
+	</a>
+</mat-nav-list>

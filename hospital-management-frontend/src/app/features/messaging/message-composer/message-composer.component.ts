@@ -307,10 +307,7 @@ export class MessageComposerComponent implements OnInit, OnDestroy {
 
 			// Send message
 			this.messageService.sendMessage(
-				this.conversationId || '',
-				formValue.content,
-				'text',
-				this.selectedFiles
+				formValue
 			).pipe(takeUntil(this.destroy$))
 				.subscribe({
 					next: (sentMessage: Message) => {

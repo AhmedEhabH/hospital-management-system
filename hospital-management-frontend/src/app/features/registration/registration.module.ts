@@ -18,6 +18,9 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 // Components
 import { PatientRegistrationComponent } from './patient-registration/patient-registration.component';
 import { RegistrationRoutingModule } from './registration-routing.module';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatStepperModule } from '@angular/material/stepper';
 
 
 @NgModule({
@@ -40,7 +43,9 @@ import { RegistrationRoutingModule } from './registration-routing.module';
 		MatProgressBarModule,
 		MatTooltipModule,
 		MatSnackBarModule,
-		MatIconModule,
+		MatStepperModule,
+		MatDatepickerModule,
+		MatNativeDateModule,
 	]
 })
 export class RegistrationModule { }

@@ -1,0 +1,257 @@
+// Mixins
+@mixin flex-between {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+@mixin flex-center {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+
+.compose-message-container {
+	min-height: 100vh;
+	background-color: var(--background-color);
+	padding-bottom: 2rem;
+}
+
+.message-header {
+	padding: 2rem 0;
+	color: white;
+	margin-bottom: 2rem;
+
+	.header-content {
+		.header-icon {
+			font-size: 3rem;
+			width: 3rem;
+			height: 3rem;
+			margin-bottom: 1rem;
+		}
+
+		h1 {
+			font-size: 2.5rem;
+			font-weight: 700;
+			margin: 0;
+			text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+		}
+
+		p {
+			font-size: 1.1rem;
+			opacity: 0.9;
+			margin-top: 0.5rem;
+		}
+	}
+
+	.header-actions {
+		.cancel-button {
+			background: rgba(255, 255, 255, 0.1);
+			color: white;
+			backdrop-filter: blur(10px);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+
+			&:hover {
+				background: rgba(255, 255, 255, 0.2);
+			}
+		}
+	}
+}
+
+.content-container {
+	margin-top: -1rem;
+	position: relative;
+	z-index: 10;
+}
+
+.compose-card {
+	padding: 2rem;
+	margin-bottom: 2rem;
+}
+
+.compose-form {
+	.form-section {
+		margin-bottom: 2rem;
+
+		h3 {
+			margin: 0 0 1rem 0;
+			font-size: 1.25rem;
+			font-weight: 600;
+			color: var(--text-primary);
+			border-bottom: 2px solid var(--primary-color);
+			padding-bottom: 0.5rem;
+		}
+
+		.form-row {
+			display: grid;
+			grid-template-columns: 1fr 200px;
+			gap: 1rem;
+
+			@media (max-width: 768px) {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		.form-field-70 {
+			flex: 1;
+		}
+
+		.form-field-30 {
+			min-width: 200px;
+		}
+
+		.full-width {
+			width: 100%;
+		}
+	}
+
+	.template-section {
+		margin-bottom: 1rem;
+
+		.template-field {
+			width: 300px;
+
+			@media (max-width: 768px) {
+				width: 100%;
+			}
+		}
+	}
+
+	.recipient-option {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+
+		.recipient-icon {
+			color: var(--primary-color);
+			font-size: 1.2rem;
+		}
+
+		.recipient-name {
+			font-weight: 500;
+		}
+
+		.recipient-type {
+			color: var(--text-secondary);
+			font-size: 0.875rem;
+		}
+	}
+
+	.priority-icon {
+		margin-right: 0.5rem;
+		font-size: 1.1rem;
+
+		&.low {
+			color: var(--medical-green);
+		}
+
+		&.medium {
+			color: var(--medical-orange);
+		}
+
+		&.high {
+			color: var(--medical-red);
+		}
+	}
+
+	.type-icon {
+		margin-right: 0.5rem;
+		color: var(--primary-color);
+	}
+
+	.form-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 1rem;
+		margin-top: 2rem;
+		padding-top: 2rem;
+		border-top: 1px solid var(--border-color);
+
+		@media (max-width: 768px) {
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.cancel-btn {
+			padding: 0.75rem 2rem;
+			font-weight: 500;
+			border-radius: 8px;
+			border: 1px solid var(--border-color);
+			color: var(--text-primary);
+
+			&:hover {
+				background: rgba(var(--primary-rgb), 0.05);
+				border-color: var(--primary-color);
+			}
+
+			mat-icon {
+				margin-right: 0.5rem;
+			}
+		}
+
+		.send-btn {
+			padding: 0.75rem 2rem;
+			font-weight: 500;
+			border-radius: 8px;
+			background: var(--primary-color);
+			color: white;
+			box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.3);
+
+			&:hover:not(:disabled) {
+				background: var(--primary-dark);
+				transform: translateY(-2px);
+				box-shadow: 0 6px 16px rgba(var(--primary-rgb), 0.4);
+			}
+
+			&:disabled {
+				opacity: 0.6;
+				cursor: not-allowed;
+			}
+
+			mat-icon {
+				margin-right: 0.5rem;
+			}
+		}
+
+		@media (max-width: 768px) {
+
+			.cancel-btn,
+			.send-btn {
+				width: 100%;
+				justify-content: center;
+			}
+		}
+	}
+}
+
+// Dark theme adjustments
+.dark-theme {
+	.compose-message-container {
+		.form-section {
+			h3 {
+				color: var(--text-primary);
+				border-bottom-color: var(--primary-light);
+			}
+		}
+
+		.recipient-option {
+			.recipient-icon {
+				color: var(--primary-light);
+			}
+		}
+
+		.type-icon {
+			color: var(--primary-light);
+		}
+
+		.cancel-btn {
+			border-color: var(--border-color);
+			color: var(--text-primary);
+
+			&:hover {
+				background: rgba(var(--primary-rgb), 0.1);
+			}
+		}
+	}
+}

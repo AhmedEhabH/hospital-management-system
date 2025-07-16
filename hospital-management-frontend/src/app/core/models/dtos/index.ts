@@ -17,3 +17,6 @@ export * from './hospital-info';
 export * from './signalr';
 
 export * from './dashboard';
+
+
+export * from './user';

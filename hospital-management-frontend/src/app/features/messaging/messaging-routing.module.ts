@@ -3,6 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { ChatWindowComponent } from './chat-window/chat-window.component';
 import { MessagingComponent } from './messaging.component';
 import { NotificationCenterComponent } from './notification-center/notification-center.component';
+import { ComposeMessageComponent } from './compose-message/compose-message.component';
 
 const routes = [
 	{
@@ -16,7 +17,8 @@ const routes = [
 	{
 		path: 'notifications',
 		component: NotificationCenterComponent
-	}
+	},
+	{ path: 'compose', component: ComposeMessageComponent },
 ];
 
 @NgModule({

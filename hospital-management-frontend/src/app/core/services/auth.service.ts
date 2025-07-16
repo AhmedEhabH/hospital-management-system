@@ -5,6 +5,7 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { BaseService } from './base.service';
+import { AuthResultDto, CurrentUserDto, LoginDto, UserInfoDto } from '../models';
 
 /**
  * Authentication Service
@@ -17,7 +18,7 @@ import { BaseService } from './base.service';
 })
 export class AuthService extends BaseService {
 	private readonly apiUrl = `${environment.apiUrl}/api/Auth`;
-	private currentUserSubject = new BehaviorSubject<any>(null);
+	private currentUserSubject = new BehaviorSubject<CurrentUserDto | null>(null);
 	private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
 
 	public currentUser$ = this.currentUserSubject.asObservable();
@@ -47,8 +48,8 @@ export class AuthService extends BaseService {
 	/**
 	 * Login user and handle navigation
 	 */
-	login(credentials: any): Observable<any> {
-		return this.http.post<any>(`${this.apiUrl}/login`, credentials)
+	login(loginData: LoginDto): Observable<AuthResultDto> {
+		return this.http.post<any>(`${this.apiUrl}/login`, loginData)
 			.pipe(
 				tap(response => {
 					if (response.success && response.token && response.user) {
@@ -57,7 +58,8 @@ export class AuthService extends BaseService {
 						localStorage.setItem('current-user', JSON.stringify(response.user));
 
 						// Update subjects
-						this.currentUserSubject.next(response.user);
+						const currentUser = this.mapToCurrentUser(response.user);
+						this.currentUserSubject.next(currentUser);
 						this.isAuthenticatedSubject.next(true);
 
 						// Navigate based on user role
@@ -66,6 +68,34 @@ export class AuthService extends BaseService {
 				}),
 				catchError(this.handleError)
 			);
+	}
+
+	private mapToCurrentUser(user: UserInfoDto): CurrentUserDto {
+		return {
+			id: user.id,
+			userId: user.userId,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			email: user.email,
+			userType: user.userType as 'Admin' | 'Doctor' | 'Patient',
+			fullName: `${user.firstName} ${user.lastName}`,
+			displayName: `${user.firstName} ${user.lastName}`,
+			isActive: true,
+			permissions: this.getDefaultPermissions(user.userType)
+		};
+	}
+
+	private getDefaultPermissions(userType: string): string[] {
+		switch (userType) {
+			case 'Admin':
+				return ['read', 'write', 'delete', 'manage_users', 'manage_system'];
+			case 'Doctor':
+				return ['read', 'write', 'manage_patients', 'create_reports'];
+			case 'Patient':
+				return ['read', 'view_own_data', 'send_messages'];
+			default:
+				return ['read'];
+		}
 	}
 
 	/**

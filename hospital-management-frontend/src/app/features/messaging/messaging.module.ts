@@ -51,9 +51,9 @@ import { InboxComponent } from './inbox/inbox.component';
 		ChatWindowComponent,
 		MessageComposerComponent,
 		NotificationCenterComponent,
-  ComposeMessageComponent,
-  MessagesListComponent,
-  InboxComponent
+		ComposeMessageComponent,
+		MessagesListComponent,
+		InboxComponent
 	],
 	imports: [
 		CommonModule,
@@ -66,7 +66,7 @@ import { InboxComponent } from './inbox/inbox.component';
 
 
 		QuillModule.forRoot(),
-		
+
 
 		// Angular Material
 		MatCardModule,
